@@ -71,13 +71,15 @@ services:
       lab.note: "Optional isolated Apache/PHP image may replace this image for SCN-05B"
 
   mock-pg:
-    image: eclipse-temurin:21-jre
+    build:
+      context: ./services/mock-pg
+    image: bookwave/mock-pg:lab
     restart: unless-stopped
-    command: ["sh", "-c", "touch /tmp/service-ready; while :; do sleep 3600; done"]
     environment:
       SERVICE_NAME: mock-pg
       LAB_PROFILE: ${LAB_PROFILE:-normal}
       HAEON_CARD_BASE_URL: http://haeon-card:8084
+      MOCK_PG_MERCHANT_NO: BOOKWAVE-LAB
       ERROR_INJECTION_ENABLED: ${ERROR_INJECTION_ENABLED:-false}
     ports:
       - "127.0.0.1:${MOCK_PG_PORT:-8083}:8083"
