@@ -1,6 +1,6 @@
 # Bookwave · Mock PG · Haeon Card 실습 환경
 
-이 폴더는 WSL2에서 실행할 Docker Compose 기준선이다. 현재 `mock-pg`는 Java 21 + Spring Boot 최소 뼈대가 연결되어 있고, 나머지 애플리케이션은 실제 서비스 이미지로 교체하기 전의 Java 런타임 대기 상태다.
+이 폴더는 WSL2에서 실행할 Docker Compose 기준선이다. 현재 `bookwave-app`과 `mock-pg`는 Java 21 + Spring Boot 최소 뼈대가 연결되어 있고, 나머지 애플리케이션은 실제 서비스 이미지로 교체하기 전의 Java 런타임 대기 상태다.
 
 ## 시작
 
@@ -24,7 +24,7 @@ Windows 파일시스템보다 WSL Linux 파일시스템 안에 프로젝트를 �
 
 ## 다음 교체 지점
 
-1. `bookwave-app`, `bookwave-chatbot`, `haeon-card`의 대기 명령을 각 Spring Boot 이미지로 교체한다. `mock-pg`는 이미 Spring Boot 뼈대가 연결되어 있다.
+1. `bookwave-chatbot`, `haeon-card`의 대기 명령을 각 Spring Boot 이미지로 교체한다. `bookwave-app`과 `mock-pg`는 이미 Spring Boot 뼈대가 연결되어 있다.
 2. `bookwave-cover-upload`는 우선 Java/Spring 실습 서비스로 시작한다. SCN-05B를 레거시 동작으로 재현하기로 확정할 때만 Apache/PHP 전용 이미지로 교체한다.
 3. 해온카드 컨테이너에는 `HAEON_CARD_모의서비스_DDL_v1.0.sql` 기준 초기화와 API 계약 테스트를 붙인다.
 4. 정상 결제 왕복이 통과한 뒤에만 OD-02-X 오류 주입과 북웨이브 SCN-05A/SCN-05B를 활성화한다.

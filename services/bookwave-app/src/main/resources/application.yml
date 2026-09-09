@@ -1,0 +1,29 @@
+server:
+  port: ${SERVER_PORT:8080}
+  shutdown: graceful
+
+spring:
+  application:
+    name: bookwave-app
+  lifecycle:
+    timeout-per-shutdown-phase: 10s
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+  endpoint:
+    health:
+      probes:
+        enabled: true
+
+bookwave:
+  mock-pg-base-url: ${MOCK_PG_BASE_URL:http://mock-pg:8083}
+  connect-timeout-ms: ${BOOKWAVE_CONNECT_TIMEOUT_MS:2000}
+  read-timeout-ms: ${BOOKWAVE_READ_TIMEOUT_MS:5000}
+  lab-profile: ${LAB_PROFILE:normal}
+
+logging:
+  pattern:
+    level: "%5p [corr=%X{correlationId}]"
