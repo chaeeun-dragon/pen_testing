@@ -1,0 +1,207 @@
+name: bookwave-haeon-lab
+
+# 이 파일은 실행 가능한 환경 뼈대다.
+# 애플리케이션 이미지가 준비되기 전에는 Java 런타임 컨테이너가 대기 상태로 실행된다.
+# 실제 결제·금융망과 외부 공격 대상은 연결하지 않는다.
+
+services:
+  bookwave-app:
+    image: eclipse-temurin:21-jre
+    restart: unless-stopped
+    command: ["sh", "-c", "touch /tmp/service-ready; while :; do sleep 3600; done"]
+    environment:
+      SERVICE_NAME: bookwave-app
+      LAB_PROFILE: ${LAB_PROFILE:-normal}
+    ports:
+      - "127.0.0.1:${BOOKWAVE_APP_PORT:-8080}:8080"
+    networks:
+      - front_net
+      - dmz_net
+      - bookwave_db_net
+    healthcheck:
+      test: ["CMD-SHELL", "test -f /tmp/service-ready"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+    labels:
+      lab.role: "bookwave-client-api"
+      lab.note: "Replace command with the Java/Spring application image"
+
+  bookwave-chatbot:
+    image: eclipse-temurin:21-jre
+    restart: unless-stopped
+    command: ["sh", "-c", "touch /tmp/service-ready; while :; do sleep 3600; done"]
+    environment:
+      SERVICE_NAME: bookwave-chatbot
+      LAB_PROFILE: ${LAB_PROFILE:-normal}
+      COVER_UPLOAD_BASE_URL: http://bookwave-cover-upload:8082
+    expose:
+      - "8081"
+    networks:
+      - dmz_net
+      - bookwave_db_net
+    healthcheck:
+      test: ["CMD-SHELL", "test -f /tmp/service-ready"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+    labels:
+      lab.role: "bookwave-chatbot"
+      lab.note: "SCN-05A entry surface; keep chatbot and cover service as separate containers"
+
+  bookwave-cover-upload:
+    image: eclipse-temurin:21-jre
+    restart: unless-stopped
+    command: ["sh", "-c", "touch /tmp/service-ready; while :; do sleep 3600; done"]
+    environment:
+      SERVICE_NAME: bookwave-cover-upload
+      LAB_PROFILE: ${LAB_PROFILE:-normal}
+      COVER_UPLOAD_RUNTIME: ${COVER_UPLOAD_RUNTIME:-java-spring}
+    expose:
+      - "8082"
+    networks:
+      - dmz_net
+    healthcheck:
+      test: ["CMD-SHELL", "test -f /tmp/service-ready"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+    labels:
+      lab.role: "bookwave-cover-and-upload"
+      lab.note: "Optional isolated Apache/PHP image may replace this image for SCN-05B"
+
+  mock-pg:
+    image: eclipse-temurin:21-jre
+    restart: unless-stopped
+    command: ["sh", "-c", "touch /tmp/service-ready; while :; do sleep 3600; done"]
+    environment:
+      SERVICE_NAME: mock-pg
+      LAB_PROFILE: ${LAB_PROFILE:-normal}
+      HAEON_CARD_BASE_URL: http://haeon-card:8084
+      ERROR_INJECTION_ENABLED: ${ERROR_INJECTION_ENABLED:-false}
+    ports:
+      - "127.0.0.1:${MOCK_PG_PORT:-8083}:8083"
+    networks:
+      - dmz_net
+      - card_net
+      - audit_net
+    healthcheck:
+      test: ["CMD-SHELL", "test -f /tmp/service-ready"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+    labels:
+      lab.role: "od-02-x-trust-boundary"
+      lab.note: "Only this adapter may call haeon-card in the normal architecture"
+
+  haeon-card:
+    image: eclipse-temurin:21-jre
+    restart: unless-stopped
+    command: ["sh", "-c", "touch /tmp/service-ready; while :; do sleep 3600; done"]
+    environment:
+      SERVICE_NAME: haeon-card
+      LAB_PROFILE: ${LAB_PROFILE:-normal}
+      SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE:-lab}
+      DB_HOST: haeon-card-mysql
+      DB_NAME: ${HAEON_DB_NAME:-haeon_card}
+      DB_USER: ${HAEON_DB_USER:-haeon_app}
+      DB_PASSWORD: ${HAEON_DB_PASSWORD:-haeon_app_lab_only}
+    ports:
+      - "127.0.0.1:${HAEON_CARD_PORT:-8084}:8084"
+    depends_on:
+      haeon-card-mysql:
+        condition: service_healthy
+    networks:
+      - card_net
+      - audit_net
+    healthcheck:
+      test: ["CMD-SHELL", "test -f /tmp/service-ready"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+    labels:
+      lab.role: "card-approval-core"
+      lab.note: "CARD-03 approval core; never accept merchant_id or decision from request body"
+
+  haeon-card-mysql:
+    image: mysql:8.0
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: ${HAEON_DB_ROOT_PASSWORD:-root_lab_only}
+      MYSQL_DATABASE: ${HAEON_DB_NAME:-haeon_card}
+      MYSQL_USER: ${HAEON_DB_USER:-haeon_app}
+      MYSQL_PASSWORD: ${HAEON_DB_PASSWORD:-haeon_app_lab_only}
+      TZ: UTC
+    volumes:
+      - haeon_card_mysql_data:/var/lib/mysql
+      - ./db/haeon-card/init/001_haeon_card_schema.sql:/docker-entrypoint-initdb.d/001_haeon_card.sql:ro
+    networks:
+      - card_net
+    healthcheck:
+      test: ["CMD-SHELL", "mysqladmin ping -h localhost -u root -p\"$${MYSQL_ROOT_PASSWORD}\" --silent"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    labels:
+      lab.role: "haeon-card-database"
+      lab.note: "Internal only; synthetic data and HAEON CARD schema"
+
+  bookwave-mysql:
+    image: mysql:8.0
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: ${BOOKWAVE_DB_ROOT_PASSWORD:-root_bookwave_lab_only}
+      MYSQL_DATABASE: ${BOOKWAVE_DB_NAME:-bookwave}
+      MYSQL_USER: ${BOOKWAVE_DB_USER:-bookwave_app}
+      MYSQL_PASSWORD: ${BOOKWAVE_DB_PASSWORD:-bookwave_app_lab_only}
+      TZ: UTC
+    volumes:
+      - bookwave_mysql_data:/var/lib/mysql
+    networks:
+      - bookwave_db_net
+    healthcheck:
+      test: ["CMD-SHELL", "mysqladmin ping -h localhost -u root -p\"$${MYSQL_ROOT_PASSWORD}\" --silent"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    labels:
+      lab.role: "bookwave-database"
+      lab.note: "Separate owner database; no direct access from haeon-card"
+
+  evidence:
+    image: busybox:1.36
+    restart: unless-stopped
+    command: ["sh", "-c", "mkdir -p /evidence; touch /evidence/.ready; while :; do sleep 3600; done"]
+    volumes:
+      - ./evidence:/evidence
+    networks:
+      - audit_net
+    healthcheck:
+      test: ["CMD-SHELL", "test -f /evidence/.ready"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+    labels:
+      lab.role: "read-only-evidence-volume"
+      lab.note: "Application code must not use this as a business database"
+
+networks:
+  front_net:
+    name: bookwave_front_net
+  dmz_net:
+    name: bookwave_dmz_net
+  bookwave_db_net:
+    name: bookwave_db_net
+    internal: true
+  card_net:
+    name: haeon_card_net
+    internal: true
+  audit_net:
+    name: lab_audit_net
+    internal: true
+
+volumes:
+  haeon_card_mysql_data:
+    name: bookwave_haeon_card_mysql_data
+  bookwave_mysql_data:
+    name: bookwave_bookwave_mysql_data

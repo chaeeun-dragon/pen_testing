@@ -1,0 +1,37 @@
+flowchart LR
+  client[북웨이브 앱]
+  app[bookwave-app\n주문 API]
+  chatbot[bookwave-chatbot\nDMZ]
+  cover[bookwave-cover-upload\nDMZ 별도 컨테이너]
+  pg[mock-pg\nOD-02-X 경계]
+  card[haeon-card\nCARD-03 승인 코어]
+  bwdb[(bookwave-mysql)]
+  carddb[(haeon-card-mysql)]
+  evidence[(evidence\n읽기 중심)]
+
+  subgraph FRONT[front_net]
+    client --> app
+  end
+
+  subgraph DMZ[dmz_net]
+    app --> chatbot
+    chatbot --> cover
+    app --> pg
+    chatbot --> bwdb
+  end
+
+  subgraph CARD[card_net]
+    pg --> card
+    card --> carddb
+  end
+
+  app -. 주문·결제 로그 .-> evidence
+  pg -. PG 원문·검증 결과 .-> evidence
+  card -. 승인·감사 증거 .-> evidence
+
+  classDef boundary fill:#fff4e5,stroke:#d97706,color:#7c2d12
+  classDef service fill:#e8f4ff,stroke:#2563eb,color:#0f172a
+  classDef db fill:#eefdf4,stroke:#15803d,color:#14532d
+  class pg boundary
+  class app,chatbot,cover,card service
+  class bwdb,carddb,evidence db
