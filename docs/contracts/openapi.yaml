@@ -1,0 +1,372 @@
+openapi: 3.0.3
+info:
+  title: Bookwave - Mock PG - Haeon Card Lab API
+  version: 0.1.0
+  description: |
+    합성 데이터만 사용하는 격리형 실습 환경의 API 계약이다.
+    실제 결제망이나 실제 카드정보를 연결하지 않는다.
+servers:
+  - url: http://localhost:8080
+    description: bookwave-app (host local)
+tags:
+  - name: Bookwave
+    description: 북웨이브 외부 결제 접수
+  - name: Mock PG
+    description: 북웨이브와 해온카드 사이의 결제 전달
+  - name: Haeon Card
+    description: 카드 승인·한도 판단
+  - name: Health
+    description: 서비스 상태 확인
+paths:
+  /api/v1/payments:
+    post:
+      tags: [Bookwave]
+      summary: 결제 접수
+      description: 북웨이브가 결제를 접수하고 Mock PG에 전달한다.
+      operationId: createPayment
+      parameters:
+        - $ref: '#/components/parameters/CorrelationId'
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PaymentRequest'
+            example:
+              correlationId: corr-20260909-0001
+              orderNo: BW-ORDER-0001
+              merchantRequestId: BW-REQ-0001
+              amount: 10000
+              currency: KRW
+              paymentMethodToken: card-token-lab-001
+      responses:
+        '200':
+          description: 승인 또는 정상 거절
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaymentResult'
+        '400':
+          $ref: '#/components/responses/InvalidRequest'
+        '409':
+          $ref: '#/components/responses/IdempotencyConflict'
+        '502':
+          $ref: '#/components/responses/UpstreamError'
+        '503':
+          $ref: '#/components/responses/UpstreamUnavailable'
+
+  /internal/v1/pg/charges:
+    post:
+      tags: [Mock PG]
+      summary: PG 거래 생성과 승인 전달
+      description: bookwave-app만 호출하며, Mock PG가 가맹점 정보와 PG 거래 ID를 만든다.
+      operationId: createPgCharge
+      servers:
+        - url: http://localhost:8083
+          description: mock-pg (host local)
+      parameters:
+        - $ref: '#/components/parameters/CorrelationId'
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PgChargeRequest'
+      responses:
+        '200':
+          description: 카드 승인 결과를 PG 형태로 반환
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaymentResult'
+        '400':
+          $ref: '#/components/responses/InvalidRequest'
+        '403':
+          $ref: '#/components/responses/MerchantNotAllowed'
+        '409':
+          $ref: '#/components/responses/IdempotencyConflict'
+        '502':
+          $ref: '#/components/responses/UpstreamError'
+        '503':
+          $ref: '#/components/responses/UpstreamUnavailable'
+
+  /internal/v1/authorizations:
+    post:
+      tags: [Haeon Card]
+      summary: 카드 승인 요청
+      description: Mock PG가 호출하며 해온카드가 최신 한도와 잠금 결과로 승인 여부를 결정한다.
+      operationId: authorizeCard
+      servers:
+        - url: http://localhost:8084
+          description: haeon-card (host local)
+      parameters:
+        - $ref: '#/components/parameters/CorrelationId'
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AuthorizationRequest'
+            example:
+              correlationId: corr-20260909-0001
+              merchantNo: BOOKWAVE-LAB
+              merchantRequestId: BW-REQ-0001
+              cardToken: card-token-lab-001
+              amount: 10000
+              currency: KRW
+              requestFingerprint: fp-lab-0001
+              requestedAt: '2026-09-09T05:00:00Z'
+      responses:
+        '200':
+          description: 승인 또는 정상 거절
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthorizationResult'
+        '400':
+          $ref: '#/components/responses/InvalidRequest'
+        '403':
+          $ref: '#/components/responses/MerchantNotAllowed'
+        '409':
+          $ref: '#/components/responses/IdempotencyConflict'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  /actuator/health:
+    get:
+      tags: [Health]
+      summary: 서비스 상태 확인
+      operationId: getHealth
+      responses:
+        '200':
+          description: 서비스와 필수 의존성이 정상
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthResponse'
+        '503':
+          description: 서비스 또는 DB가 준비되지 않음
+
+components:
+  parameters:
+    CorrelationId:
+      name: X-Correlation-Id
+      in: header
+      required: true
+      description: 세 서비스 로그를 한 결제 왕복으로 묶는 ID
+      schema:
+        type: string
+        minLength: 8
+        maxLength: 80
+        pattern: '^[A-Za-z0-9_-]+$'
+      example: corr-20260909-0001
+    IdempotencyKey:
+      name: Idempotency-Key
+      in: header
+      required: true
+      description: 같은 요청의 재시도를 하나로 묶는 키. merchantRequestId와 같은 값이어야 한다.
+      schema:
+        type: string
+        minLength: 1
+        maxLength: 80
+        pattern: '^[A-Za-z0-9_-]+$'
+      example: BW-REQ-0001
+
+  schemas:
+    PaymentRequest:
+      type: object
+      required: [correlationId, orderNo, merchantRequestId, amount, currency, paymentMethodToken]
+      additionalProperties: false
+      properties:
+        correlationId:
+          type: string
+          example: corr-20260909-0001
+        orderNo:
+          type: string
+          example: BW-ORDER-0001
+        merchantRequestId:
+          type: string
+          example: BW-REQ-0001
+        amount:
+          type: integer
+          format: int64
+          minimum: 1
+          example: 10000
+        currency:
+          type: string
+          enum: [KRW]
+        paymentMethodToken:
+          type: string
+          pattern: '^card-token-lab-[A-Za-z0-9_-]+$'
+
+    PgChargeRequest:
+      allOf:
+        - $ref: '#/components/schemas/PaymentRequest'
+
+    AuthorizationRequest:
+      type: object
+      required: [correlationId, merchantNo, merchantRequestId, cardToken, amount, currency, requestFingerprint, requestedAt]
+      additionalProperties: false
+      properties:
+        correlationId:
+          type: string
+          example: corr-20260909-0001
+        merchantNo:
+          type: string
+          example: BOOKWAVE-LAB
+          description: Mock PG가 서버 설정으로 선택한 합성 가맹점 번호. 해온카드가 허용 목록과 비교한 뒤 내부 merchant_id로 매핑한다.
+        merchantRequestId:
+          type: string
+          example: BW-REQ-0001
+        cardToken:
+          type: string
+          pattern: '^card-token-lab-[A-Za-z0-9_-]+$'
+        amount:
+          type: integer
+          format: int64
+          minimum: 1
+          example: 10000
+        currency:
+          type: string
+          enum: [KRW]
+        requestFingerprint:
+          type: string
+          pattern: '^fp-lab-[A-Za-z0-9_-]+$'
+        requestedAt:
+          type: string
+          format: date-time
+        decision:
+          type: string
+          deprecated: true
+          description: 요청에 포함하지 않는다. 포함되어도 해온카드는 무시한다.
+          readOnly: true
+
+    PaymentResult:
+      type: object
+      required: [correlationId, orderNo, paymentId, pgTid, decision, approvedAmount]
+      additionalProperties: false
+      properties:
+        correlationId:
+          type: string
+        orderNo:
+          type: string
+        paymentId:
+          type: string
+          example: PAY-LAB-0001
+        pgTid:
+          type: string
+          example: PG-LAB-0001
+        decision:
+          $ref: '#/components/schemas/Decision'
+        approvedAmount:
+          type: integer
+          format: int64
+          minimum: 0
+        authorizationNo:
+          type: string
+          example: AUTH-LAB-0001
+        reasonCode:
+          type: string
+          example: APPROVED
+
+    AuthorizationResult:
+      type: object
+      required: [correlationId, authorizationId, decision, approvedAmount, reasonCode]
+      additionalProperties: false
+      properties:
+        correlationId:
+          type: string
+        authorizationId:
+          type: integer
+          format: int64
+          example: 1
+        authorizationNo:
+          type: string
+          example: AUTH-LAB-0001
+        decision:
+          $ref: '#/components/schemas/Decision'
+        approvedAmount:
+          type: integer
+          format: int64
+          minimum: 0
+        remainingLimit:
+          type: integer
+          format: int64
+          minimum: 0
+          description: 카드 내부 실습 증거용. 북웨이브 응답에는 전달하지 않는다.
+        reasonCode:
+          type: string
+          example: APPROVED
+
+    Decision:
+      type: string
+      enum: [APPROVED, DECLINED, DUPLICATE, MISMATCH_QUARANTINED]
+
+    ErrorResponse:
+      type: object
+      required: [correlationId, errorCode, message, retryable]
+      additionalProperties: false
+      properties:
+        correlationId:
+          type: string
+        errorCode:
+          type: string
+          example: INVALID_REQUEST
+        message:
+          type: string
+          example: 필수값이 누락되었습니다.
+        retryable:
+          type: boolean
+          example: false
+
+    HealthResponse:
+      type: object
+      required: [status]
+      properties:
+        status:
+          type: string
+          enum: [UP]
+        service:
+          type: string
+          example: haeon-card
+
+  responses:
+    InvalidRequest:
+      description: 요청 형식 오류
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+    MerchantNotAllowed:
+      description: 허용되지 않은 가맹점
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+    IdempotencyConflict:
+      description: 같은 요청 키에 다른 내용이 사용됨
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+    UpstreamError:
+      description: 다음 서비스의 응답 오류
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+    UpstreamUnavailable:
+      description: 다음 서비스 연결 불가
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+    InternalError:
+      description: 예상하지 못한 내부 오류
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
