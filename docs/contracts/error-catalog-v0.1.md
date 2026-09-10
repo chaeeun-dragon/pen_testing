@@ -12,6 +12,7 @@
 | `DUPLICATE_REQUEST` | 409 | 이미 처리한 요청과 충돌 | 기존 결과 조회 |
 | `UPSTREAM_ERROR` | 502 | 다음 서비스가 잘못된 응답을 반환 | 정책에 따라 1회 |
 | `UPSTREAM_UNAVAILABLE` | 503 | 다음 서비스와 연결되지 않음 | 같은 키로 1회 |
+| `BEFORE_BARRIER_TIMEOUT` | 503 | Before 동시성 실습의 짝 요청이 제한 시간 안에 오지 않음 | 실습 설정 확인 후 다시 실행 |
 | `INTERNAL_ERROR` | 500 | 예상하지 못한 내부 오류 | 로그 확인 후 결정 |
 
 ## 처리 원칙

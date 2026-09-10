@@ -1,7 +1,8 @@
 name: bookwave-haeon-lab
 
-# 이 파일은 실행 가능한 환경 뼈대다.
-# 아직 구현 전인 서비스는 Java 런타임 대기 상태로 실행되고, bookwave-app과 mock-pg는 Spring Boot 뼈대를 사용한다.
+# 이 파일은 실행 가능한 환경 기준선이다.
+# bookwave-app, mock-pg, haeon-card는 Java 21 + Spring Boot 뼈대이며,
+# 챗봇·표지 업로드 서비스는 실제 실습 이미지로 교체하기 전의 대기 상태다.
 # 실제 결제·금융망과 외부 공격 대상은 연결하지 않는다.
 
 services:
@@ -82,6 +83,7 @@ services:
       LAB_PROFILE: ${LAB_PROFILE:-normal}
       HAEON_CARD_BASE_URL: http://haeon-card:8084
       MOCK_PG_MERCHANT_NO: BOOKWAVE-LAB
+      HAEON_MERCHANT_TOKEN: ${HAEON_MERCHANT_TOKEN:-lab-merchant-bookwave}
       ERROR_INJECTION_ENABLED: ${ERROR_INJECTION_ENABLED:-false}
     ports:
       - "127.0.0.1:${MOCK_PG_PORT:-8083}:8083"
@@ -99,17 +101,25 @@ services:
       lab.note: "Only this adapter may call haeon-card in the normal architecture"
 
   haeon-card:
-    image: eclipse-temurin:21-jre
+    build:
+      context: ./services/haeon-card
+    image: bookwave/haeon-card:lab
     restart: unless-stopped
-    command: ["sh", "-c", "touch /tmp/service-ready; while :; do sleep 3600; done"]
     environment:
       SERVICE_NAME: haeon-card
       LAB_PROFILE: ${LAB_PROFILE:-normal}
       SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE:-lab}
+      BEFORE_BARRIER_ENABLED: ${BEFORE_BARRIER_ENABLED:-false}
+      BARRIER_TIMEOUT_SECONDS: ${BARRIER_TIMEOUT_SECONDS:-5}
+      SERVER_PORT: 8084
       DB_HOST: haeon-card-mysql
       DB_NAME: ${HAEON_DB_NAME:-haeon_card}
       DB_USER: ${HAEON_DB_USER:-haeon_app}
       DB_PASSWORD: ${HAEON_DB_PASSWORD:-haeon_app_lab_only}
+      DB_POOL_MAX: ${HAEON_DB_POOL_MAX:-4}
+      DB_POOL_MIN: ${HAEON_DB_POOL_MIN:-2}
+      HAEON_MERCHANT_NO: ${HAEON_MERCHANT_NO:-BOOKWAVE-LAB}
+      HAEON_MERCHANT_TOKEN: ${HAEON_MERCHANT_TOKEN:-lab-merchant-bookwave}
     ports:
       - "127.0.0.1:${HAEON_CARD_PORT:-8084}:8084"
     depends_on:
@@ -139,6 +149,8 @@ services:
     volumes:
       - haeon_card_mysql_data:/var/lib/mysql
       - ./db/haeon-card/init/001_haeon_card_schema.sql:/docker-entrypoint-initdb.d/001_haeon_card.sql:ro
+      - ./db/haeon-card/fixtures/002_card03_baseline.sql:/docker-entrypoint-initdb.d/002_card03_baseline.sql:ro
+      - ./db/haeon-card/fixtures/003_card03_reset.sql:/docker-entrypoint-initdb.d/003_card03_reset.sql:ro
     networks:
       - card_net
     healthcheck:

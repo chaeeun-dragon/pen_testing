@@ -6,6 +6,7 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 public record MockPgProperties(
         String haeonCardBaseUrl,
         String merchantNo,
+        String merchantToken,
         long connectTimeoutMs,
         long readTimeoutMs,
         String labProfile,
