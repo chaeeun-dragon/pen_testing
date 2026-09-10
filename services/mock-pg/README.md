@@ -24,6 +24,7 @@ GET  /internal/v1/pg/health
 ```http
 X-Correlation-Id: corr-20260909-0001
 Idempotency-Key: BW-REQ-0001
+Authorization: Bearer lab-merchant-bookwave
 ```
 
 `Idempotency-Key`는 본문의 `merchantRequestId`와 같아야 한다. 카드번호·CVC 대신 `card-token-lab-*`만 사용한다.
@@ -40,5 +41,5 @@ curl http://localhost:8083/actuator/health
 ## 현재 제한
 
 - 멱등 결과는 프로세스 메모리에만 저장한다. 재시작 후 보존이 필요해지면 전용 PG 거래 저장소를 추가한다.
-- `before/after` 오류 주입 훅은 아직 켜지지 않는다. 정상 왕복을 통과한 뒤 별도 테스트 프로파일로 추가한다.
-- 내부 서비스 인증(mTLS·서비스 토큰)은 격리된 로컬 랩 기준선 이후에 추가한다.
+- PG 결과와 카드 결과를 일부러 다르게 만드는 OD-02-X `before/after` 오류 주입 훅은 아직 켜지지 않았다. 정상 왕복을 통과한 뒤 별도 테스트 프로파일로 추가한다.
+- 현재 Bearer 값은 합성 실습 토큰이며 환경 변수 `HAEON_MERCHANT_TOKEN`으로만 주입한다. 실제 운영 인증은 사용하지 않는다.

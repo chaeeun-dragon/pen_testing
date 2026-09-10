@@ -1,6 +1,6 @@
 # Bookwave · Mock PG · Haeon Card 실습 환경
 
-이 폴더는 WSL2에서 실행할 Docker Compose 기준선이다. 현재 `bookwave-app`과 `mock-pg`는 Java 21 + Spring Boot 최소 뼈대가 연결되어 있고, 나머지 애플리케이션은 실제 서비스 이미지로 교체하기 전의 Java 런타임 대기 상태다.
+이 폴더는 WSL2에서 실행할 Docker Compose 기준선이다. 현재 `bookwave-app`과 `mock-pg`는 Java 21 + Spring Boot 최소 뼈대가 연결되어 있고, `haeon-card`는 Java 21 + Spring Boot·JDBC 기반 승인 코어 뼈대까지 생성되었다. 챗봇·표지 업로드 서비스는 실제 서비스 이미지로 교체하기 전의 Java 런타임 대기 상태다.
 
 ## 시작
 
@@ -24,10 +24,10 @@ Windows 파일시스템보다 WSL Linux 파일시스템 안에 프로젝트를 �
 
 ## 다음 교체 지점
 
-1. `bookwave-chatbot`, `haeon-card`의 대기 명령을 각 Spring Boot 이미지로 교체한다. `bookwave-app`과 `mock-pg`는 이미 Spring Boot 뼈대가 연결되어 있다.
+1. `bookwave-chatbot`과 `bookwave-cover-upload`의 대기 명령을 각 실습 이미지로 교체한다. `bookwave-app`, `mock-pg`, `haeon-card`는 Spring Boot 뼈대가 연결되어 있다.
 2. `bookwave-cover-upload`는 우선 Java/Spring 실습 서비스로 시작한다. SCN-05B를 레거시 동작으로 재현하기로 확정할 때만 Apache/PHP 전용 이미지로 교체한다.
-3. 해온카드 컨테이너에는 `HAEON_CARD_모의서비스_DDL_v1.0.sql` 기준 초기화와 API 계약 테스트를 붙인다.
-4. 정상 결제 왕복이 통과한 뒤에만 OD-02-X 오류 주입과 북웨이브 SCN-05A/SCN-05B를 활성화한다.
+3. 해온카드 컨테이너에 H0 DDL 기준 합성 fixture와 API 계약 smoke test를 붙인다. 정상 프로파일은 DB 기준 승인·거절과 승인 거래·감사 기록을 처리한다.
+4. 정상 결제 왕복이 통과한 뒤에만 CARD-03 Before/After 비교, OD-02-X 오류 주입과 북웨이브 SCN-05A/SCN-05B를 활성화한다.
 
 ## Mock PG만 먼저 확인하기
 
@@ -37,4 +37,11 @@ docker compose --env-file .env up -d mock-pg
 curl http://localhost:8083/actuator/health
 ```
 
-현재 해온카드가 임시 컨테이너인 동안 `/internal/v1/pg/charges`는 정상 승인 대신 `UPSTREAM_ERROR` 또는 `UPSTREAM_UNAVAILABLE`을 반환할 수 있다. 해온카드 승인 API가 연결된 뒤 정상 왕복을 확인한다.
+정상 프로파일에서는 `/internal/v1/authorizations`가 DB 기준 승인·거절을 반환한다. CARD-03 동시성은 `services/haeon-card/README.md`와 `tools/card03-concurrency.sh`의 별도 실습 절차로 확인한다.
+
+## 북웨이브 결제 화면
+
+`bookwave-app`을 실행한 뒤 브라우저에서 `http://localhost:8080/`을 열면 해온카드
+스타일의 모의 결제 화면을 사용할 수 있다. 실제 카드정보 없이 테스트 토큰으로 결제
+요청을 보내고, 승인 결과·PG 거래번호·카드 승인번호·요청 추적 ID를 한 화면에서
+확인한다. 같은 요청 재시도 버튼으로 멱등 처리도 눈으로 확인할 수 있다.

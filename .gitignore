@@ -1,4 +1,5 @@
 .env
 evidence/runs/
+evidence/.ready
 **/target/
 *.log

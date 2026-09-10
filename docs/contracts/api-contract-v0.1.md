@@ -61,6 +61,7 @@ haeon-card-mysql (내부 전용)
 Content-Type: application/json
 X-Correlation-Id: corr-20260909-0001
 Idempotency-Key: BW-REQ-0001
+Authorization: Bearer lab-merchant-bookwave
 ```
 
 헤더와 본문의 `correlationId`가 다르면 `400 INVALID_CORRELATION_ID`로 거절한다. `Idempotency-Key`가 필요한 API에서 누락되면 `400 MISSING_IDEMPOTENCY_KEY`로 거절한다.
@@ -190,7 +191,7 @@ Mock PG 내부 규칙:
   "cardToken": "card-token-lab-001",
   "amount": 10000,
   "currency": "KRW",
-  "requestFingerprint": "fp-lab-0001",
+  "requestFingerprint": "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
   "requestedAt": "2026-09-09T05:00:00Z"
 }
 ```
@@ -235,7 +236,7 @@ Mock PG 내부 규칙:
 
 `remainingLimit`은 카드 내부 검증과 실습 증거용 값이다. Mock PG는 이를 저장할 수 있지만 북웨이브 응답에는 전달하지 않는다.
 
-API의 `merchantNo`는 합성 가맹점 번호다. 해온카드는 이를 `merchants.merchant_no`와 비교한 뒤 내부 숫자형 `merchant_id`로 매핑한다.
+API의 `merchantNo`는 현재 v0.1 호환을 위한 합성 가맹점 번호다. `Authorization: Bearer lab-merchant-bookwave`가 있으면 해온카드는 서버 설정의 가맹점 주체를 우선 사용한다. 다음 계약 버전에서는 Bearer 주체를 필수로 하고 `merchantNo` 본문을 제거한다.
 
 ## 7. 공통 상태와 오류
 
@@ -260,6 +261,7 @@ API의 `merchantNo`는 합성 가맹점 번호다. 해온카드는 이를 `merch
 | 409 | `DUPLICATE_REQUEST` | 이미 처리된 요청의 충돌 |
 | 502 | `UPSTREAM_ERROR` | 다음 서비스 응답 오류 |
 | 503 | `UPSTREAM_UNAVAILABLE` | 다음 서비스 연결 불가 |
+| 503 | `BEFORE_BARRIER_TIMEOUT` | Before 동시성 실습의 짝 요청이 제한 시간 안에 오지 않음 |
 | 500 | `INTERNAL_ERROR` | 예상하지 못한 내부 오류 |
 
 오류 응답 형식:

@@ -21,6 +21,7 @@ management:
 mock-pg:
   haeon-card-base-url: ${HAEON_CARD_BASE_URL:http://haeon-card:8084}
   merchant-no: ${MOCK_PG_MERCHANT_NO:BOOKWAVE-LAB}
+  merchant-token: ${HAEON_MERCHANT_TOKEN:lab-merchant-bookwave}
   connect-timeout-ms: ${MOCK_PG_CONNECT_TIMEOUT_MS:2000}
   read-timeout-ms: ${MOCK_PG_READ_TIMEOUT_MS:5000}
   lab-profile: ${LAB_PROFILE:normal}

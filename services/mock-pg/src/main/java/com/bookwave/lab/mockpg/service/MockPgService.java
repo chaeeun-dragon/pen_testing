@@ -76,7 +76,7 @@ public class MockPgService {
                 request.paymentMethodToken(),
                 request.amount(),
                 request.currency(),
-                "fp-lab-" + fingerprint,
+                fingerprint,
                 Instant.now());
         try {
             log.info("event=authorization_forward merchantNo={} merchantRequestId={} amount={} synthetic=true",
@@ -85,6 +85,7 @@ public class MockPgService {
                     .uri("/internal/v1/authorizations")
                     .header("X-Correlation-Id", request.correlationId())
                     .header("Idempotency-Key", request.merchantRequestId())
+                    .header("Authorization", "Bearer " + properties.merchantToken())
                     .body(payload)
                     .retrieve()
                     .body(AuthorizationResult.class);
