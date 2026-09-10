@@ -9,6 +9,16 @@ POST /api/v1/payments
 GET  /actuator/health
 ```
 
+## 브라우저 화면
+
+컨테이너가 실행되면 `http://localhost:8080/`에서 테스트 결제 화면을 열 수 있다.
+화면에서 주문번호·금액·테스트 카드 토큰을 입력하고 결제 요청을 보내면 같은 출처의
+`POST /api/v1/payments`를 호출한다. 실제 카드번호는 사용하지 않으며, 승인 결과의
+`paymentId`, `pgTid`, `authorizationNo`, `correlationId`를 화면에서 확인할 수 있다.
+
+`같은 요청 다시 보내기` 버튼은 동일한 `merchantRequestId`를 재사용해 멱등 재시도를
+눈으로 확인하는 용도다. 실패 시에는 서버가 돌려준 오류 코드와 메시지를 함께 보여준다.
+
 요청 헤더:
 
 ```http
