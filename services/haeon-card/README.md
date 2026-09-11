@@ -6,6 +6,7 @@ CARD-03 동시 승인·한도 이중 사용 시나리오를 위한 Java 21 + Spr
 
 - 포트: `8084`
 - DB: Compose 내부 `haeon-card-mysql:3306`
+- 네트워크: 기본 실행 시 `haeon_card_net`·`lab_audit_net` 내부 전용
 - JDBC와 MySQL 드라이버를 포함한 기본 런타임
 - `/actuator/health` 제공
 - `/internal/v1/authorizations`는 DB 기준 승인·거절과 승인 거래·감사 기록을 처리한다.
@@ -29,6 +30,39 @@ docker compose exec -T haeon-card-mysql sh -c 'mysql -u"$MYSQL_USER" -p"$MYSQL_P
 5. 기본 `normal`/`after` 프로파일에서 `card_limits` 행 잠금과 최신 한도 기준 판정을 확인한다.
 
 실제 카드번호·CVC·금융망 자격증명은 사용하지 않는다. `before` 장벽은 정상 왕복 확인 후 동시 요청 실습에서만 켠다.
+
+## localhost:8084 디버깅
+
+기본 `compose.yaml`에서는 Haeon 카드에 호스트 포트를 게시하지 않는다. 결제 흐름은
+`mock-pg -> haeon-card` 내부 Docker DNS(`http://haeon-card:8084`)로 동작해야 하며,
+이 구성이 서비스 간 신뢰 경계를 보존한다.
+
+Docker Engine/WSL에서 `internal` 네트워크에만 붙은 컨테이너는 `ports`를 적어도
+호스트 리스너가 만들어지지 않는 경우가 있다. 호스트에서 브라우저나 `curl`로
+직접 확인해야 할 때만 디버그 오버라이드를 사용한다. 오버라이드는 Haeon만 별도
+디버그 네트워크에 잠시 연결하고, 다른 서비스는 그 네트워크에 연결하지 않는다.
+
+```bash
+docker compose -f compose.yaml -f compose.debug.yaml --env-file .env \
+  up -d --force-recreate haeon-card
+
+curl --max-time 5 http://127.0.0.1:8084/actuator/health
+```
+
+디버깅이 끝나면 내부 전용 기본 구성으로 되돌린다.
+
+```bash
+docker compose -f compose.yaml -f compose.debug.yaml --env-file .env \
+  rm -sf haeon-card
+docker compose --env-file .env up -d haeon-card
+```
+
+기본 구성에서 상태를 확인할 때는 임시 컨테이너를 `haeon_card_net`에 붙인다.
+
+```bash
+docker run --rm --network haeon_card_net busybox:1.36 \
+  wget -qO- http://haeon-card:8084/actuator/health
+```
 
 `LAB_PROFILE=before`와 `BEFORE_BARRIER_ENABLED=true` 조합은 같은 카드에 동시에 들어오는 두 요청 A/B에만 사용한다. 일반 요청을 한 건만 보내면 장벽 제한 시간 후 실패하므로, 운영 프로파일이나 기본 `normal`에 켜지 않는다.
 

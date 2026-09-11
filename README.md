@@ -19,6 +19,7 @@ Windows 파일시스템보다 WSL Linux 파일시스템 안에 프로젝트를 �
 - `mock-pg`만 `card_net`에 연결되며, 북웨이브 서비스는 `haeon-card`를 직접 호출하지 않는다.
 - `haeon-card-mysql`과 `bookwave-mysql`은 소유자를 분리한다.
 - DB 포트는 호스트에 공개하지 않는다. 앱 포트는 로컬호스트에만 바인딩한다.
+- `haeon-card`는 기본 구성에서 내부 전용이며, localhost 직접 확인은 `compose.debug.yaml`을 사용할 때만 허용한다.
 - `ERROR_INJECTION_ENABLED=true`는 승인된 Before 실습에서만 사용한다.
 - 실제 금융망, 실제 카드번호·CVC, 실제 기업 자격증명은 넣지 않는다.
 
@@ -38,6 +39,25 @@ curl http://localhost:8083/actuator/health
 ```
 
 정상 프로파일에서는 `/internal/v1/authorizations`가 DB 기준 승인·거절을 반환한다. CARD-03 동시성은 `services/haeon-card/README.md`와 `tools/card03-concurrency.sh`의 별도 실습 절차로 확인한다.
+
+## Haeon 카드 localhost 디버깅
+
+기본 실행에서 Haeon 카드의 `8084`는 Docker 내부에서만 열려 있다. 호스트에서
+Actuator를 직접 확인할 때만 다음처럼 디버그 오버라이드를 함께 사용한다.
+
+```bash
+docker compose -f compose.yaml -f compose.debug.yaml --env-file .env \
+  up -d --force-recreate haeon-card
+curl http://127.0.0.1:8084/actuator/health
+```
+
+디버깅 후에는 기본 내부 전용 구성으로 다시 올린다.
+
+```bash
+docker compose -f compose.yaml -f compose.debug.yaml --env-file .env \
+  rm -sf haeon-card
+docker compose --env-file .env up -d haeon-card
+```
 
 ## 북웨이브 결제 화면
 

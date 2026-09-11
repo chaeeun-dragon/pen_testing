@@ -1,0 +1,21 @@
+# 로컬 디버깅 전용 오버라이드
+#
+# 기본 compose.yaml에서는 haeon-card를 card_net/audit_net 내부 전용으로
+# 유지한다. Docker Engine/WSL에서는 internal 네트워크에만 붙은 컨테이너의
+# published port가 호스트 리스너로 생성되지 않을 수 있으므로, 직접
+# localhost로 확인할 때만 이 파일을 함께 사용한다.
+
+services:
+  haeon-card:
+    ports:
+      - "127.0.0.1:${HAEON_CARD_PORT:-8084}:8084"
+    networks:
+      - card_net
+      - audit_net
+      - haeon_debug_net
+
+networks:
+  # 다른 애플리케이션 컨테이너는 이 네트워크에 연결하지 않는다.
+  # 디버깅 시에만 Haeon 카드에 호스트 포트를 게시하기 위한 전용 경계다.
+  haeon_debug_net:
+    name: haeon_haeon_debug_net
