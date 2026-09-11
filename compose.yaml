@@ -120,8 +120,8 @@ services:
       DB_POOL_MIN: ${HAEON_DB_POOL_MIN:-2}
       HAEON_MERCHANT_NO: ${HAEON_MERCHANT_NO:-BOOKWAVE-LAB}
       HAEON_MERCHANT_TOKEN: ${HAEON_MERCHANT_TOKEN:-lab-merchant-bookwave}
-    ports:
-      - "127.0.0.1:${HAEON_CARD_PORT:-8084}:8084"
+    # Haeon 카드는 card_net/audit_net 내부 전용이다.
+    # localhost 디버깅이 필요할 때만 compose.debug.yaml을 함께 사용한다.
     depends_on:
       haeon-card-mysql:
         condition: service_healthy
