@@ -1,0 +1,10 @@
+{
+  "correlationId": "corr-20260914-0001",
+  "merchantNo": "BOOKWAVE-LAB",
+  "merchantRequestId": "BW-REQ-0001",
+  "cardToken": "card-token-lab-001",
+  "amount": 10000,
+  "currency": "KRW",
+  "requestFingerprint": "0000000000000000000000000000000000000000000000000000000000000000",
+  "requestedAt": "2026-09-14T05:00:00Z"
+}

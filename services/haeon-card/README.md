@@ -82,6 +82,27 @@ bash tools/haeon-card-smoke.sh
 
 `first-response.json`과 `replay-response.json`의 `authorizationId`가 같고, DB에 승인 1건·거래 1건만 남으면 정상이다. 실행 결과는 `evidence/runs/HC-SMOKE-.../`에 저장된다.
 
+### 카드 API 계약 확인
+
+필드 매핑과 인증·멱등 경계를 한 번에 확인하려면 다음 스크립트를 실행한다.
+디버그 포트를 쓰지 않는 기본 구성에서는 `HAEON_CARD_URL`을 Haeon 컨테이너가
+있는 내부 주소로 지정한다.
+
+```bash
+HAEON_CARD_URL=http://localhost:8084 \
+  bash tools/card-api-contract-check.sh
+```
+
+다음 결과를 확인한다.
+
+- 첫 요청이 HTTP 200이고 `decision`·`authorizationId`가 존재함
+- 같은 `Idempotency-Key` 재시도가 같은 `authorizationId`를 반환함
+- 잘못된 Bearer 토큰이 HTTP 403 `MERCHANT_NOT_ALLOWED`가 됨
+- 실행 증거가 `evidence/runs/CARD-CONTRACT-.../`에 저장됨
+
+이 스크립트는 정상 승인 1건을 DB에 남기므로, 반복 실행 전 필요하면 기준 fixture를
+다시 적용한다.
+
 ### 1) 기준선 복원
 
 ```bash

@@ -11,6 +11,14 @@
 - 같은 `merchantRequestId` 재시도는 기존 결과를 반환한다.
 - 카드 내부 값(`remainingLimit`)은 북웨이브 응답에 노출하지 않는다.
 
+필드 변환은 `CardAuthorizationMapper`가 담당하고, 카드 API 호출은
+`CardAuthorizationGateway` 경계 뒤의 `HaeonCardAuthorizationClient`가 담당한다.
+`paymentMethodToken`을
+Haeon 요청의 `cardToken`으로 바꾸고, 서버 설정의 `merchantNo`와 PG가 생성한
+`requestFingerprint`·`requestedAt`을 추가한다. 팀장님 카드 API로 교체할 때는
+이 매퍼·게이트웨이 구현과 `HAEON_CARD_BASE_URL`만 바꾸고 외부 북웨이브 계약은 유지한다.
+자세한 표는 `docs/contracts/card-api-field-mapping-v0.1.md`를 참고한다.
+
 ## API
 
 ```text

@@ -100,7 +100,7 @@ paths:
       operationId: authorizeCard
       servers:
         - url: http://localhost:8084
-          description: haeon-card (host local)
+          description: haeon-card (compose.debug.yaml에서만 호스트 로컬에 게시)
       parameters:
         - $ref: '#/components/parameters/CorrelationId'
         - $ref: '#/components/parameters/IdempotencyKey'

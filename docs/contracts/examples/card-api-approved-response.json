@@ -1,0 +1,9 @@
+{
+  "correlationId": "corr-20260914-0001",
+  "authorizationId": 1,
+  "authorizationNo": "AUTH-LAB-0001",
+  "decision": "APPROVED",
+  "approvedAmount": 10000,
+  "remainingLimit": 90000,
+  "reasonCode": "APPROVED"
+}

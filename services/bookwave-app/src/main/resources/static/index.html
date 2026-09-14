@@ -3,342 +3,39 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="theme-color" content="#103f73">
+  <meta name="theme-color" content="#087f79">
   <title>해온카드</title>
-  <style>
-    :root {
-      --ink: #17212e;
-      --sub: #667085;
-      --line: #e5e9ef;
-      --blue: #103f73;
-      --blue-2: #1967b3;
-      --aqua: #13a7a0;
-      --sky: #eaf4ff;
-      --surface: #fff;
-      --page: #f7f9fc;
-      --shadow: 0 14px 40px rgba(24, 52, 84, .08);
-    }
-
-    * { box-sizing: border-box; }
-    html { scroll-behavior: smooth; }
-    body {
-      margin: 0;
-      color: var(--ink);
-      background: var(--page);
-      font-family: "Pretendard Variable", Pretendard, "Noto Sans KR", system-ui, -apple-system, sans-serif;
-      font-size: 15px;
-      line-height: 1.5;
-      word-break: keep-all;
-    }
-    button, input { font: inherit; }
-    button { cursor: pointer; }
-    a { color: inherit; text-decoration: none; }
-    .wrap { max-width: 1240px; margin: 0 auto; padding: 0 30px; }
-
-    .utility-bar { height: 38px; background: #fff; border-bottom: 1px solid #f0f2f5; color: #7a8492; font-size: 11px; }
-    .utility-bar .wrap { height: 100%; display: flex; justify-content: space-between; align-items: center; }
-    .utility-left, .utility-right { display: flex; align-items: center; gap: 17px; }
-    .utility-left a:first-child { color: var(--blue); font-weight: 800; }
-    .utility-right a:hover, .utility-left a:hover { color: var(--blue); }
-    .divider { width: 1px; height: 11px; background: #dce2e9; }
-
-    .main-header { background: #fff; border-bottom: 1px solid var(--line); position: sticky; top: 0; z-index: 20; }
-    .main-header .wrap { min-height: 82px; display: flex; align-items: center; gap: 42px; }
-    .brand { display: flex; align-items: center; gap: 11px; flex-shrink: 0; }
-    .brand-symbol { width: 43px; height: 43px; display: grid; place-items: center; color: #fff; font-size: 13px; font-weight: 900; letter-spacing: -.09em; border-radius: 15px 15px 15px 5px; background: linear-gradient(145deg, #0f467f, #19a9ad); box-shadow: 0 8px 20px rgba(16, 63, 115, .2); }
-    .brand-name { font-size: 21px; font-weight: 900; letter-spacing: -.07em; }
-    .brand-name small { display: block; margin-top: -2px; color: var(--sub); font-size: 11px; font-weight: 600; letter-spacing: -.02em; }
-    .gnb { display: flex; align-items: center; gap: 31px; height: 82px; color: #27384d; font-weight: 800; }
-    .gnb a { height: 100%; display: inline-flex; align-items: center; position: relative; }
-    .gnb a:hover, .gnb a.active { color: var(--blue-2); }
-    .gnb a.active::after { content: ""; position: absolute; left: 0; right: 0; bottom: 0; height: 3px; border-radius: 3px 3px 0 0; background: var(--aqua); }
-    .header-actions { margin-left: auto; display: flex; gap: 8px; }
-    .header-btn { border: 1px solid #d9e0e9; border-radius: 9px; padding: 9px 13px; color: #314258; background: #fff; font-size: 12px; font-weight: 800; }
-    .header-btn.primary { border-color: var(--blue); color: #fff; background: var(--blue); }
-    .header-btn:hover { border-color: #9db2c9; background: #f8fbfe; }
-    .header-btn.primary:hover { background: #0c3560; }
-
-    .page { padding-bottom: 62px; }
-    .hero { padding: 27px 0 0; }
-    .hero-panel { min-height: 312px; position: relative; overflow: hidden; border-radius: 2px; color: #fff; background: linear-gradient(112deg, #0d3766 0%, #10558e 52%, #128b92 100%); }
-    .hero-panel::before { content: ""; position: absolute; width: 530px; height: 530px; right: -110px; bottom: -360px; border: 1px solid rgba(255,255,255,.22); border-radius: 50%; box-shadow: 0 0 0 28px rgba(255,255,255,.04), 0 0 0 70px rgba(255,255,255,.035); }
-    .hero-panel::after { content: ""; position: absolute; width: 280px; height: 280px; right: 250px; top: -210px; border-radius: 50%; background: rgba(38, 182, 184, .19); filter: blur(2px); }
-    .hero-copy { position: relative; z-index: 1; max-width: 570px; padding: 47px 58px 40px; }
-    .hero-copy .overline { color: #a9ece4; font-size: 12px; font-weight: 800; letter-spacing: .08em; }
-    .hero-copy h1 { margin: 14px 0 13px; font-size: clamp(30px, 4vw, 44px); line-height: 1.18; letter-spacing: -.065em; }
-    .hero-copy p { margin: 0; color: #e5f2ff; font-size: 16px; }
-    .hero-buttons { display: flex; gap: 9px; margin-top: 27px; }
-    .hero-buttons a { display: inline-flex; align-items: center; justify-content: center; border-radius: 9px; padding: 11px 16px; font-size: 12px; font-weight: 800; }
-    .hero-buttons .solid { color: var(--blue); background: #fff; }
-    .hero-buttons .ghost { border: 1px solid rgba(255,255,255,.42); color: #fff; background: rgba(255,255,255,.06); }
-    .hero-buttons a:hover { transform: translateY(-1px); }
-    .hero-card-art { position: absolute; z-index: 2; right: 70px; top: 44px; width: 370px; height: 225px; padding: 29px; border: 1px solid rgba(255,255,255,.42); border-radius: 19px; transform: rotate(-8deg); color: rgba(255,255,255,.92); background: linear-gradient(135deg, rgba(255,255,255,.28), rgba(255,255,255,.06)); box-shadow: 0 23px 36px rgba(6, 30, 58, .28); backdrop-filter: blur(8px); transition: transform .35s ease, box-shadow .35s ease; }
-    .hero-card-art:hover { transform: rotate(-5deg) translateY(-5px); box-shadow: 0 29px 44px rgba(6, 30, 58, .33); }
-    .hero-card-art::after { content: ""; width: 120px; height: 120px; position: absolute; right: -28px; bottom: -43px; border: 1px solid rgba(255,255,255,.3); border-radius: 50%; }
-    .hero-card-art .chip { width: 42px; height: 29px; border: 1px solid rgba(255,255,255,.6); border-radius: 7px; background: linear-gradient(135deg, rgba(247,218,139,.8), rgba(255,255,255,.24)); }
-    .hero-card-art .card-label { position: absolute; right: 24px; top: 25px; font-size: 12px; font-weight: 800; letter-spacing: .05em; }
-    .hero-card-art strong { display: block; margin-top: 57px; font-size: 23px; letter-spacing: -.06em; }
-    .hero-card-art span { display: block; margin-top: 4px; font-size: 11px; opacity: .8; }
-    .hero-dots { position: absolute; z-index: 3; left: 58px; bottom: 22px; display: flex; gap: 7px; }
-    .hero-dots button { width: 23px; height: 4px; padding: 0; border: 0; border-radius: 4px; background: rgba(255,255,255,.35); }
-    .hero-dots button.active { background: #fff; }
-
-    .quick-links { display: grid; grid-template-columns: repeat(6, 1fr); background: #fff; border: 1px solid var(--line); border-top: 0; box-shadow: 0 5px 20px rgba(17, 55, 92, .04); }
-    .quick-link { min-height: 102px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; border-right: 1px solid #edf0f4; color: #34485e; font-size: 12px; font-weight: 800; }
-    .quick-link:last-child { border-right: 0; }
-    .quick-link:hover { color: var(--blue-2); background: #f9fbfd; }
-    .quick-icon { width: 30px; height: 30px; display: grid; place-items: center; border-radius: 10px; color: var(--blue-2); background: #eef5fd; }
-    .quick-icon svg { width: 17px; height: 17px; }
-
-    .section { margin-top: 44px; }
-    .section-head { display: flex; align-items: end; justify-content: space-between; margin-bottom: 16px; }
-    .section-head h2 { margin: 0; font-size: 24px; letter-spacing: -.06em; }
-    .section-head p { margin: 3px 0 0; color: var(--sub); font-size: 13px; }
-    .more { color: #607084; font-size: 12px; font-weight: 800; }
-    .more:hover { color: var(--blue-2); }
-    .product-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
-    .product-card { position: relative; min-height: 280px; padding: 21px; overflow: hidden; border: 1px solid var(--line); border-radius: 15px; background: #fff; transition: .2s ease; }
-    .product-card:hover { transform: translateY(-4px); border-color: #b4c9df; box-shadow: var(--shadow); }
-    .product-card .tag { color: var(--aqua); font-size: 11px; font-weight: 850; }
-    .product-card h3 { margin: 7px 0 6px; font-size: 19px; letter-spacing: -.06em; }
-    .product-card p { max-width: 185px; margin: 0; color: var(--sub); font-size: 13px; }
-    .product-card .card-mini { position: absolute; right: -27px; bottom: 30px; width: 205px; height: 128px; padding: 17px; border-radius: 15px; transform: rotate(-12deg); box-shadow: 0 17px 25px rgba(28, 64, 103, .2); transition: transform .25s ease; }
-    .product-card:hover .card-mini { transform: rotate(-8deg) translateY(-6px); }
-    .product-card:nth-child(1) .card-mini { color: #fff; background: linear-gradient(135deg, #123f7c, #23a4a0); }
-    .product-card:nth-child(2) .card-mini { color: #182a3b; background: linear-gradient(135deg, #e7d4a5, #fff6d8); }
-    .product-card:nth-child(3) .card-mini { color: #fff; background: linear-gradient(135deg, #3a3d54, #8e93b1); }
-    .card-mini i { display: block; width: 30px; height: 22px; border-radius: 5px; background: rgba(255,255,255,.5); }
-    .card-mini b { position: absolute; left: 17px; bottom: 17px; font-size: 11px; }
-    .card-mini small { position: absolute; right: 17px; bottom: 17px; font-size: 11px; }
-    .benefits { display: flex; gap: 6px; margin-top: 18px; }
-    .benefit-chip { display: inline-flex; flex-direction: column; min-width: 58px; padding: 7px 8px; border: 1px solid #e7eef5; border-radius: 8px; color: #6d7c8c; background: #f8fbfd; font-size: 11px; line-height: 1.25; }
-    .benefit-chip strong { color: var(--aqua); font-size: 17px; letter-spacing: -.06em; }
-    .product-card .detail { position: absolute; left: 21px; bottom: 22px; color: var(--blue-2); font-size: 11px; font-weight: 800; }
-
-    .middle-grid { display: grid; grid-template-columns: 1fr 370px; gap: 18px; }
-    .benefit-banner { min-height: 255px; position: relative; overflow: hidden; padding: 29px 31px; border-radius: 15px; color: #192a3d; background: linear-gradient(109deg, #eef8ff, #dff6f1); }
-    .benefit-banner::after { content: ""; position: absolute; width: 290px; height: 290px; right: -75px; top: -120px; border: 1px solid rgba(16, 112, 132, .16); border-radius: 50%; box-shadow: 0 0 0 27px rgba(16, 112, 132, .05), 0 0 0 54px rgba(16, 112, 132, .04); }
-    .benefit-banner small { color: #168a89; font-size: 11px; font-weight: 850; }
-    .benefit-banner h3 { margin: 9px 0 7px; font-size: 25px; letter-spacing: -.07em; }
-    .benefit-banner p { margin: 0; color: #587181; font-size: 14px; }
-    .benefit-banner a { display: inline-block; margin-top: 15px; color: #137a80; font-size: 12px; font-weight: 850; }
-    .event-value { margin-top: 11px; color: #087b79; font-size: 21px; font-weight: 900; letter-spacing: -.06em; }
-    .event-date { margin-top: 3px; color: #6f8993; font-size: 11px; }
-    .login-card { padding: 23px 23px; border: 1px solid var(--line); border-radius: 15px; background: #fff; }
-    .login-card h3 { margin: 0; font-size: 18px; letter-spacing: -.05em; }
-    .login-card p { margin: 5px 0 16px; color: var(--sub); font-size: 13px; }
-    .login-tabs { display: flex; border-bottom: 1px solid #e5eaf0; }
-    .login-tabs button { flex: 1; padding: 10px 0; border: 0; border-bottom: 2px solid transparent; color: #718096; background: #fff; font-size: 12px; font-weight: 800; }
-    .login-tabs button.active { border-color: var(--blue-2); color: var(--blue); }
-    .login-input { width: 100%; height: 41px; margin-top: 14px; padding: 0 11px; border: 1px solid #d7e0e9; border-radius: 8px; outline: none; font-size: 12px; }
-    .login-input:focus { border-color: #72a2cc; box-shadow: 0 0 0 3px rgba(28, 115, 201, .1); }
-    .login-submit { width: 100%; height: 42px; margin-top: 9px; border: 0; border-radius: 8px; color: #fff; background: var(--blue); font-size: 12px; font-weight: 850; }
-    .login-submit:hover { background: #0b3159; }
-    .login-links { display: flex; justify-content: center; gap: 14px; margin-top: 13px; color: #8995a4; font-size: 11px; }
-    .my-card { padding: 23px; border: 1px solid var(--line); border-radius: 15px; background: #fff; }
-    .my-heading { display: flex; align-items: start; justify-content: space-between; gap: 10px; }
-    .my-heading h3 { margin: 0; font-size: 19px; letter-spacing: -.06em; }
-    .my-heading p { margin: 4px 0 0; color: var(--sub); font-size: 12px; }
-    .my-link { color: var(--blue-2); font-size: 11px; font-weight: 850; white-space: nowrap; }
-    .my-card-art { position: relative; height: 55px; margin-top: 16px; padding: 13px 15px; overflow: hidden; border-radius: 10px; color: #fff; background: linear-gradient(115deg, #123f7c, #1d8da0); }
-    .my-card-art::after { content: ""; position: absolute; width: 130px; height: 130px; right: -28px; top: -50px; border: 1px solid rgba(255,255,255,.23); border-radius: 50%; }
-    .my-card-art strong { position: relative; z-index: 1; display: block; font-size: 13px; }
-    .my-card-art span { position: relative; z-index: 1; display: block; margin-top: 1px; font-size: 11px; opacity: .82; }
-    .my-stats { display: grid; grid-template-columns: repeat(3, 1fr); margin-top: 13px; border: 1px solid #e6edf3; border-radius: 10px; background: #fbfdff; }
-    .my-stat { padding: 12px 10px; border-right: 1px solid #e6edf3; }
-    .my-stat:last-child { border-right: 0; }
-    .my-stat span { display: block; color: #7a8795; font-size: 11px; }
-    .my-stat strong { display: block; margin-top: 4px; color: #243a54; font-size: 15px; letter-spacing: -.04em; }
-    .my-stat small { display: block; margin-top: 2px; color: #7e8b98; font-size: 11px; }
-    .limit-bar { height: 5px; margin-top: 7px; overflow: hidden; border-radius: 99px; background: #e7edf3; }
-    .limit-bar i { display: block; width: 14%; height: 100%; border-radius: inherit; background: linear-gradient(90deg, var(--aqua), #6dc5d9); }
-    .my-actions { display: grid; grid-template-columns: repeat(3, 1fr); gap: 7px; margin-top: 11px; }
-    .my-actions button { padding: 8px 4px; border: 1px solid #e0e8f0; border-radius: 8px; color: #4d6379; background: #fff; font-size: 11px; font-weight: 750; }
-    .my-actions button:hover { color: var(--blue-2); border-color: #aac3db; background: #f8fbff; }
-    [hidden] { display: none !important; }
-    .my-login-view { min-height: 254px; }
-    .my-login-view .my-heading p { max-width: 230px; }
-    .my-login-form { margin-top: 14px; }
-    .my-login-form .login-input { margin-top: 0; margin-bottom: 8px; }
-    .my-login-form .login-submit { margin-top: 1px; }
-    .my-login-view .login-links { margin-top: 12px; }
-    .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0; }
-
-    .finance-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 13px; }
-    .finance-card { min-height: 148px; padding: 18px; border: 1px solid var(--line); border-radius: 13px; background: #fff; }
-    .finance-card small { color: #748294; font-size: 11px; font-weight: 800; }
-    .finance-card h3 { margin: 8px 0 5px; font-size: 16px; letter-spacing: -.05em; }
-    .finance-card p { margin: 0; color: var(--sub); font-size: 12px; }
-    .finance-card .finance-icon { float: right; width: 34px; height: 34px; display: grid; place-items: center; border-radius: 50%; color: var(--blue-2); background: #edf5ff; font-size: 17px; }
-    .finance-card .finance-value { display: block; margin-top: 12px; color: #344b62; font-size: 11px; font-weight: 700; }
-    .finance-card .finance-value strong { color: var(--blue-2); font-size: 15px; }
-
-    .service-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
-    .life-card { min-height: 162px; position: relative; overflow: hidden; padding: 21px; border: 1px solid var(--line); border-radius: 15px; background: #fff; transition: .2s ease; }
-    .life-card:hover { transform: translateY(-3px); box-shadow: var(--shadow); }
-    .life-card:nth-child(1) { background: linear-gradient(135deg, #f0fffb, #fff); }
-    .life-card:nth-child(2) { background: linear-gradient(135deg, #eef7ff, #fff); }
-    .life-card:nth-child(3) { background: linear-gradient(135deg, #f7f2ff, #fff); }
-    .life-icon { width: 42px; height: 42px; display: grid; place-items: center; border-radius: 14px; color: var(--aqua); background: rgba(19,167,160,.12); font-size: 20px; }
-    .life-card:nth-child(2) .life-icon { color: #2786d1; background: rgba(39,134,209,.12); }
-    .life-card:nth-child(3) .life-icon { color: #7853cc; background: rgba(120,83,204,.12); }
-    .life-card h3 { margin: 11px 0 4px; font-size: 17px; letter-spacing: -.05em; }
-    .life-card p { margin: 0; color: var(--sub); font-size: 12px; }
-    .life-card .detail { position: absolute; right: 20px; bottom: 21px; color: var(--blue-2); font-size: 11px; font-weight: 800; }
-    .finance-card:hover { border-color: #afc6dd; box-shadow: 0 9px 22px rgba(25, 61, 99, .06); }
-
-    .notice-section { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
-    .notice-box { padding: 20px 22px; border: 1px solid var(--line); border-radius: 13px; background: #fff; }
-    .notice-box h3 { margin: 0 0 13px; font-size: 16px; letter-spacing: -.04em; }
-    .notice-list { margin: 0; padding: 0; list-style: none; }
-    .notice-list li { display: flex; justify-content: space-between; gap: 12px; padding: 9px 0; border-top: 1px solid #f0f2f5; color: #46576b; font-size: 12px; }
-    .notice-list li:first-child { border-top: 0; }
-    .notice-list time { flex-shrink: 0; color: #9aa4b1; font-size: 11px; }
-
-    footer { padding: 25px 30px 32px; border-top: 1px solid #e3e8ee; color: #7d8895; background: #fff; font-size: 11px; }
-    footer .wrap { display: flex; justify-content: space-between; gap: 20px; }
-    footer strong { color: #526274; }
-
-    .modal-backdrop { display: none; position: fixed; inset: 0; z-index: 50; padding: 20px; background: rgba(14, 29, 46, .58); }
-    .modal-backdrop.show { display: grid; place-items: center; animation: fade .18s ease both; }
-    @keyframes fade { from { opacity: 0; } to { opacity: 1; } }
-    .payment-modal { width: min(650px, 100%); max-height: calc(100vh - 40px); overflow: auto; border-radius: 16px; background: #fff; box-shadow: 0 28px 85px rgba(3, 20, 39, .32); animation: modal-in .22s ease both; }
-    @keyframes modal-in { from { opacity: 0; transform: translateY(12px) scale(.985); } to { opacity: 1; transform: none; } }
-    .modal-head { display: flex; align-items: center; justify-content: space-between; padding: 21px 23px 17px; border-bottom: 1px solid #edf0f4; }
-    .modal-head h2 { margin: 0; font-size: 18px; letter-spacing: -.05em; }
-    .modal-head p { margin: 3px 0 0; color: var(--sub); font-size: 11px; }
-    .modal-close { width: 30px; height: 30px; border: 0; border-radius: 7px; color: #5c6c7e; background: #f2f5f8; font-size: 18px; line-height: 1; }
-    .modal-content { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; padding: 21px 23px 24px; }
-    .modal-form { padding-right: 18px; border-right: 1px solid #edf0f4; }
-    .modal-form label { display: block; margin: 0 0 6px; color: #4d5d70; font-size: 11px; font-weight: 850; }
-    .modal-form input { width: 100%; height: 40px; margin-bottom: 13px; padding: 0 10px; border: 1px solid #d4dee8; border-radius: 8px; outline: none; font-size: 12px; }
-    .modal-form input:focus { border-color: var(--blue-2); box-shadow: 0 0 0 3px rgba(28, 115, 201, .1); }
-    .modal-submit, .modal-replay { width: 100%; height: 41px; border-radius: 8px; font-size: 12px; font-weight: 850; }
-    .modal-submit { border: 0; color: #fff; background: var(--blue); }
-    .modal-submit:disabled { opacity: .58; cursor: wait; }
-    .modal-replay { margin-top: 8px; border: 1px solid #c9d8e7; color: var(--blue); background: #fff; }
-    .modal-replay:disabled { color: #a5b0bc; background: #f5f7f9; cursor: not-allowed; }
-    .modal-note { margin: 13px 0 0; color: #8996a4; font-size: 11px; }
-    .modal-result { min-height: 250px; padding: 17px; border-radius: 11px; background: #f8fafc; }
-    .modal-result.empty { display: grid; place-items: center; text-align: center; color: #8996a4; font-size: 12px; }
-    .modal-result.empty svg { margin-bottom: 9px; color: #7fa6c8; }
-    .result-state { display: none; }
-    .result-state.show { display: block; animation: rise .25s ease both; }
-    @keyframes rise { from { opacity: 0; transform: translateY(7px); } to { opacity: 1; transform: none; } }
-    .result-pill { display: inline-flex; align-items: center; gap: 6px; padding: 6px 9px; border-radius: 7px; font-size: 11px; font-weight: 850; }
-    .result-pill.approved { color: #08756e; background: #e0f7f1; }
-    .result-pill.declined, .result-pill.error { color: #a7424c; background: #ffedf0; }
-    .result-pill::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
-    .result-state h3 { margin: 13px 0 4px; font-size: 17px; letter-spacing: -.04em; }
-    .result-state p { margin: 0 0 14px; color: var(--sub); font-size: 11px; }
-    .result-table { width: 100%; border-collapse: collapse; }
-    .result-table th, .result-table td { padding: 7px 0; border-top: 1px solid #e7edf3; text-align: left; font-size: 11px; }
-    .result-table th { width: 41%; color: #8491a0; font-weight: 600; }
-    .result-table td { color: #304459; font-weight: 800; overflow-wrap: anywhere; }
-    .result-error { margin-top: 13px !important; color: #a7424c !important; }
-
-    @media (max-width: 1000px) {
-      .main-header .wrap { gap: 22px; }
-      .gnb { gap: 18px; }
-      .hero-card-art { right: 33px; }
-      .middle-grid { grid-template-columns: 1fr 320px; }
-    }
-    @media (max-width: 780px) {
-      .wrap { padding-inline: 18px; }
-      .utility-right a:nth-child(n+2), .header-actions .header-btn:first-child { display: none; }
-      .main-header .wrap { min-height: 70px; flex-wrap: wrap; gap: 0 20px; padding-top: 10px; padding-bottom: 10px; }
-      .gnb { order: 3; width: 100%; height: 37px; justify-content: space-between; overflow-x: auto; gap: 22px; font-size: 13px; }
-      .gnb a { height: 37px; white-space: nowrap; }
-      .hero-card-art { opacity: .5; right: -30px; top: 112px; transform: rotate(-8deg) scale(.86); }
-      .hero-copy { padding: 43px 30px 49px; }
-      .hero-copy p { max-width: 430px; }
-      .quick-links { grid-template-columns: repeat(3, 1fr); }
-      .quick-link:nth-child(3) { border-right: 0; }
-      .quick-link:nth-child(-n+3) { border-bottom: 1px solid #edf0f4; }
-      .product-grid, .finance-grid, .service-grid { grid-template-columns: repeat(2, 1fr); }
-      .middle-grid { grid-template-columns: 1fr; }
-      .notice-section { grid-template-columns: 1fr; }
-      footer .wrap { flex-direction: column; }
-      .modal-content { grid-template-columns: 1fr; }
-      .modal-form { padding: 0 0 5px; border-right: 0; border-bottom: 1px solid #edf0f4; }
-    }
-    @media (max-width: 500px) {
-      .utility-bar { height: auto; padding: 9px 0; }
-      .utility-left { gap: 11px; }
-      .utility-left span:last-child { display: none; }
-      .brand-name { font-size: 19px; }
-      .header-btn.primary { padding-inline: 10px; }
-      .hero { padding-top: 18px; }
-      .hero-panel { min-height: 375px; }
-      .hero-copy { padding: 34px 23px 44px; }
-      .hero-copy h1 { font-size: 30px; }
-      .hero-copy p { font-size: 14px; }
-      .hero-dots { left: 23px; }
-      .section { margin-top: 34px; }
-      .section-head h2 { font-size: 21px; }
-      .product-grid, .finance-grid, .service-grid { grid-template-columns: 1fr; }
-      .product-card { min-height: 230px; }
-      .benefit-banner h3 { font-size: 22px; }
-      .modal-backdrop { padding: 10px; }
-      .payment-modal { max-height: calc(100vh - 20px); }
-      .modal-head, .modal-content { padding-inline: 17px; }
-    }
-  </style>
+  <link rel="stylesheet" href="/haeon.css?v=20260914-2">
 </head>
 <body>
+  <a class="skip-link" href="#top">본문 바로가기</a>
   <div class="utility-bar"><div class="wrap"><div class="utility-left"><a href="#top">개인</a><a href="#">법인</a><a href="#">가맹점</a><i class="divider"></i><span>해온카드 고객센터</span></div><div class="utility-right"><a href="#">카드관리</a><a href="#">이용안내</a><a href="#">인증센터</a><a href="#">검색</a></div></div></div>
   <header class="main-header"><div class="wrap"><a class="brand" href="#top" aria-label="해온카드 홈"><span class="brand-symbol">해온</span><span class="brand-name">해온카드<small>당신의 생활에 더 가까이</small></span></a><nav class="gnb" aria-label="주요 메뉴"><a href="#myPanel" id="myNav">MY</a><a class="active" href="#cards">카드</a><a href="#benefit">혜택</a><a href="#finance">금융</a><a href="#life">라이프</a><a href="#notice">고객센터</a></nav><div class="header-actions"><button class="header-btn" type="button" id="searchButton">검색</button><button class="header-btn primary" type="button" id="headerLogin">로그인</button></div></div></header>
 
   <main class="page" id="top"><div class="wrap">
-    <section class="hero"><div class="hero-panel" id="heroPanel"><div class="hero-copy"><div class="overline" id="heroOverline">HAEON CARD · EVERYDAY BENEFIT</div><h1 id="heroTitle">오늘의 생활에<br>딱 맞는 카드</h1><p id="heroText">쓸수록 커지는 일상의 혜택을<br>해온카드에서 만나보세요.</p><div class="hero-buttons"><a class="solid" href="#cards">카드 둘러보기</a><a class="ghost" href="#benefit">혜택 확인하기</a></div></div><div class="hero-card-art" aria-hidden="true"><div class="chip"></div><div class="card-label">HAEON</div><strong id="heroCardName">해온 데일리</strong><span>EVERYDAY · 01</span></div><div class="hero-dots" role="tablist" aria-label="프로모션 배너"><button class="active" type="button" data-slide="0" aria-label="첫 번째 배너"></button><button type="button" data-slide="1" aria-label="두 번째 배너"></button><button type="button" data-slide="2" aria-label="세 번째 배너"></button></div></div></section>
+    <div class="home-top"><section class="hero"><div class="hero-tabs" role="tablist" aria-label="추천 카드 테마"><button type="button" class="active" role="tab" id="heroTab0" aria-selected="true" aria-controls="heroPanel" data-hero="0">일상의 혜택</button><button type="button" role="tab" id="heroTab1" aria-selected="false" aria-controls="heroPanel" tabindex="-1" data-hero="1">쇼핑의 즐거움</button><button type="button" role="tab" id="heroTab2" aria-selected="false" aria-controls="heroPanel" tabindex="-1" data-hero="2">여행의 설렘</button></div><div class="hero-panel" role="tabpanel" aria-labelledby="heroTab0" id="heroPanel"><div class="hero-copy"><div class="overline" id="heroOverline">HAEON CARD · EVERYDAY BENEFIT</div><h1 id="heroTitle">오늘의 생활에<br>딱 맞는 카드</h1><p id="heroText">쓸수록 커지는 일상의 혜택을<br>해온카드에서 만나보세요.</p><div class="hero-buttons"><a class="solid" href="#cards">카드 둘러보기</a><a class="ghost" href="#benefit">혜택 확인하기</a></div></div><div class="hero-card-back" aria-hidden="true">HAEON<br>plus</div><div class="hero-card-art" aria-hidden="true"><div class="chip"></div><div class="card-label">HAEON</div><strong id="heroCardName">해온 데일리</strong><span>EVERYDAY · 01</span></div><div class="hero-controls"><span class="slide-count" id="slideCount">01 / 03</span><div class="hero-dots" role="group" aria-label="프로모션 배너 선택"><button class="active" type="button" data-slide="0" aria-label="첫 번째 배너"></button><button type="button" data-slide="1" aria-label="두 번째 배너"></button><button type="button" data-slide="2" aria-label="세 번째 배너"></button></div><button class="slide-pause" id="slidePause" type="button" aria-label="배너 자동 재생 시작" aria-pressed="false">▶</button></div></div></section><aside class="my-card" id="myPanel"><div class="my-login-view" id="myLoginView"><div class="my-heading"><div><h3>나의 카드 생활</h3><p>로그인하고 나에게 꼭 맞는 혜택을 만나보세요.</p></div><span class="my-link">MY</span></div><div class="login-tabs" role="tablist" aria-label="로그인 방법"><button class="active" id="idLoginTab" role="tab" aria-selected="true" aria-controls="loginForm" type="button">아이디</button><button id="simpleLoginTab" role="tab" aria-selected="false" aria-controls="simpleLoginPanel" type="button" tabindex="-1">간편 로그인</button></div><form class="my-login-form" id="loginForm" role="tabpanel" aria-labelledby="idLoginTab"><label class="sr-only" for="loginId">아이디</label><input class="login-input" id="loginId" type="text" placeholder="아이디" autocomplete="username" required><label class="sr-only" for="loginPassword">비밀번호</label><input class="login-input" id="loginPassword" type="password" placeholder="비밀번호" autocomplete="current-password" required><button class="login-submit" id="loginSubmit" type="submit">로그인</button><p id="loginStatus" class="login-status" role="status" hidden></p></form><div id="simpleLoginPanel" class="simple-login" role="tabpanel" aria-labelledby="simpleLoginTab" hidden><strong>간편 로그인 안내</strong>간편 인증 서비스는 준비 중입니다.<br>현재는 아이디 입력 화면을 확인할 수 있습니다.</div><div class="login-links"><a href="#">아이디 찾기</a><a href="#">비밀번호 찾기</a><a href="#">회원가입</a></div></div><div class="my-account-view" id="myAccountView" hidden><div class="my-heading"><div><h3>MY 해온</h3><p id="myGreeting">김해온님, 좋은 하루 되세요!</p></div><a class="my-link" href="#" id="myPageLink">MY 페이지 〉</a></div><div class="my-card-art"><strong id="myCardName">해온 플러스 · **** 2381</strong><span>주 이용 카드</span></div><div class="my-stats"><div class="my-stat"><span>이번 달 이용금액</span><strong id="mySpent">532,000원</strong><small>전월 대비 12% ▼</small></div><div class="my-stat"><span>결제예정금액</span><strong id="myDue">120,000원</strong><small>09.15 결제예정</small></div><div class="my-stat"><span>이용가능한도</span><strong id="myAvailable">3,468,000원</strong><div class="limit-bar"><i></i></div><small>총 한도 4,000,000원</small></div></div><div class="my-actions"><button type="button">이용내역 조회</button><button type="button" id="myPaymentButton">즉시결제</button><button type="button">카드관리</button></div></div></aside></div>
 
     <nav class="quick-links" aria-label="빠른 메뉴"><a class="quick-link" href="#myPanel"><span class="quick-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M5 4h14v16H5z"/><path d="M8 8h8M8 12h8M8 16h4"/></svg></span>이용내역</a><a class="quick-link" href="#myPanel"><span class="quick-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 6h16v13H4z"/><path d="M4 10h16M8 15h3"/></svg></span>결제예정금액</a><a class="quick-link" href="#myPanel"><span class="quick-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 18V6M4 18h16"/><path d="m8 15 3-4 3 2 4-6"/></svg></span>이용가능한도</a><a class="quick-link" href="#myPanel"><span class="quick-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M5 4h14v16H5z"/><path d="M8 8h8M8 12h8M8 16h4"/></svg></span>승인내역</a><a class="quick-link" href="#payment" id="paymentOpen"><span class="quick-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 7h18v12H3z"/><path d="M3 11h18M7 15h4"/></svg></span>즉시결제</a><a class="quick-link" href="#myPanel"><span class="quick-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 3 4 6v5c0 5 3.4 8.2 8 10 4.6-1.8 8-5 8-10V6l-8-3Z"/><path d="m9 12 2 2 4-4"/></svg></span>카드관리</a></nav>
 
-    <section class="section" id="cards"><div class="section-head"><div><h2>나에게 맞는 해온카드</h2><p>라이프스타일에 맞춰 가장 많이 찾는 카드를 모았습니다.</p></div><a class="more" href="#">모든 카드 보기 〉</a></div><div class="product-grid"><article class="product-card"><span class="tag">생활비 할인</span><h3>해온 데일리</h3><p>편의점·교통·배달까지<br>매일 쓰는 곳에서 가볍게</p><div class="benefits"><span class="benefit-chip"><strong>10%</strong>온라인 쇼핑</span><span class="benefit-chip"><strong>5%</strong>편의점·커피</span><span class="benefit-chip"><strong>3%</strong>대중교통</span></div><div class="card-mini"><i></i><b>HAEON DAILY</b><small>01</small></div><a class="detail" href="#">카드 자세히 보기 〉</a></article><article class="product-card"><span class="tag">프리미엄 혜택</span><h3>해온 플러스</h3><p>온라인 쇼핑과 구독 서비스<br>결제할수록 커지는 혜택</p><div class="benefits"><span class="benefit-chip"><strong>10%</strong>주요 쇼핑몰</span><span class="benefit-chip"><strong>5%</strong>외식·배달</span><span class="benefit-chip"><strong>2%</strong>모든 가맹점</span></div><div class="card-mini"><i></i><b>HAEON PLUS</b><small>02</small></div><a class="detail" href="#">카드 자세히 보기 〉</a></article><article class="product-card"><span class="tag">여행의 즐거움</span><h3>해온 트래블</h3><p>여행의 시작부터 끝까지<br>공항 라운지와 해외 혜택</p><div class="benefits"><span class="benefit-chip"><strong>2%</strong>해외 결제</span><span class="benefit-chip"><strong>0원</strong>해외 수수료</span><span class="benefit-chip"><strong>무료</strong>공항 라운지</span></div><div class="card-mini"><i></i><b>HAEON TRAVEL</b><small>03</small></div><a class="detail" href="#">카드 자세히 보기 〉</a></article></div></section>
+    <section class="section" id="cards"><div class="section-head"><div><h2>나에게 맞는 해온카드</h2><p>매일의 취향에, 해온의 혜택을 더하세요.</p></div><a class="more" href="#">전체 카드  ↗</a></div><div class="product-toolbar"><div class="product-filters" role="group" aria-label="카드 혜택 필터"><button type="button" class="active" data-filter="all" aria-pressed="true">전체</button><button type="button" data-filter="0" aria-pressed="false">생활·교통</button><button type="button" data-filter="1" aria-pressed="false">쇼핑·구독</button><button type="button" data-filter="2" aria-pressed="false">여행·해외</button></div><span class="sr-only" id="filterStatus" role="status"></span></div><div class="product-grid"><article class="product-card"><span class="tag">생활비 할인</span><h3>해온 데일리</h3><p>편의점·교통·배달까지<br>매일 쓰는 곳에서 가볍게</p><div class="benefits"><span class="benefit-chip"><strong>10%</strong>온라인 쇼핑</span><span class="benefit-chip"><strong>5%</strong>편의점·커피</span><span class="benefit-chip"><strong>3%</strong>대중교통</span></div><div class="card-mini"><i></i><b>HAEON DAILY</b><small>01</small></div><a class="detail" href="#">카드 자세히 보기 〉</a></article><article class="product-card"><span class="tag">프리미엄 혜택</span><h3>해온 플러스</h3><p>온라인 쇼핑과 구독 서비스<br>결제할수록 커지는 혜택</p><div class="benefits"><span class="benefit-chip"><strong>10%</strong>주요 쇼핑몰</span><span class="benefit-chip"><strong>5%</strong>외식·배달</span><span class="benefit-chip"><strong>2%</strong>모든 가맹점</span></div><div class="card-mini"><i></i><b>HAEON PLUS</b><small>02</small></div><a class="detail" href="#">카드 자세히 보기 〉</a></article><article class="product-card"><span class="tag">여행의 즐거움</span><h3>해온 트래블</h3><p>여행의 시작부터 끝까지<br>공항 라운지와 해외 혜택</p><div class="benefits"><span class="benefit-chip"><strong>2%</strong>해외 결제</span><span class="benefit-chip"><strong>0원</strong>해외 수수료</span><span class="benefit-chip"><strong>무료</strong>공항 라운지</span></div><div class="card-mini"><i></i><b>HAEON TRAVEL</b><small>03</small></div><a class="detail" href="#">카드 자세히 보기 〉</a></article></div></section>
 
-    <section class="section middle-grid" id="benefit"><article class="benefit-banner"><small>SPECIAL EVENT · 09.01 — 09.30</small><h3>이번 달, 해온카드로<br>더 큰 캐시백 혜택!</h3><p>주요 생활 영역에서 결제하면<br>최대 30,000원 캐시백을 받아보세요.</p><div class="event-value">최대 10% 캐시백</div><div class="event-date">대상 가맹점 및 유의사항 확인</div><a href="#">이벤트 자세히 보기 〉</a></article><aside class="my-card" id="myPanel"><div class="my-login-view" id="myLoginView"><div class="my-heading"><div><h3>해온카드 로그인</h3><p>로그인 후 나의 카드와 혜택을 확인하세요.</p></div><span class="my-link">MY</span></div><div class="login-tabs"><button class="active" type="button">아이디 로그인</button><button type="button">간편 로그인</button></div><form class="my-login-form" id="loginForm"><label class="sr-only" for="loginId">아이디</label><input class="login-input" id="loginId" type="text" placeholder="아이디" autocomplete="username" required><label class="sr-only" for="loginPassword">비밀번호</label><input class="login-input" id="loginPassword" type="password" placeholder="비밀번호" autocomplete="current-password" required><button class="login-submit" id="loginSubmit" type="submit">로그인</button></form><div class="login-links"><a href="#">아이디 찾기</a><a href="#">비밀번호 찾기</a><a href="#">회원가입</a></div></div><div class="my-account-view" id="myAccountView" hidden><div class="my-heading"><div><h3>MY 해온</h3><p id="myGreeting">김해온님, 좋은 하루 되세요!</p></div><a class="my-link" href="#" id="myPageLink">MY 페이지 〉</a></div><div class="my-card-art"><strong id="myCardName">해온 플러스 · **** 2381</strong><span>주 이용 카드</span></div><div class="my-stats"><div class="my-stat"><span>이번 달 이용금액</span><strong id="mySpent">532,000원</strong><small>전월 대비 12% ▼</small></div><div class="my-stat"><span>결제예정금액</span><strong id="myDue">120,000원</strong><small>09.15 결제예정</small></div><div class="my-stat"><span>이용가능한도</span><strong id="myAvailable">3,468,000원</strong><div class="limit-bar"><i></i></div><small>총 한도 4,000,000원</small></div></div><div class="my-actions"><button type="button">이용내역 조회</button><button type="button" id="myPaymentButton">즉시결제</button><button type="button">카드관리</button></div></div></aside></section>
+    <section class="section" id="benefit"><div class="section-head"><div><h2>놓치기 아쉬운 혜택</h2><p>해온카드와 함께하는 기분 좋은 일상</p></div></div><div class="middle-grid"><article class="benefit-banner"><small>MONTHLY BENEFIT · 09.01 — 09.30</small><h3>이번 달, 해온카드로<br>더 큰 캐시백 혜택!</h3><p>주요 생활 영역에서 결제하면<br>최대 30,000원 캐시백을 받아보세요.</p><div class="event-value">최대 10% 캐시백</div><div class="event-date">대상 가맹점 및 유의사항 확인</div><a href="#">이벤트 자세히 보기 〉</a><div class="event-art" aria-hidden="true">₩</div></article><article class="benefit-banner event-secondary"><small>EVERYDAY LIFE</small><h3>매달 나가는 생활요금,<br>이제 편하게 자동납부</h3><p>통신비부터 아파트관리비까지<br>해온카드로 한 번에 관리하세요.</p><a href="#life">생활 서비스 알아보기 〉</a><div class="event-art" aria-hidden="true">▤</div></article></div></section>
 
     <section class="section" id="finance"><div class="section-head"><div><h2>필요할 때 만나는 금융</h2><p>나에게 맞는 금융 서비스를 간편하게 이용하세요.</p></div><a class="more" href="#">금융상품 전체 보기 〉</a></div><div class="finance-grid"><a class="finance-card" href="#"><span class="finance-icon">₩</span><small>대출</small><h3>장기카드대출</h3><p>목돈이 필요할 때 여유 있게</p><span class="finance-value">이용한도 <strong>최대 5,000만원</strong></span></a><a class="finance-card" href="#"><span class="finance-icon">◷</span><small>대출</small><h3>단기카드대출</h3><p>급한 순간, 빠르고 간편하게</p><span class="finance-value">365일 <strong>간편 이용</strong></span></a><a class="finance-card" href="#"><span class="finance-icon">▥</span><small>결제</small><h3>일부결제금액이월</h3><p>원하는 결제 비율로 관리</p><span class="finance-value">결제비율 <strong>10%부터</strong></span></a><a class="finance-card" href="#"><span class="finance-icon">▣</span><small>자동차</small><h3>오토 금융</h3><p>새로운 시작을 위한 스마트한 선택</p><span class="finance-value">온라인 <strong>간편 신청</strong></span></a></div></section>
 
     <section class="section" id="life"><div class="section-head"><div><h2>일상에 더해지는 서비스</h2><p>카드 생활을 더 편리하게 만드는 생활 서비스를 만나보세요.</p></div><a class="more" href="#">전체 서비스 보기 〉</a></div><div class="service-grid"><article class="life-card"><div class="life-icon">▣</div><h3>자동납부</h3><p>아파트관리비·전기요금·통신요금을<br>한 번에 편리하게</p><a class="detail" href="#">신청하기 〉</a></article><article class="life-card"><div class="life-icon">◎</div><h3>해외 안심 케어</h3><p>해외에서도 안심하고<br>즐거운 여행을 시작하세요.</p><a class="detail" href="#">자세히 보기 〉</a></article><article class="life-card"><div class="life-icon">◇</div><h3>해온 포인트</h3><p>쌓을수록 더 커지는 즐거움<br>포인트 사용처를 확인하세요.</p><a class="detail" href="#">포인트 조회 〉</a></article></div></section>
 
-    <section class="section notice-section" id="notice"><article class="notice-box"><h3>공지사항</h3><ul class="notice-list"><li><span>해온카드 서비스 이용 안내</span><time>2026.09.10</time></li><li><span>안전한 카드 이용을 위한 보안 안내</span><time>2026.09.08</time></li><li><span>시스템 점검 일정 안내</span><time>2026.09.02</time></li></ul></article><article class="notice-box"><h3>고객센터</h3><ul class="notice-list"><li><span>자주 묻는 질문</span><span>〉</span></li><li><span>카드 분실·도난 신고</span><span>〉</span></li><li><span>상담 및 문의</span><span>〉</span></li></ul></article></section>
+    <section class="section notice-section" id="notice"><article class="notice-box"><h3>공지사항</h3><ul class="notice-list"><li><span>해온카드 서비스 이용 안내</span><time>2026.09.10</time></li><li><span>안전한 카드 이용을 위한 보안 안내</span><time>2026.09.08</time></li><li><span>시스템 점검 일정 안내</span><time>2026.09.02</time></li></ul></article><article class="notice-box"><h3>무엇을 도와드릴까요?</h3><p class="support-caption">카드 이용에 필요한 안내를 빠르게 찾아보세요.</p><div class="support-links"><button type="button" data-info="자주 묻는 질문">자주 묻는 질문 ↗</button><button type="button" data-info="카드 분실·도난 신고">분실·도난 신고 ↗</button><button type="button" data-info="상담 및 문의">상담 안내 ↗</button></div></article></section>
   </div></main>
 
-  <footer><div class="wrap"><div><strong>해온카드</strong> · 이용약관 · 개인정보처리방침 · 고객권리안내</div><div>모의서비스 환경 · 실제 금융 거래에 사용되지 않습니다.</div></div></footer>
+  <footer><div class="wrap"><div><strong>해온카드</strong><div class="footer-links"><button type="button" data-info="이용약관">이용약관</button><button type="button" data-info="개인정보처리방침">개인정보처리방침</button><button type="button" data-info="고객권리안내">고객권리안내</button><button type="button" data-info="이용안내">이용안내</button></div><div>© HAEON CARD. All rights reserved.</div></div><div class="footer-note"><span>모의서비스</span><br>팀 프로젝트를 위한 가상의 카드사입니다.<br>실제 금융 거래에 사용되지 않습니다.</div></div></footer><a class="to-top" href="#top" aria-label="맨 위로">↑</a>
 
   <div class="modal-backdrop" id="paymentModal" role="dialog" aria-modal="true" aria-labelledby="paymentModalTitle"><div class="payment-modal"><div class="modal-head"><div><h2 id="paymentModalTitle">북웨이브 결제 승인 조회</h2><p>가맹점 결제 요청의 승인 결과를 확인합니다.</p></div><button class="modal-close" type="button" id="modalClose" aria-label="닫기">×</button></div><div class="modal-content"><form class="modal-form" id="paymentForm"><label for="paymentOrder">주문번호</label><input id="paymentOrder" name="orderNo" required autocomplete="off"><label for="paymentAmount">결제 금액 (원)</label><input id="paymentAmount" name="amount" type="number" min="1" step="100" value="10000" required><label for="paymentToken">카드 토큰</label><input id="paymentToken" name="paymentMethodToken" value="card-token-lab-001" required autocomplete="off"><button class="modal-submit" type="submit" id="paymentSubmit">승인 결과 조회</button><button class="modal-replay" type="button" id="paymentReplay" disabled>같은 요청 재조회</button><p class="modal-note">북웨이브 연동 확인을 위한 합성 결제입니다.</p></form><div class="modal-result empty" id="modalResult"><div id="resultEmptyText"><svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="4" y="5" width="16" height="14" rx="2"/><path d="M4 10h16M8 15h4"/></svg><div>승인 결과가 이곳에 표시됩니다.</div></div><div class="result-state" id="resultState"><span class="result-pill" id="resultPill"></span><h3 id="resultTitle">-</h3><p id="resultSubtitle">-</p><table class="result-table"><tbody><tr><th>주문번호</th><td id="outOrder">-</td></tr><tr><th>승인 금액</th><td id="outAmount">-</td></tr><tr><th>PG 거래번호</th><td id="outPgTid">-</td></tr><tr><th>카드 승인번호</th><td id="outAuth">-</td></tr><tr><th>추적 ID</th><td id="outCorrelation">-</td></tr><tr><th>판정 코드</th><td id="outReason">-</td></tr></tbody></table><p class="result-error" id="resultError"></p></div></div></div></div></div>
 
-  <script>
-    (() => {
-      const $ = (id) => document.getElementById(id);
-      const heroSlides = [
-        { overline: 'HAEON CARD · EVERYDAY BENEFIT', title: '오늘의 생활에<br>딱 맞는 카드', text: '쓸수록 커지는 일상의 혜택을<br>해온카드에서 만나보세요.', card: '해온 데일리' },
-        { overline: 'HAEON CARD · SMART SHOPPING', title: '쇼핑하는 순간마다<br>커지는 즐거움', text: '온라인 쇼핑부터 구독 서비스까지<br>해온 플러스로 알뜰하게.', card: '해온 플러스' },
-        { overline: 'HAEON CARD · TRAVEL LIFE', title: '여행의 모든 순간을<br>더 가볍게', text: '공항부터 해외 결제까지<br>해온 트래블의 특별한 혜택.', card: '해온 트래블' }
-      ];
-      let slideIndex = 0; let slideTimer;
-      const setSlide = (index) => { slideIndex = index; const slide = heroSlides[index]; $('heroOverline').textContent = slide.overline; $('heroTitle').innerHTML = slide.title; $('heroText').innerHTML = slide.text; $('heroCardName').textContent = slide.card; document.querySelectorAll('.hero-dots button').forEach((button, i) => button.classList.toggle('active', i === index)); };
-      const restartSlides = () => { clearInterval(slideTimer); slideTimer = setInterval(() => setSlide((slideIndex + 1) % heroSlides.length), 5200); };
-      document.querySelectorAll('.hero-dots button').forEach((button) => button.addEventListener('click', () => { setSlide(Number(button.dataset.slide)); restartSlides(); })); restartSlides();
 
-      const modal = $('paymentModal'); const form = $('paymentForm'); const submitButton = $('paymentSubmit'); const replayButton = $('paymentReplay'); const result = $('modalResult'); const resultEmptyText = $('resultEmptyText'); const resultState = $('resultState'); let lastRequest = null;
-      const makeId = (prefix) => `${prefix}-${Date.now().toString(36).toUpperCase()}`; const money = (value) => `${Number(value || 0).toLocaleString('ko-KR')}원`;
-      const seedOrder = () => { $('paymentOrder').value = `BW-ORDER-${new Date().toISOString().slice(11, 19).replaceAll(':', '')}`; };
-      const openModal = (event) => { if (event) event.preventDefault(); modal.classList.add('show'); seedOrder(); setTimeout(() => $('paymentOrder').focus(), 50); };
-      const closeModal = () => modal.classList.remove('show');
-      $('paymentOpen').addEventListener('click', openModal); $('modalClose').addEventListener('click', closeModal); modal.addEventListener('click', (event) => { if (event.target === modal) closeModal(); }); document.addEventListener('keydown', (event) => { if (event.key === 'Escape' && modal.classList.contains('show')) closeModal(); });
-      const showResult = (kind, title, subtitle, data = {}) => { result.className = 'modal-result'; resultEmptyText.style.display = 'none'; resultState.className = 'result-state show'; const pill = $('resultPill'); pill.className = `result-pill ${kind}`; pill.textContent = kind === 'approved' ? '승인 완료' : kind === 'declined' ? '승인 거절' : '확인 필요'; $('resultTitle').textContent = title; $('resultSubtitle').textContent = subtitle; $('outOrder').textContent = data.orderNo || '-'; $('outAmount').textContent = data.approvedAmount != null ? money(data.approvedAmount) : (data.amount != null ? money(data.amount) : '-'); $('outPgTid').textContent = data.pgTid || '-'; $('outAuth').textContent = data.authorizationNo || '-'; $('outCorrelation').textContent = data.correlationId || '-'; $('outReason').textContent = data.reasonCode || data.errorCode || '-'; $('resultError').textContent = data.message || ''; };
-      const callPayment = async (request) => { const response = await fetch('/api/v1/payments', { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-Correlation-Id': request.correlationId, 'Idempotency-Key': request.merchantRequestId }, body: JSON.stringify(request) }); const body = await response.json().catch(() => ({})); if (!response.ok) { const error = new Error(body.message || `요청이 실패했습니다 (${response.status})`); error.body = body; throw error; } return body; };
-      const sendPayment = async (request, replay = false) => { submitButton.disabled = true; replayButton.disabled = true; submitButton.textContent = replay ? '재조회 중…' : '승인 확인 중…'; try { const body = await callPayment(request); lastRequest = request; showResult(body.decision === 'APPROVED' ? 'approved' : 'declined', body.decision === 'APPROVED' ? '결제가 승인되었습니다.' : '결제가 거절되었습니다.', replay ? '동일 요청의 기존 결과를 반환했습니다.' : '북웨이브 결제 요청이 정상 처리되었습니다.', body); replayButton.disabled = false; } catch (error) { lastRequest = request; showResult('error', '승인 결과를 확인하지 못했습니다.', '잠시 후 다시 시도해 주세요.', error.body || {}); } finally { submitButton.disabled = false; submitButton.textContent = '승인 결과 조회'; } };
-      form.addEventListener('submit', (event) => { event.preventDefault(); const request = { correlationId: makeId('BW-FLOW'), orderNo: $('paymentOrder').value.trim(), merchantRequestId: makeId('BW-REQ'), amount: Number($('paymentAmount').value), currency: 'KRW', paymentMethodToken: $('paymentToken').value.trim() }; sendPayment(request); }); replayButton.addEventListener('click', () => { if (lastRequest) sendPayment(lastRequest, true); });
-      const focusMy = (event) => { if (event) event.preventDefault(); $('myPanel').scrollIntoView({ behavior: 'smooth', block: 'center' }); setTimeout(() => { const target = $('myLoginView').hidden ? $('myPageLink') : $('loginId'); if (target) target.focus(); }, 320); };
-      const setLoggedIn = (loggedIn, profile = {}) => { $('myLoginView').hidden = loggedIn; $('myAccountView').hidden = !loggedIn; $('headerLogin').textContent = loggedIn ? '로그아웃' : '로그인'; if (profile.name) $('myGreeting').textContent = `${profile.name}님, 좋은 하루 되세요!`; if (profile.cardName) $('myCardName').textContent = profile.cardName; };
-      window.haeonCardUi = { setLoggedIn };
-      $('loginForm').addEventListener('submit', (event) => { event.preventDefault(); if (!$('loginId').value.trim() || !$('loginPassword').value.trim()) return; window.alert('로그인 API 연결 후 인증 성공 시 MY 화면으로 전환됩니다.'); });
-      $('myNav').addEventListener('click', focusMy); $('headerLogin').addEventListener('click', (event) => { if ($('myAccountView').hidden) focusMy(event); else setLoggedIn(false); }); $('myPageLink').addEventListener('click', focusMy); $('myPaymentButton').addEventListener('click', openModal); $('searchButton').addEventListener('click', () => window.alert('검색 기능은 준비 중입니다.'));
-      seedOrder();
-    })();
-  </script>
+  <dialog class="ui-dialog" id="infoDialog" aria-labelledby="infoTitle"><div class="modal-head"><h2 id="infoTitle"></h2><button type="button" class="modal-close" data-close-dialog aria-label="안내 닫기">×</button></div><div class="dialog-body" id="infoBody"></div></dialog>
+  <dialog class="ui-dialog" id="searchDialog" aria-labelledby="searchTitle"><div class="modal-head"><h2 id="searchTitle">어떤 서비스를 찾으세요?</h2><button type="button" class="modal-close" data-close-dialog aria-label="검색 닫기">×</button></div><div class="dialog-body"><label class="sr-only" for="siteSearch">메뉴와 카드 검색</label><input type="search" id="siteSearch" class="search-input" placeholder="카드, 혜택, 이용내역 등을 검색하세요" autocomplete="off"><div class="search-results" id="searchResults"></div><p class="sr-only" id="searchStatus" role="status"></p></div></dialog>
+
+  <script src="/haeon.js?v=20260914-2" defer></script>
 </body>
 </html>

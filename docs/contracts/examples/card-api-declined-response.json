@@ -1,0 +1,8 @@
+{
+  "correlationId": "corr-20260914-0002",
+  "authorizationId": 2,
+  "decision": "DECLINED",
+  "approvedAmount": 0,
+  "remainingLimit": 0,
+  "reasonCode": "LIMIT_EXCEEDED"
+}
