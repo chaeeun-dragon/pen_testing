@@ -20,6 +20,8 @@ Windows 파일시스템보다 WSL Linux 파일시스템 안에 프로젝트를 �
 - `haeon-card-mysql`과 `bookwave-mysql`은 소유자를 분리한다.
 - DB 포트는 호스트에 공개하지 않는다. 앱 포트는 로컬호스트에만 바인딩한다.
 - `haeon-card`는 기본 구성에서 내부 전용이며, localhost 직접 확인은 `compose.debug.yaml`을 사용할 때만 허용한다.
+- 카드 API 필드 매핑과 계약 테스트 기준은 `docs/contracts/card-api-field-mapping-v0.1.md`에 정리한다.
+- 전체 결제 왕복 계약 테스트는 `tools/payment-flow-contract-check.sh`로 실행한다.
 - `ERROR_INJECTION_ENABLED=true`는 승인된 Before 실습에서만 사용한다.
 - 실제 금융망, 실제 카드번호·CVC, 실제 기업 자격증명은 넣지 않는다.
 
@@ -39,6 +41,16 @@ curl http://localhost:8083/actuator/health
 ```
 
 정상 프로파일에서는 `/internal/v1/authorizations`가 DB 기준 승인·거절을 반환한다. CARD-03 동시성은 `services/haeon-card/README.md`와 `tools/card03-concurrency.sh`의 별도 실습 절차로 확인한다.
+
+전체 결제 왕복과 멱등 재시도, 세 서비스 로그의 correlation ID를 한 번에 확인하려면
+다음 스크립트를 사용한다.
+
+```bash
+bash tools/payment-flow-contract-check.sh
+```
+
+Haeon 디버그 포트까지 직접 확인하려면 `HAEON_CARD_URL=http://localhost:8084`를
+추가한다. 실행 증거는 `evidence/runs/PAYMENT-FLOW-.../`에 저장된다.
 
 ## Haeon 카드 localhost 디버깅
 

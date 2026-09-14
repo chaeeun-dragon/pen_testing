@@ -1,6 +1,5 @@
 package com.bookwave.lab.mockpg.service;
 
-import com.bookwave.lab.mockpg.api.AuthorizationRequest;
 import com.bookwave.lab.mockpg.api.AuthorizationResult;
 import com.bookwave.lab.mockpg.api.PaymentRequest;
 import com.bookwave.lab.mockpg.api.PaymentResult;
@@ -12,27 +11,27 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
-import org.springframework.web.client.ResourceAccessException;
-import org.springframework.web.client.RestClient;
-import org.springframework.web.client.RestClientResponseException;
 
 @Service
 public class MockPgService {
     private static final Logger log = LoggerFactory.getLogger(MockPgService.class);
 
-    private final RestClient haeonCardClient;
     private final MockPgProperties properties;
     private final IdempotencyStore idempotencyStore;
     private final RequestFingerprint requestFingerprint;
+    private final CardAuthorizationMapper cardAuthorizationMapper;
+    private final CardAuthorizationGateway cardAuthorizationGateway;
 
-    public MockPgService(RestClient haeonCardClient,
-                         MockPgProperties properties,
+    public MockPgService(MockPgProperties properties,
                          IdempotencyStore idempotencyStore,
-                         RequestFingerprint requestFingerprint) {
-        this.haeonCardClient = haeonCardClient;
+                         RequestFingerprint requestFingerprint,
+                         CardAuthorizationMapper cardAuthorizationMapper,
+                         CardAuthorizationGateway cardAuthorizationGateway) {
         this.properties = properties;
         this.idempotencyStore = idempotencyStore;
         this.requestFingerprint = requestFingerprint;
+        this.cardAuthorizationMapper = cardAuthorizationMapper;
+        this.cardAuthorizationGateway = cardAuthorizationGateway;
     }
 
     public PaymentResult charge(PaymentRequest request, String correlationHeader, String idempotencyKey) {
@@ -69,37 +68,9 @@ public class MockPgService {
     }
 
     private AuthorizationResult requestAuthorization(PaymentRequest request, String fingerprint) {
-        AuthorizationRequest payload = new AuthorizationRequest(
-                request.correlationId(),
-                properties.merchantNo(),
-                request.merchantRequestId(),
-                request.paymentMethodToken(),
-                request.amount(),
-                request.currency(),
-                fingerprint,
-                Instant.now());
-        try {
-            log.info("event=authorization_forward merchantNo={} merchantRequestId={} amount={} synthetic=true",
-                    properties.merchantNo(), request.merchantRequestId(), request.amount());
-            return haeonCardClient.post()
-                    .uri("/internal/v1/authorizations")
-                    .header("X-Correlation-Id", request.correlationId())
-                    .header("Idempotency-Key", request.merchantRequestId())
-                    .header("Authorization", "Bearer " + properties.merchantToken())
-                    .body(payload)
-                    .retrieve()
-                    .body(AuthorizationResult.class);
-        } catch (ResourceAccessException ex) {
-            throw new MockPgException(HttpStatus.SERVICE_UNAVAILABLE, "UPSTREAM_UNAVAILABLE",
-                    "해온카드 서비스에 연결할 수 없습니다.", true);
-        } catch (RestClientResponseException ex) {
-            if (ex.getStatusCode().is4xxClientError()) {
-                throw new MockPgException(HttpStatus.BAD_GATEWAY, "UPSTREAM_ERROR",
-                        "해온카드가 요청을 거절했습니다.", false);
-            }
-            throw new MockPgException(HttpStatus.BAD_GATEWAY, "UPSTREAM_ERROR",
-                    "해온카드 응답을 처리할 수 없습니다.", true);
-        }
+        var payload = cardAuthorizationMapper.toCardAuthorization(
+                request, properties, fingerprint, Instant.now());
+        return cardAuthorizationGateway.authorize(payload);
     }
 
     private void validateHeaders(PaymentRequest request, String correlationHeader, String idempotencyKey) {
