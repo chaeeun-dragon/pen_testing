@@ -95,7 +95,7 @@ CREATE TABLE authorization_requests (
   CONSTRAINT fk_hc_auth_card FOREIGN KEY (card_id) REFERENCES cards(card_id) ON DELETE RESTRICT ON UPDATE RESTRICT,
   CONSTRAINT fk_hc_auth_merchant FOREIGN KEY (merchant_id) REFERENCES merchants(merchant_id) ON DELETE RESTRICT ON UPDATE RESTRICT,
   CONSTRAINT ck_hc_request_key CHECK (CHAR_LENGTH(TRIM(merchant_request_id)) > 0),
-  CONSTRAINT ck_hc_auth_amount CHECK (amount > 0 AND amount <= 100000 AND amount = FLOOR(amount)),
+  CONSTRAINT ck_hc_auth_amount CHECK (amount > 0 AND amount <= 10000000 AND amount = FLOOR(amount)),
   CONSTRAINT ck_hc_auth_channel CHECK (channel = 'CARD' AND currency = 'KRW'),
   CONSTRAINT ck_hc_auth_read_version CHECK (read_limit_version IS NULL OR read_limit_version >= 0),
   CONSTRAINT ck_hc_auth_read_used CHECK (read_used_amount IS NULL OR read_used_amount >= 0),
@@ -120,7 +120,7 @@ CREATE TABLE card_transactions (
   UNIQUE KEY uk_hc_txn_no (txn_no),
   UNIQUE KEY uk_hc_txn_auth (auth_id),
   CONSTRAINT fk_hc_txn_auth FOREIGN KEY (auth_id) REFERENCES authorization_requests(auth_id) ON DELETE RESTRICT ON UPDATE RESTRICT,
-  CONSTRAINT ck_hc_txn_amount CHECK (amount > 0 AND amount <= 100000 AND amount = FLOOR(amount)),
+  CONSTRAINT ck_hc_txn_amount CHECK (amount > 0 AND amount <= 10000000 AND amount = FLOOR(amount)),
   CONSTRAINT ck_hc_txn_status CHECK (status = 'APPROVED')
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='H0 승인 장부 - INV-01~03 대사 대상';
 

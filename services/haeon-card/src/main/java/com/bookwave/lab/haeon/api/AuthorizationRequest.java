@@ -13,7 +13,7 @@ public record AuthorizationRequest(
         @NotBlank @Size(max = 40) @Pattern(regexp = "[A-Za-z0-9_-]{1,40}") String merchantNo,
         @NotBlank @Size(max = 80) @Pattern(regexp = "[A-Za-z0-9_-]+") String merchantRequestId,
         @NotBlank @Size(max = 80) @Pattern(regexp = "card-token-lab-[A-Za-z0-9_-]+") String cardToken,
-        @NotNull @Positive @Max(100000) Long amount,
+        @NotNull @Positive @Max(10000000) Long amount,
         @NotBlank @Pattern(regexp = "[A-Z]{3}") String currency,
         @NotBlank @Pattern(regexp = "[0-9a-fA-F]{64}") String requestFingerprint,
         @NotNull Instant requestedAt
