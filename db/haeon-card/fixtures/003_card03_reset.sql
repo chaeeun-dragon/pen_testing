@@ -6,5 +6,6 @@ DELETE FROM card_transactions;
 DELETE FROM authorization_requests;
 
 UPDATE card_limits
-SET used_amount = 0.00,
+SET limit_amount = 100000.00,
+    used_amount = 0.00,
     version = 0;
