@@ -21,17 +21,20 @@ public class MockPgService {
     private final RequestFingerprint requestFingerprint;
     private final CardAuthorizationMapper cardAuthorizationMapper;
     private final CardAuthorizationGateway cardAuthorizationGateway;
+    private final PaymentResultMapper paymentResultMapper;
 
     public MockPgService(MockPgProperties properties,
                          IdempotencyStore idempotencyStore,
                          RequestFingerprint requestFingerprint,
                          CardAuthorizationMapper cardAuthorizationMapper,
-                         CardAuthorizationGateway cardAuthorizationGateway) {
+                         CardAuthorizationGateway cardAuthorizationGateway,
+                         PaymentResultMapper paymentResultMapper) {
         this.properties = properties;
         this.idempotencyStore = idempotencyStore;
         this.requestFingerprint = requestFingerprint;
         this.cardAuthorizationMapper = cardAuthorizationMapper;
         this.cardAuthorizationGateway = cardAuthorizationGateway;
+        this.paymentResultMapper = paymentResultMapper;
     }
 
     public PaymentResult charge(PaymentRequest request, String correlationHeader, String idempotencyKey) {
@@ -52,15 +55,8 @@ public class MockPgService {
         String pgTid = "PG-LAB-" + shortId();
         String paymentId = "PAY-LAB-" + shortId();
         AuthorizationResult authorization = requestAuthorization(request, fingerprint);
-        PaymentResult result = new PaymentResult(
-                request.correlationId(),
-                request.orderNo(),
-                paymentId,
-                pgTid,
-                authorization.decision(),
-                authorization.approvedAmount(),
-                authorization.authorizationNo(),
-                authorization.reasonCode());
+        PaymentResult result = paymentResultMapper.toPaymentResult(
+                request, authorization, paymentId, pgTid);
         idempotencyStore.put(request.merchantRequestId(), new IdempotencyStore.StoredPayment(fingerprint, result));
         log.info("event=pg_charge_completed orderNo={} merchantRequestId={} pgTid={} decision={} amount={} synthetic=true",
                 request.orderNo(), request.merchantRequestId(), pgTid, result.decision(), result.approvedAmount());
