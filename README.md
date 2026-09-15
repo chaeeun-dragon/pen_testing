@@ -21,6 +21,7 @@ Windows 파일시스템보다 WSL Linux 파일시스템 안에 프로젝트를 �
 - DB 포트는 호스트에 공개하지 않는다. 앱 포트는 로컬호스트에만 바인딩한다.
 - `haeon-card`는 기본 구성에서 내부 전용이며, localhost 직접 확인은 `compose.debug.yaml`을 사용할 때만 허용한다.
 - 카드 API 필드 매핑과 계약 테스트 기준은 `docs/contracts/card-api-field-mapping-v0.1.md`에 정리한다.
+- 로컬 카드 API 호환성·승인·거절·재시도 검증은 `docs/contracts/card-api-compatibility-check-v0.2.md`와 `tools/card-api-contract-check.sh`를 기준으로 한다.
 - 전체 결제 왕복 계약 테스트는 `tools/payment-flow-contract-check.sh`로 실행한다.
 - `ERROR_INJECTION_ENABLED=true`는 승인된 Before 실습에서만 사용한다.
 - 실제 금융망, 실제 카드번호·CVC, 실제 기업 자격증명은 넣지 않는다.
@@ -41,6 +42,17 @@ curl http://localhost:8083/actuator/health
 ```
 
 정상 프로파일에서는 `/internal/v1/authorizations`가 DB 기준 승인·거절을 반환한다. CARD-03 동시성은 `services/haeon-card/README.md`와 `tools/card03-concurrency.sh`의 별도 실습 절차로 확인한다.
+
+카드 API 자체의 필드 매핑과 호환성(승인·멱등 재시도·한도 초과·멱등키 충돌·위조 결과 필드·가맹점 인증)을 확인하려면 합성 fixture를 먼저 복원한 뒤 다음을 실행한다.
+
+```bash
+docker compose exec -T haeon-card-mysql sh -c \
+  'mysql -uroot -p"$MYSQL_ROOT_PASSWORD" "$MYSQL_DATABASE" \
+   < /docker-entrypoint-initdb.d/003_card03_reset.sql'
+HAEON_CARD_URL=http://localhost:8084 bash tools/card-api-contract-check.sh
+```
+
+결과는 `evidence/runs/CARD-CONTRACT-.../`에 요청·응답·매핑 manifest 형태로 남는다.
 
 전체 결제 왕복과 멱등 재시도, 세 서비스 로그의 correlation ID를 한 번에 확인하려면
 다음 스크립트를 사용한다.
