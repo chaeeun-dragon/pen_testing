@@ -1,7 +1,7 @@
 # 실제 카드사 침해사고 착안 결제 서버 침해 시뮬레이션과 CARD-03 연결 v0.1
 
 작성일: 2026-09-16
-상태: 안전한 고정 신호 시뮬레이션 경로 구현·검증됨 — 실제 침입·웹쉘은 미구현·비범위
+상태: S1~S4 순서 로그·탐지 구현·검증됨 — 실제 침입·웹쉘은 미구현·비범위
 대상: 북웨이브 → Mock PG → 해온카드 합성 결제 실습 환경
 
 ## 1. 이 문서가 정하는 프로젝트 표현
@@ -98,14 +98,15 @@ CARD-03은 침입 이후의 부정결제 경로를 증명하는 자료가 아니
 기본 배포에서는 `403 INCIDENT_SIMULATION_DISABLED`로 거절한다. 활성화하더라도
 `INCIDENT-SIM-` 형식의 합성 실행 ID와 별도의 랩 제어 토큰을 모두 통과해야 한다.
 전용 경로는 `POST /internal/v1/lab/incident-simulations/payment-server`이며 결제 본문·
-가맹점·카드·명령을 받지 않는다. 구현은 고정 이벤트 네 개만 기록하며 Mock PG·
+가맹점·카드·명령을 받지 않는다. 구현은 고정 이벤트 일곱 개만 기록하며 Mock PG·
 해온카드를 호출하지 않는다. 세부 계약은
 `docs/contracts/incident-simulation-contract-v0.1.md`를 따른다.
 
-전용 경로의 최종 검증 실행은 `INCIDENT-SIM-20260916T015100Z`로 남겼다. 고정 `ALERT`,
-`BLOCKED`, `PASS` 이벤트 네 개가 Bookwave 로그에서만 확인됐고, 응답·증거 모두
+전용 경로의 S1~S4 최종 검증 실행은 `INCIDENT-SIM-20260916T020000Z`로 남겼다. S3
+`ALERT`, S4 `BLOCKED`·추가 검증 `PASS`를 포함한 고정 이벤트 일곱 개가 Bookwave
+로그에서만 확인됐고, 범위 제한 탐지 결과는 `PASS`였다. 응답·증거 모두
 `mockPgCalled=false`, `haeonCardCalled=false`였다. 이후
-`POST-INCIDENT-FLOW-20260916T015300Z`로 정상 결제 동시 멱등성 회귀를 통과했으며,
+`POST-S1S4-FLOW-20260916T022000Z`로 정상 결제 동시 멱등성 회귀를 통과했으며,
 최종 합성 카드 DB는 한도 100,000원, 사용액 0원, 버전 0으로 복원했다.
 
 ## 4. 구현된 최소 시나리오: 결제 서버 침입 징후의 안전한 시뮬레이션
@@ -127,10 +128,10 @@ CARD-03은 침입 이후의 부정결제 경로를 증명하는 자료가 아니
 | 단계 | 시연할 사실 | 허용되는 구현 | 금지되는 구현 |
 |---|---|---|---|
 | S0 | 기준선이 정상임 | 합성 fixture, health check, 정상 결제 | 실제 개인정보·금융망 연결 |
-| S1 | 결제 서버 침입 징후 | 고정 `simulated_payment_server_access_detected=ALERT` 이벤트 | 명령 실행 가능한 웹쉘, 외부 노출 |
-| S2 | 데이터 접근 위험 | 고정 `simulated_synthetic_data_access_blocked=BLOCKED` 이벤트 | 실제 카드번호·CVC·인증정보 저장·반출 |
-| S3 | 탐지 가능성 | `correlationId`, 구조화 로그, 실행 도구의 고정 이벤트 검증 | 전체 DB를 무차별 스캔하거나 실제 공격 도구 사용 |
-| S4 | 대응 효과 | `incident_simulation_completed=PASS`, PG·카드 호출 없음 대사 | 실제 계정 차단·실제 결제 취소 |
+| S1 | 결제 서버 침입 징후 | 고정 `simulated_payment_server_access_detected=OBSERVED` 이벤트 | 명령 실행 가능한 웹쉘, 외부 노출 |
+| S2 | 데이터 접근 위험 | 고정 `simulated_synthetic_data_access_attempted=OBSERVED` 이벤트. 실제 접근은 수행하지 않음 | 실제 카드번호·CVC·인증정보 저장·반출 |
+| S3 | 탐지 가능성 | `incident_simulation_alert_raised=ALERT`, `runId`·`correlationId` 범위 제한 탐지 | 전체 DB를 무차별 스캔하거나 실제 공격 도구 사용 |
+| S4 | 대응 효과 | 고정 `BLOCKED`와 `incident_simulation_additional_verification_passed=PASS`, PG·카드 호출 없음 대사 | 실제 계정 차단·실제 결제 취소 |
 | S5 | 승인 코어 방어 | 기존 CARD-03 Before/After를 별도 실행·대사 | 침입 단계와 CARD-03 결과를 같은 원인이라고 단정 |
 
 ### 4.2 최소 증거 계약
@@ -140,7 +141,8 @@ CARD-03은 침입 이후의 부정결제 경로를 증명하는 자료가 아니
 
 - `scenario.json`: `scenarioId`, `simulation=true`, Mock PG·해온카드 호출 없음
 - `services.log`: S1~S4의 `correlationId`별 고정 구조화 이벤트
-- `result.json`: 고정 `ALERT`, 차단 `BLOCKED`, 완료 `PASS`
+- `result.json`: S3 `ALERT`, S4 차단·추가 검증 `PASS`
+- `detection/result.json`, `event-sequence.tsv`: 범위 제한 탐지 결과와 순서 대사
 - `summary.txt`: 합성 데이터만 사용했으며 실제 웹쉘·실제 정보유출이 아니라는 문구
 - `correlation-report.tsv`: 북웨이브만 상관 로그가 있고 Mock PG·해온카드는 없음
 

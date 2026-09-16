@@ -54,7 +54,9 @@ fi
 
 for expected in '"simulation":true' '"outcome":"BLOCKED"' '"mockPgCalled":false' \
   '"haeonCardCalled":false' '"simulated_payment_server_access_detected"' \
-  '"simulated_synthetic_data_access_blocked"'; do
+  '"simulated_synthetic_data_access_attempted"' '"incident_simulation_alert_raised"' \
+  '"simulated_synthetic_data_access_blocked"' \
+  '"incident_simulation_additional_verification_passed"'; do
   if ! grep -Fq "${expected}" "${OUT_DIR}/response.json"; then
     echo "response is missing expected fixed field: ${expected}" >&2
     exit 1
@@ -64,26 +66,14 @@ done
 docker compose --env-file .env logs --no-color --tail=300 bookwave-app mock-pg haeon-card \
   > "${OUT_DIR}/services.log" 2>&1
 
-for event in incident_simulation_started simulated_payment_server_access_detected \
-  simulated_synthetic_data_access_blocked incident_simulation_completed; do
-  if ! grep -F "${CORRELATION_ID}" "${OUT_DIR}/services.log" | grep -Fq "event=${event}"; then
-    echo "Bookwave log is missing ${event} for ${CORRELATION_ID}" >&2
-    exit 1
-  fi
-done
-
-if grep -F "${CORRELATION_ID}" "${OUT_DIR}/services.log" | grep -Eq '\[(mock-pg|haeon-card)\]'; then
-  echo "simulation correlationId appeared in Mock PG or Haeon Card logs." >&2
-  exit 1
-fi
+PROJECT_ROOT="$(pwd)" RUN_ID="${RUN_ID}" CORRELATION_ID="${CORRELATION_ID}" \
+SERVICES_LOG="${OUT_DIR}/services.log" DETECTION_DIR="${OUT_DIR}/detection" \
+  bash tools/payment-server-incident-detection-check.sh
 
 printf '{"scenarioId":"PAYMENT_SERVER_INCIDENT_V1","runId":"%s","correlationId":"%s","simulation":true,"normalPaymentRouteCalled":false,"mockPgCalled":false,"haeonCardCalled":false}\n' \
   "${RUN_ID}" "${CORRELATION_ID}" > "${OUT_DIR}/scenario.json"
-printf '{"runId":"%s","result":"PASS","alerts":["simulated_payment_server_access_detected"],"blocked":["simulated_synthetic_data_access_blocked"],"mockPgCalled":false,"haeonCardCalled":false}\n' \
-  "${RUN_ID}" > "${OUT_DIR}/result.json"
-printf 'service\tcorrelationIdObserved\nbookwave-app\tyes\nmock-pg\tno (expected)\nhaeon-card\tno (expected)\n' \
-  > "${OUT_DIR}/correlation-report.tsv"
-printf 'Synthetic payment-server incident simulation PASS. Fixed ALERT observation and fixed BLOCKED synthetic-data access were recorded; Mock PG and Haeon Card were not called.\n' \
-  > "${OUT_DIR}/summary.txt"
+cp "${OUT_DIR}/detection/result.json" "${OUT_DIR}/result.json"
+cp "${OUT_DIR}/detection/correlation-report.tsv" "${OUT_DIR}/correlation-report.tsv"
+cp "${OUT_DIR}/detection/summary.txt" "${OUT_DIR}/summary.txt"
 
 echo "Payment-server incident simulation PASS: ${OUT_DIR}"

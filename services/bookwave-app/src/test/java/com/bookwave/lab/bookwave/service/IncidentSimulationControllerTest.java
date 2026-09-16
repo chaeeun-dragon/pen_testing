@@ -33,8 +33,10 @@ class IncidentSimulationControllerTest {
                 .andExpect(jsonPath("$.outcome").value("BLOCKED"))
                 .andExpect(jsonPath("$.mockPgCalled").value(false))
                 .andExpect(jsonPath("$.haeonCardCalled").value(false))
-                .andExpect(jsonPath("$.events[1].result").value("ALERT"))
-                .andExpect(jsonPath("$.events[2].result").value("BLOCKED"));
+                .andExpect(jsonPath("$.events[3].event").value("incident_simulation_alert_raised"))
+                .andExpect(jsonPath("$.events[3].result").value("ALERT"))
+                .andExpect(jsonPath("$.events[4].result").value("BLOCKED"))
+                .andExpect(jsonPath("$.events[5].result").value("PASS"));
     }
 
     @Test

@@ -135,11 +135,12 @@ db/haeon-card/fixtures/005_card03_demo_amount_range.sql
 
 - 전용 비결제 경로와 `INCIDENT_SIMULATION_ENABLED=false` 기본 차단 구현
 - 랩 제어 토큰과 `INCIDENT-SIM-` 실행 ID 검증
-- 고정 `RECORDED → ALERT → BLOCKED → PASS` 이벤트만 생성
+- 고정 `RECORDED → OBSERVED → OBSERVED → ALERT → BLOCKED → PASS → PASS` 이벤트만 생성
 - 실행 ID는 증거·로그 식별자일 뿐 승인 판단이나 권한으로 사용하지 않음
-- `tools/payment-server-incident-simulation.sh`가 Mock PG·해온카드 미호출을 대사
-- 최종 검증 실행: `INCIDENT-SIM-20260916T015100Z`; 이후 정상 흐름 회귀:
-  `POST-INCIDENT-FLOW-20260916T015300Z`
+- `tools/payment-server-incident-detection-check.sh`가 같은 `runId`·`correlationId` 범위에서
+  S1 관측 → S2 접근 시도 → S3 ALERT → S4 차단·추가 검증 PASS 순서와 미호출을 대사
+- 최종 검증 실행: `INCIDENT-SIM-20260916T020000Z`; 이후 정상 흐름 회귀:
+  `POST-S1S4-FLOW-20260916T022000Z`
 
 ## 4. 탐지 자동화
 
@@ -147,6 +148,7 @@ db/haeon-card/fixtures/005_card03_demo_amount_range.sql
 
 ```text
 tools/card03-detection-check.sh
+tools/payment-server-incident-detection-check.sh
 ```
 
 이 스크립트는 공격을 실행하지 않고, 저장된 서비스 로그와 현재 합성 DB를 검사한다.

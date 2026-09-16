@@ -21,8 +21,11 @@ public class IncidentSimulationService {
     private static final Pattern CORRELATION_ID = Pattern.compile("[A-Za-z0-9_-]{8,80}");
     private static final List<IncidentSimulationEvent> FIXED_EVENTS = List.of(
             new IncidentSimulationEvent("S1", "incident_simulation_started", "RECORDED"),
-            new IncidentSimulationEvent("S1", "simulated_payment_server_access_detected", "ALERT"),
-            new IncidentSimulationEvent("S2", "simulated_synthetic_data_access_blocked", "BLOCKED"),
+            new IncidentSimulationEvent("S1", "simulated_payment_server_access_detected", "OBSERVED"),
+            new IncidentSimulationEvent("S2", "simulated_synthetic_data_access_attempted", "OBSERVED"),
+            new IncidentSimulationEvent("S3", "incident_simulation_alert_raised", "ALERT"),
+            new IncidentSimulationEvent("S4", "simulated_synthetic_data_access_blocked", "BLOCKED"),
+            new IncidentSimulationEvent("S4", "incident_simulation_additional_verification_passed", "PASS"),
             new IncidentSimulationEvent("S4", "incident_simulation_completed", "PASS"));
 
     private final IncidentSimulationGuard guard;
@@ -36,13 +39,22 @@ public class IncidentSimulationService {
         guard.requireAuthorized(runId, accessToken);
 
         log.info("event=incident_simulation_started scenarioId={} runId={} simulation=true "
-                        + "route=dedicated_lab_control_plane",
+                        + "result=RECORDED route=dedicated_lab_control_plane",
                 SCENARIO_ID, runId);
-        log.warn("event=simulated_payment_server_access_detected scenarioId={} runId={} simulation=true "
-                        + "result=ALERT observation=fixed_synthetic_signal",
+        log.info("event=simulated_payment_server_access_detected scenarioId={} runId={} simulation=true "
+                        + "result=OBSERVED observation=fixed_synthetic_signal",
+                SCENARIO_ID, runId);
+        log.info("event=simulated_synthetic_data_access_attempted scenarioId={} runId={} simulation=true "
+                        + "result=OBSERVED dataClass=synthetic_reference action=not_performed",
+                SCENARIO_ID, runId);
+        log.warn("event=incident_simulation_alert_raised scenarioId={} runId={} simulation=true "
+                        + "result=ALERT detectionRule=payment_server_synthetic_access_sequence",
                 SCENARIO_ID, runId);
         log.info("event=simulated_synthetic_data_access_blocked scenarioId={} runId={} simulation=true "
                         + "result=BLOCKED dataClass=synthetic_reference",
+                SCENARIO_ID, runId);
+        log.info("event=incident_simulation_additional_verification_passed scenarioId={} runId={} simulation=true "
+                        + "result=PASS verification=no_payment_or_card_dependency",
                 SCENARIO_ID, runId);
         log.info("event=incident_simulation_completed scenarioId={} runId={} simulation=true "
                         + "result=PASS mockPgCalled=false haeonCardCalled=false",
