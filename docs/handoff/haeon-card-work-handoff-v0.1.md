@@ -12,7 +12,8 @@
 - 사전 준비 커밋: `6acc978 feat: harden payment flow and prepare incident simulation`
 - 시뮬레이션 구현 커밋: `56cda20 feat: add isolated payment server incident simulation`
 - S1~S4 탐지 커밋: `227eca5 feat: add scoped incident sequence detection`
-- 원격 브랜치에는 위 S1~S4 커밋까지 반영되어 있다
+- 증거 패키지 커밋: `771ac43 feat: package verifiable incident evidence`
+- 원격 브랜치에는 위 증거 패키지 커밋까지 반영되어 있다
 - 개발 환경: WSL Ubuntu 24.04, Docker Compose, Java 21, Spring Boot 3.4.5, MySQL 8.0
 - 데이터: 실제 카드·회원·금융망이 아닌 합성 데이터만 사용
 
@@ -145,6 +146,18 @@ db/haeon-card/fixtures/005_card03_demo_amount_range.sql
 - 최종 증거 검증 실행: `INCIDENT-SIM-20260916T030000Z`; 이후 정상 흐름 회귀:
   `POST-EVIDENCE-FLOW-20260916T034500Z`
 
+### 3.6 6단계 회귀·보안 검증
+
+- `tools/payment-server-incident-db-isolation-check.sh`가 시뮬레이션 전후
+  `card_limits`, `authorization_requests`, `card_transactions`, `audit_events` 전체
+  스냅샷을 비교한다. 성공 시 `haeonCardDbChanged=false`를 증거로 남긴다.
+- 증거 검사기는 DB 격리 산출물이 함께 있을 때 전후 스냅샷 동일성·격리 결과·manifest
+  포함 여부까지 검사한다.
+- `tools/network-port-security-check.sh`는 컨테이너를 변경하지 않고 host-port 허용 목록과
+  `internal: true` DB·카드·감사 네트워크를 검사한다.
+- 해온카드 8084는 `compose.debug.yaml` 사용 시에만 `127.0.0.1`으로 노출된다. 일반
+  내부 호출은 계속 Docker DNS `haeon-card:8084`를 사용한다.
+
 ## 4. 탐지 자동화
 
 실행 파일:
@@ -267,6 +280,21 @@ evidence/runs/CARD03-BEFORE-20260915T005643Z/
 evidence/runs/CARD03-AFTER-20260915T005920Z/
 ```
 
+### 5.5 6단계 보안 회귀 실행
+
+- `SECURITY-CARD-CONTRACT-20260916T042000Z`: 승인·재조회·한도 거절·멱등키 충돌·위조
+  응답 필드·Bearer 누락/오류 거절을 통과했다.
+- `SECURITY-CARD03-BEFORE-20260916T043000Z`: 지정된 두 상관 ID에서 한도 초과와 같은
+  스냅샷의 중복 승인을 탐지해 `ALERT`(alerts=2, failures=0)를 반환했다.
+- `SECURITY-CARD03-AFTER-20260916T044000Z`: 1건 승인과 1건 `LIMIT_EXCEEDED` 거절을
+  확인하고 탐지 결과 `PASS`를 반환했다.
+- `SECURITY-PAYMENT-FLOW-20260916T045000Z`: Bookwave → Mock PG → 해온카드 동시
+  멱등성·재조회·승인·거절·세 서비스 `correlationId` 연결을 통과했다.
+- `INCIDENT-SIM-20260916T041000Z`: 침입 징후 합성 실행 전후 해온카드 승인 DB 네 테이블
+  스냅샷이 동일했고 `haeonCardDbChanged=false`, 증거 검사 `PASS`를 기록했다.
+- `SECURITY-NETWORK-20260916T050500Z`: 8080·8083·8084는 loopback만 사용하고, 그 밖의
+  서비스·DB는 호스트 포트가 없으며 DB·카드·감사 네트워크는 `internal: true`임을 확인했다.
+
 ## 6. 주요 문서·스크립트 목록
 
 ### 시나리오·탐지
@@ -291,6 +319,9 @@ evidence/runs/CARD03-AFTER-20260915T005920Z/
 - `tools/card03-concurrency.sh`: CARD-03 동시 요청
 - `tools/card03-detection-check.sh`: 탐지 규칙 자동 점검
 - `tools/card-api-contract-check.sh`: 카드 API 계약 확인
+- `tools/payment-server-incident-db-isolation-check.sh`: 침입 징후 시뮬레이션의 해온카드
+  DB 비변경 증명
+- `tools/network-port-security-check.sh`: host-port 허용 목록·Docker 네트워크 격리 확인
 
 ## 7. 새 스레드에서 바로 실행할 명령
 
@@ -386,8 +417,8 @@ LAB_PROFILE=normal BEFORE_BARRIER_ENABLED=false \
 1. [ ] 체크리스트 기준으로 시연 리허설 1회 완료
 2. [ ] 영상 촬영용 demo 금액·화면·터미널 표시 범위 확정
 3. [ ] Before `ALERT`와 After `PASS` 증거를 최종 폴더로 정리
-4. [ ] 전체 결제 흐름에서 세 서비스 `correlationId` 연결 재확인
-5. [ ] 네트워크 격리와 8084 포트 매핑 최종 점검
+4. [x] 전체 결제 흐름에서 세 서비스 `correlationId` 연결 재확인
+5. [x] 네트워크 격리와 8084 포트 매핑 최종 점검
 6. [ ] 팀장 API를 받으면 API 계약서 필드와 endpoint를 비교해 교체
 7. [ ] 로그인 DB/API와 북웨이브 영속 DB 필요 여부 결정
 8. [ ] 챗봇·표지 업로드 임시 컨테이너를 실제 서비스로 교체할지 결정

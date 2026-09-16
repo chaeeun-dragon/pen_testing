@@ -51,6 +51,29 @@ for relative_path in "${required_files[@]}"; do
   [[ -s "${OUT_DIR}/${relative_path}" ]] || write_failure "MISSING_${relative_path//\//_}"
 done
 
+db_isolation_files=(
+  "haeon-db-before.tsv"
+  "haeon-db-after.tsv"
+  "haeon-db-isolation.json"
+)
+db_isolation_present=false
+for relative_path in "${db_isolation_files[@]}"; do
+  if [[ -e "${OUT_DIR}/${relative_path}" ]]; then
+    db_isolation_present=true
+  fi
+done
+if [[ "${db_isolation_present}" == "true" ]]; then
+  for relative_path in "${db_isolation_files[@]}"; do
+    [[ -s "${OUT_DIR}/${relative_path}" ]] || write_failure "MISSING_${relative_path//\//_}"
+  done
+  cmp -s "${OUT_DIR}/haeon-db-before.tsv" "${OUT_DIR}/haeon-db-after.tsv" \
+    || write_failure "HAEON_DB_SNAPSHOT_CHANGED"
+  grep -Fq '"haeonCardDbChanged":false' "${OUT_DIR}/haeon-db-isolation.json" \
+    || write_failure "HAEON_DB_CHANGE_REPORTED"
+  grep -Fq '"result":"PASS"' "${OUT_DIR}/haeon-db-isolation.json" \
+    || write_failure "HAEON_DB_ISOLATION_NOT_PASSED"
+fi
+
 grep -Fq "\"runId\":\"${RUN_ID}\"" "${OUT_DIR}/scenario.json" \
   || write_failure "SCENARIO_RUN_ID_MISMATCH"
 grep -Fq "\"correlationId\":\"${CORRELATION_ID}\"" "${OUT_DIR}/scenario.json" \
@@ -96,6 +119,9 @@ manifest_files=(
   "detection/event-sequence.tsv"
   "detection/correlation-report.tsv"
 )
+if [[ "${db_isolation_present}" == "true" ]]; then
+  manifest_files+=("${db_isolation_files[@]}")
+fi
 
 manifest_path="${OUT_DIR}/evidence-manifest.json"
 printf '{"schemaVersion":"payment-server-incident-evidence-v0.1","runId":"%s","correlationId":"%s","simulation":true,"result":"PASS","generatedAt":"%s","artifacts":[' \
