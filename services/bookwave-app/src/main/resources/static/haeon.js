@@ -35,6 +35,55 @@
         return `${prefix}-${suffix}`;
       }; const money = (value) => `${Number(value || 0).toLocaleString('ko-KR')}원`;
       const seedOrder = () => { $('paymentOrder').value = makeId('BW-ORDER'); };
+      // 합성 데모 데이터 — 실제 회원·카드·결제 정보가 아닌 팀 프로젝트용 가상 값이다.
+      const SYNTHETIC = {
+        member: { id: 'haeon-demo', name: '김해온', cardName: '해온 플러스', cardMasked: '**** 2381',
+          grade: '플래티넘', joinDate: '2021.03.14', phoneMasked: '010-****-2381', emailMasked: 'haeon***@haeon.example' },
+        summary: { spent: 1284600, prevSpent: 1461000, due: 642000, dueDate: '09.25', available: 3715400, totalLimit: 5000000, statementMonth: '2026.09' },
+        cards: [
+          { name: '해온 플러스', masked: '**** 2381', brand: 'Mastercard', type: '신용', payDate: '매월 25일', benefit: '주요 쇼핑몰 10% · 외식·배달 5% · 모든 가맹점 2%', used: 1284600, limit: 5000000, main: true },
+          { name: '해온 데일리', masked: '**** 8842', brand: '국내전용', type: '신용', payDate: '매월 25일', benefit: '온라인 쇼핑 10% · 편의점·커피 5% · 대중교통 3%', used: 402000, limit: 3000000 },
+          { name: '해온 트래블', masked: '**** 5107', brand: 'Visa', type: '신용', payDate: '매월 14일', benefit: '해외 결제 2% · 해외 수수료 0원 · 공항 라운지 무료', used: 0, limit: 2000000 }
+        ],
+        transactions: [
+          { date: '2026.09.14', time: '08:12', merchant: '스타벅스 강남점', category: '커피', card: '플러스', amount: 6300, status: '승인', installment: '일시불', point: 63 },
+          { date: '2026.09.14', time: '21:40', merchant: '넷플릭스', category: '구독', card: '플러스', amount: 13500, status: '예정', installment: '일시불', point: 0 },
+          { date: '2026.09.13', time: '13:22', merchant: '쿠팡', category: '온라인쇼핑', card: '플러스', amount: 38900, status: '승인', installment: '일시불', point: 389 },
+          { date: '2026.09.13', time: '19:05', merchant: '배달의민족', category: '배달', card: '플러스', amount: 23500, status: '승인', installment: '일시불', point: 235 },
+          { date: '2026.09.12', time: '12:33', merchant: 'GS25 역삼점', category: '편의점', card: '데일리', amount: 4800, status: '승인', installment: '일시불', point: 48 },
+          { date: '2026.09.11', time: '09:47', merchant: '서울교통공사', category: '대중교통', card: '데일리', amount: 1400, status: '승인', installment: '일시불', point: 14 },
+          { date: '2026.09.10', time: '15:10', merchant: '올리브영 성수', category: '쇼핑', card: '플러스', amount: 41200, status: '승인', installment: '일시불', point: 412 },
+          { date: '2026.09.09', time: '20:18', merchant: '무신사', category: '온라인쇼핑', card: '플러스', amount: 129000, status: '승인', installment: '3개월 할부', point: 1290 },
+          { date: '2026.09.08', time: '11:02', merchant: '이마트 성수점', category: '마트', card: '플러스', amount: 87600, status: '승인', installment: '일시불', point: 876 },
+          { date: '2026.09.07', time: '18:44', merchant: '교보문고 광화문', category: '도서', card: '데일리', amount: 32400, status: '승인', installment: '일시불', point: 324 },
+          { date: '2026.09.06', time: '22:15', merchant: '쿠팡플레이', category: '구독', card: '플러스', amount: 4900, status: '승인', installment: '일시불', point: 49 },
+          { date: '2026.09.05', time: '14:50', merchant: '무신사 (부분취소)', category: '환불', card: '플러스', amount: -12000, status: '취소', installment: '일시불', point: 0 },
+          { date: '2026.09.04', time: '10:30', merchant: 'CU 삼성점', category: '편의점', card: '데일리', amount: 3200, status: '승인', installment: '일시불', point: 32 },
+          { date: '2026.09.03', time: '19:22', merchant: '아웃백 스테이크', category: '외식', card: '플러스', amount: 68000, status: '승인', installment: '일시불', point: 680 },
+          { date: '2026.09.02', time: '08:05', merchant: 'SK텔레콤', category: '통신요금', card: '플러스', amount: 55000, status: '승인', installment: '일시불', point: 550 },
+          { date: '2026.09.01', time: '07:58', merchant: '스타벅스 삼성점', category: '커피', card: '플러스', amount: 5600, status: '승인', installment: '일시불', point: 56 }
+        ],
+        points: {
+          balance: 128450,
+          history: [
+            { date: '2026.09.13', desc: '쿠팡 결제 적립', delta: 389, type: '적립' },
+            { date: '2026.09.10', desc: '올리브영 결제 적립', delta: 412, type: '적립' },
+            { date: '2026.09.08', desc: '9월 플래티넘 등급 보너스', delta: 2000, type: '적립' },
+            { date: '2026.09.05', desc: '스타벅스 포인트 사용', delta: -3000, type: '사용' },
+            { date: '2026.08.31', desc: '8월 실적 캐시백', delta: 5600, type: '적립' }
+          ]
+        },
+        faq: [
+          { q: '이용내역은 어디서 확인하나요?', a: 'MY 해온에 로그인한 뒤 “이용내역 조회”에서 최근 결제 내역을 일자·시각·할부·적립 포인트까지 확인할 수 있습니다.' },
+          { q: '결제 승인 결과는 어떻게 확인하나요?', a: '빠른 메뉴의 “즉시결제”에서 북웨이브 연동 결제 승인 결과를 조회할 수 있습니다.' },
+          { q: '카드 이용한도는 어떻게 조회하나요?', a: '로그인 후 MY 해온의 “이용가능한도”와 “카드관리”에서 카드별 사용액과 한도를 확인할 수 있습니다.' },
+          { q: '포인트는 어디서 확인하나요?', a: '라이프 영역의 “해온 포인트”에서 보유 포인트와 적립·사용 내역을 확인할 수 있습니다.' },
+          { q: '카드를 분실했을 때는 어떻게 하나요?', a: '고객센터의 “분실·도난 신고”에서 절차 안내를 확인할 수 있습니다. (모의 화면입니다)' },
+          { q: '이 사이트의 정보는 실제인가요?', a: '아니요. 팀 프로젝트용 가상 카드사이며 모든 회원·카드·거래 데이터는 합성 값입니다. 실제 개인정보나 카드번호를 입력하지 마세요.' },
+          { q: '로그인하면 입력 정보가 전송되나요?', a: '아니요. 현재 로그인은 합성 데모로 동작하며, 입력한 아이디·비밀번호를 인증 서버로 전송하지 않습니다.' }
+        ]
+      };
+      const SESSION_KEY = 'haeon.session';
       let paymentOpener;
       const setModalIsolation = (active) => document.querySelectorAll('body > *:not(#paymentModal)').forEach(element => {
         element.inert = active;
@@ -56,9 +105,21 @@
       const sendPayment = async (request, replay = false) => { submitButton.disabled = true; replayButton.disabled = true; form.setAttribute('aria-busy', 'true'); submitButton.textContent = replay ? '재조회 중…' : '승인 요청 중…'; try { const body = await callPayment(request); lastRequest = request; showResult(body.decision === 'APPROVED' ? 'approved' : 'declined', body.decision === 'APPROVED' ? '결제가 승인되었습니다.' : '결제가 거절되었습니다.', replay ? '동일 요청의 기존 결과를 반환했습니다.' : '북웨이브 결제 요청이 정상 처리되었습니다.', body); replayButton.disabled = false; } catch (error) { showResult('error', '승인 결과를 확인하지 못했습니다.', '잠시 후 다시 시도해 주세요.', {...(error.body || {}), orderNo: request.orderNo, amount: request.amount, correlationId: error.body?.correlationId || request.correlationId}); } finally { form.removeAttribute('aria-busy'); submitButton.disabled = false; submitButton.textContent = '결제 승인 요청'; } };
       form.addEventListener('submit', (event) => { event.preventDefault(); const request = { correlationId: makeId('BW-FLOW'), orderNo: $('paymentOrder').value.trim(), merchantRequestId: makeId('BW-REQ'), amount: Number($('paymentAmount').value), currency: 'KRW', paymentMethodToken: $('paymentToken').value.trim() }; sendPayment(request); }); replayButton.addEventListener('click', () => { if (lastRequest) sendPayment(lastRequest, true); });
       const focusMy = (event) => { if (event) event.preventDefault(); $('myPanel').scrollIntoView({ behavior: 'smooth', block: 'center' }); setTimeout(() => { const target = $('myLoginView').hidden ? $('myPageLink') : $('loginId'); if (target) target.focus(); }, 320); };
-      const setLoggedIn = (loggedIn, profile = {}) => { $('myLoginView').hidden = loggedIn; $('myAccountView').hidden = !loggedIn; $('headerLogin').textContent = loggedIn ? '로그아웃' : '로그인'; if (profile.name) $('myGreeting').textContent = `${profile.name}님, 좋은 하루 되세요!`; if (profile.cardName) $('myCardName').textContent = profile.cardName; };
+      const setLoggedIn = (loggedIn, profile = SYNTHETIC.member) => {
+        $('myLoginView').hidden = loggedIn; $('myAccountView').hidden = !loggedIn;
+        $('headerLogin').textContent = loggedIn ? '로그아웃' : '로그인';
+        if (loggedIn) {
+          const s = SYNTHETIC.summary;
+          $('myGreeting').textContent = `${profile.name}님, 좋은 하루 되세요!`;
+          $('myCardName').textContent = `${profile.cardName} · ${profile.cardMasked}`;
+          $('mySpent').textContent = money(s.spent);
+          $('myDue').textContent = money(s.due);
+          $('myAvailable').textContent = money(s.available);
+        }
+        try { if (loggedIn) localStorage.setItem(SESSION_KEY, profile.id || 'member'); else localStorage.removeItem(SESSION_KEY); } catch (error) { /* localStorage 사용 불가 시 무시 */ }
+      };
       window.haeonCardUi = { setLoggedIn };
-      $('loginForm').addEventListener('submit', (event) => { event.preventDefault(); if (!$('loginId').value.trim() || !$('loginPassword').value.trim()) return; $('loginStatus').hidden = false; $('loginStatus').textContent = '로그인 서비스는 준비 중입니다. 현재 입력한 정보는 전송되지 않습니다.'; });
+      $('loginForm').addEventListener('submit', (event) => { event.preventDefault(); if (!$('loginId').value.trim() || !$('loginPassword').value.trim()) return; setLoggedIn(true); $('loginPassword').value = ''; $('loginStatus').hidden = false; $('loginStatus').textContent = '합성 데모 계정으로 로그인했습니다. 입력 정보는 서버로 전송되지 않습니다.'; });
       $('myNav').addEventListener('click', focusMy); $('headerLogin').addEventListener('click', (event) => { if ($('myAccountView').hidden) { activateLogin(false); focusMy(event); } else setLoggedIn(false); }); $('myPageLink').addEventListener('click', focusMy); $('myPaymentButton').addEventListener('click', openModal);
       const infoDialog = $('infoDialog');
       const searchDialog = $('searchDialog');
@@ -79,7 +140,88 @@
         '상담 및 문의': ['해온카드 이용 안내', '고객 상담 서비스는 준비 중입니다.', '팀 프로젝트 담당자에게 모의서비스 이용과 관련한 사항을 문의해 주세요.'],
         '개인정보처리방침': ['모의서비스 개인정보 안내', '실제 개인정보를 입력하지 마세요.', '현재 로그인 폼은 인증 서버로 입력 정보를 전송하지 않습니다. 결제 연동에는 합성 데이터만 사용합니다.']
       };
+      const buildDialog = title => {
+        $('infoTitle').textContent = title;
+        $('infoBody').replaceChildren();
+        const tag = document.createElement('span'); tag.className = 'dialog-tag'; tag.textContent = 'HAEON CARD'; $('infoBody').append(tag);
+        return $('infoBody');
+      };
+      const showFaq = () => {
+        const body = buildDialog('자주 묻는 질문');
+        const list = document.createElement('div'); list.className = 'faq-list';
+        SYNTHETIC.faq.forEach(({ q, a }) => {
+          const item = document.createElement('details'); item.className = 'faq-item';
+          const summary = document.createElement('summary'); summary.textContent = q;
+          const answer = document.createElement('p'); answer.textContent = a;
+          item.append(summary, answer); list.append(item);
+        });
+        body.append(list); infoDialog.showModal();
+      };
+      const historyPill = { '승인': '', '취소': 'cancel', '예정': 'pending' };
+      const el = (tag, className, text) => { const node = document.createElement(tag); if (className) node.className = className; if (text != null) node.textContent = text; return node; };
+      const showHistory = () => {
+        const body = buildDialog('최근 이용내역');
+        const approved = SYNTHETIC.transactions.filter(t => t.status === '승인');
+        const approvedSum = approved.reduce((total, t) => total + t.amount, 0);
+        body.append(el('p', null, `${SYNTHETIC.member.name}님 · ${SYNTHETIC.summary.statementMonth} 이용내역 (합성 데이터)`));
+        const stat = el('div', 'history-stat');
+        stat.append(el('span', null, `총 ${SYNTHETIC.transactions.length}건`), el('span', null, `승인 ${approved.length}건 · 합계 ${money(approvedSum)}`));
+        body.append(stat);
+        const list = el('div', 'history-list');
+        SYNTHETIC.transactions.forEach(t => {
+          const row = el('div', 'history-row');
+          const main = el('div', 'history-main');
+          const meta = `${t.date} ${t.time} · ${t.category} · 해온 ${t.card}${t.installment && t.installment !== '일시불' ? ' · ' + t.installment : ''}`;
+          main.append(el('strong', null, t.merchant), el('span', null, meta));
+          const trailing = el('div', 'history-amount');
+          trailing.append(el('strong', null, money(t.amount)));
+          const badges = el('div', 'history-badges');
+          const pill = el('span', `history-pill ${historyPill[t.status] || ''}`.trim(), t.status);
+          badges.append(pill);
+          if (t.point > 0) badges.append(el('span', 'history-point', `+${t.point.toLocaleString('ko-KR')}P`));
+          trailing.append(badges);
+          row.append(main, trailing); list.append(row);
+        });
+        body.append(list); infoDialog.showModal();
+      };
+      const showCards = () => {
+        const body = buildDialog('카드관리 · 보유 카드');
+        body.append(el('p', null, `${SYNTHETIC.member.name}님 · ${SYNTHETIC.member.grade} 등급 · 보유 카드 ${SYNTHETIC.cards.length}장 (합성 데이터)`));
+        const list = el('div', 'card-list');
+        SYNTHETIC.cards.forEach(card => {
+          const row = el('div', 'card-row');
+          const head = el('div', 'card-row-head');
+          head.append(el('strong', null, card.name), el('span', null, card.masked));
+          if (card.main) head.append(el('span', 'card-tag', '주 이용'));
+          row.append(head, el('div', 'card-meta', `${card.brand} · ${card.type} · 결제일 ${card.payDate}`));
+          const usage = el('div', 'card-usage');
+          const bar = el('div', 'usage-bar'); const fill = el('i'); fill.style.width = `${Math.min(100, Math.round(card.used / card.limit * 100))}%`; bar.append(fill);
+          usage.append(bar, el('span', null, `${money(card.used)} / 한도 ${money(card.limit)}`));
+          row.append(usage, el('div', 'card-benefit', card.benefit));
+          list.append(row);
+        });
+        body.append(list); infoDialog.showModal();
+      };
+      const showPoints = () => {
+        const body = buildDialog('해온 포인트');
+        const balance = el('div', 'point-balance');
+        balance.append(el('span', null, `${SYNTHETIC.member.name}님의 보유 포인트`), el('strong', null, `${SYNTHETIC.points.balance.toLocaleString('ko-KR')} P`));
+        body.append(balance);
+        const list = el('div', 'point-list');
+        SYNTHETIC.points.history.forEach(p => {
+          const row = el('div', 'point-row');
+          const main = el('div', 'point-main');
+          main.append(el('strong', null, p.desc), el('span', null, `${p.date} · ${p.type}`));
+          const delta = el('strong', `point-delta ${p.delta < 0 ? 'minus' : 'plus'}`, `${p.delta > 0 ? '+' : ''}${p.delta.toLocaleString('ko-KR')} P`);
+          row.append(main, delta); list.append(row);
+        });
+        body.append(list);
+        body.append(el('p', 'point-note', '적립·사용 내역은 팀 프로젝트용 합성 데이터입니다. 실제 포인트 거래가 아닙니다.'));
+        infoDialog.showModal();
+      };
       const showInfo = title => {
+        if (title === '자주 묻는 질문') { showFaq(); return; }
+        if (title === '해온 포인트') { showPoints(); return; }
         $('infoTitle').textContent = title;
         $('infoBody').replaceChildren();
         const tag = document.createElement('span'); tag.className = 'dialog-tag'; tag.textContent = 'HAEON CARD'; $('infoBody').append(tag);
@@ -145,7 +287,12 @@
         showInfo(article ? article.querySelector('h3').textContent : text);
       }));
       document.querySelectorAll('.notice-list li').forEach((item, index) => {const span = item.querySelector('span'); if (!span) return; const button = document.createElement('button'); button.type = 'button'; button.textContent = span.textContent; button.addEventListener('click', () => {const title = button.textContent; infoCopy[title] = index === 0 ? ['해온카드 모의서비스 이용 안내', '이 사이트는 팀 프로젝트용 가상 카드사입니다. 합성 데이터로 기능을 확인해 주세요.'] : index === 1 ? ['안전한 카드 이용 안내', '실제 개인정보나 카드번호를 입력하지 말고 프로젝트용 합성 데이터를 이용해 주세요.'] : ['시스템 점검 안내', '개발 및 점검 중에는 서비스 이용이 일시적으로 제한될 수 있습니다.']; showInfo(title);}); span.replaceWith(button);});
-      document.querySelectorAll('.my-actions button:not(#myPaymentButton)').forEach(button => button.addEventListener('click', () => showInfo(button.textContent)));
+      document.querySelectorAll('.my-actions button:not(#myPaymentButton)').forEach(button => button.addEventListener('click', () => {
+        const text = button.textContent.trim();
+        if (text === '이용내역 조회') showHistory();
+        else if (text === '카드관리') showCards();
+        else showInfo(text);
+      }));
       document.querySelectorAll('.gnb a').forEach(link => link.addEventListener('click', () => {document.querySelectorAll('.gnb a').forEach(item => item.classList.toggle('active', item === link));}));
       document.addEventListener('keydown', event => {
         if (event.key !== 'Tab' || !modal.classList.contains('show')) return;
@@ -154,5 +301,6 @@
         else if (!event.shiftKey && document.activeElement === last) {event.preventDefault(); first.focus();}
       });
 
+      try { if (localStorage.getItem(SESSION_KEY)) setLoggedIn(true); } catch (error) { /* localStorage 사용 불가 시 로그아웃 상태 유지 */ }
       seedOrder();
     })();
