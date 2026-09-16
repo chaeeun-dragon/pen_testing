@@ -26,8 +26,13 @@ case "$SCENARIO_PROFILE" in
 esac
 
 REQUEST_AMOUNT="${CARD03_REQUEST_AMOUNT:-$DEFAULT_REQUEST_AMOUNT}"
+BASELINE_USED_AMOUNT="${CARD03_BASELINE_USED_AMOUNT:-0}"
 if [[ ! "$REQUEST_AMOUNT" =~ ^[0-9]+$ || "$REQUEST_AMOUNT" -le 0 ]]; then
   echo "CARD03_REQUEST_AMOUNT는 1 이상의 원 단위 정수여야 합니다. 현재: ${REQUEST_AMOUNT}" >&2
+  exit 2
+fi
+if [[ ! "$BASELINE_USED_AMOUNT" =~ ^[0-9]+(\.[0-9]{1,2})?$ ]]; then
+  echo "CARD03_BASELINE_USED_AMOUNT는 0 이상의 원 단위 금액이어야 합니다. 현재: ${BASELINE_USED_AMOUNT}" >&2
   exit 2
 fi
 
@@ -77,8 +82,9 @@ status=0
 wait "$pid_a" || status=$?
 wait "$pid_b" || status=$?
 
-printf '{"run_id":"%s","profile":"%s","scenario_profile":"%s","base_url":"%s","request_amount":%s,"request_count":2,"status":%d}\n' \
-  "$RUN_ID" "$PROFILE" "$SCENARIO_PROFILE" "$BASE_URL" "$REQUEST_AMOUNT" "$status" > "${OUT_DIR}/run.json"
+printf '{"run_id":"%s","profile":"%s","scenario_profile":"%s","base_url":"%s","request_amount":%s,"request_count":2,"baseline_used_amount":%s,"correlation_ids":["%s-A","%s-B"],"merchant_request_ids":["HC03-REQ-A","HC03-REQ-B"],"status":%d}\n' \
+  "$RUN_ID" "$PROFILE" "$SCENARIO_PROFILE" "$BASE_URL" "$REQUEST_AMOUNT" "$BASELINE_USED_AMOUNT" \
+  "$RUN_ID" "$RUN_ID" "$status" > "${OUT_DIR}/run.json"
 
 if [[ "$status" -ne 0 ]]; then
   echo "CARD-03 요청 중 하나 이상 실패했습니다. 응답 파일과 서비스 로그를 확인하세요." >&2

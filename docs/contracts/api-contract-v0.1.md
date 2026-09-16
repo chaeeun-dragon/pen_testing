@@ -236,7 +236,10 @@ Mock PG 내부 규칙:
 
 `remainingLimit`은 카드 내부 검증과 실습 증거용 값이다. Mock PG는 이를 저장할 수 있지만 북웨이브 응답에는 전달하지 않는다.
 
-API의 `merchantNo`는 현재 v0.1 호환을 위한 합성 가맹점 번호다. `Authorization: Bearer lab-merchant-bookwave`가 있으면 해온카드는 서버 설정의 가맹점 주체를 우선 사용한다. 다음 계약 버전에서는 Bearer 주체를 필수로 하고 `merchantNo` 본문을 제거한다.
+API의 `merchantNo`는 현재 v0.1 호환을 위한 합성 가맹점 번호다. 해온카드는
+`Authorization: Bearer lab-merchant-bookwave`를 **반드시** 검증하고, 인증된 서버 설정의
+가맹점 주체만 사용한다. 헤더가 없거나 토큰이 틀리면 본문 `merchantNo` 값과 무관하게
+`403 MERCHANT_NOT_ALLOWED`로 거절한다. 다음 계약 버전에서는 `merchantNo` 본문을 제거한다.
 
 ## 7. 공통 상태와 오류
 
@@ -256,7 +259,7 @@ API의 `merchantNo`는 현재 v0.1 호환을 위한 합성 가맹점 번호다. 
 | 400 | `INVALID_REQUEST` | 필수값·형식·금액 오류 |
 | 400 | `INVALID_CORRELATION_ID` | 헤더와 본문 ID 불일치 |
 | 400 | `MISSING_IDEMPOTENCY_KEY` | 중복 방지 키 누락 |
-| 403 | `MERCHANT_NOT_ALLOWED` | 허용하지 않은 가맹점 |
+| 403 | `MERCHANT_NOT_ALLOWED` | Bearer 인증 누락·오류 또는 허용하지 않은 가맹점 |
 | 409 | `IDEMPOTENCY_CONFLICT` | 같은 키에 다른 금액·주문을 사용 |
 | 409 | `DUPLICATE_REQUEST` | 이미 처리된 요청의 충돌 |
 | 502 | `UPSTREAM_ERROR` | 다음 서비스 응답 오류 |
@@ -281,29 +284,33 @@ API의 `merchantNo`는 현재 v0.1 호환을 위한 합성 가맹점 번호다. 
 - Mock PG는 해온카드에 동일한 `merchantRequestId`를 전달한다.
 - 같은 키와 같은 내용이면 최초 결과를 다시 반환한다.
 - 같은 키와 다른 금액이면 `409 IDEMPOTENCY_CONFLICT`다.
+- 같은 키가 동시에 두 번 들어오면 북웨이브와 Mock PG는 원자적으로 첫 요청을 선점하고,
+  나머지 요청은 그 결과를 기다린다. 따라서 동일 인스턴스에서는 두 호출의 `paymentId`,
+  `pgTid`, `authorizationNo`가 같아야 한다.
+- 이 v0.1 선점 저장소는 단일 인스턴스 메모리 범위다. 프로세스 재시작·다중 레플리카까지
+  보장해야 하는 운영 전환 시에는 공유 영속 저장소 또는 분산 잠금으로 같은 규칙을 옮긴다.
+  해온카드 DB의 가맹점별 멱등 UNIQUE 키는 최종 승인 원본을 계속 보호한다.
 - 연결 타임아웃은 2초, 전체 요청 타임아웃은 5초로 시작한다.
 - 5xx 재시도는 1회만 허용하고, 4xx 업무 오류는 재시도하지 않는다.
 - 타임아웃 뒤에 승인 여부가 불확실하면 새 키를 만들지 말고 기존 키로 조회 API를 추가할 때까지 `PENDING_REVIEW`로 기록한다.
 
 ## 9. 로그와 증거 계약
 
-모든 서비스는 다음 필드를 구조화 로그에 남긴다.
+모든 서비스는 사람이 읽을 수 있는 `key=value` 구조 로그를 남기며, MDC 접두사
+`corr=<correlationId>`가 한 결제 왕복을 연결한다. 현재 구현의 이벤트 계약은 다음과
+같다.
 
-```json
-{
-  "runId": "ODX-20260909-001",
-  "correlationId": "corr-20260909-0001",
-  "service": "mock-pg",
-  "event": "authorization_forward",
-  "merchantRequestId": "BW-REQ-0001",
-  "pgTid": "PG-LAB-0001",
-  "decision": "APPROVED",
-  "synthetic": true
-}
-```
+| 서비스 | 이벤트 | 실제 이벤트 필드 |
+|---|---|---|
+| bookwave-app | `payment_requested` | `orderNo`, `merchantRequestId`, `amount`, `paymentMethod=synthetic_card` |
+| bookwave-app | `payment_completed` | `orderNo`, `paymentId`, `pgTid`, `decision`, `reasonCode`, `approvedAmount`, `authorizationNo` |
+| mock-pg | `authorization_forward` | `merchantNo`, `merchantRequestId`, `amount`, `paymentMethod=synthetic_card`, `targetService=haeon-card` |
+| mock-pg | `pg_charge_completed` | `orderNo`, `merchantRequestId`, `paymentId`, `pgTid`, `decision`, `reasonCode`, `approvedAmount`, `authorizationNo` |
+| haeon-card | `limit_read` | `cardId`, `merchantRequestId`, `amount`, `readUsedAmount`, `readLimitVersion`, `mode` |
+| haeon-card | `auth_committed` | `authId`, `merchantRequestId`, `decision`, `decisionCode`, `approvedAmount`, `authorizationNo` |
 
-- `runId`는 실행 묶음, `correlationId`는 한 결제 왕복을 뜻한다.
-- 카드번호·CVC·실제 개인정보는 기록하지 않는다.
+- `runId`는 서비스 로그 필드가 아니라 실행 증거 폴더와 `run.json`의 묶음 식별자다.
+- 카드번호·CVC·원시 결제 토큰·실제 개인정보는 기록하지 않는다.
 - `evidence`는 업무 DB가 아니라 실행 로그와 manifest를 보관하는 곳이다.
 - 실행 전 프로파일, Git 커밋, Compose 설정 해시를 manifest에 남긴다.
 
