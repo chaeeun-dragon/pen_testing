@@ -1,7 +1,7 @@
 # 결제 서버 침입 징후 합성 시뮬레이션 실행 계약 v0.1
 
 작성일: 2026-09-16
-상태: 4단계 구현·검증 완료 - S1~S4 순서 로그·범위 제한 탐지·실행 증거 도구 구현됨
+상태: 5단계 구현·검증 완료 - 실행 도구·증거 패키지·범위 제한 탐지·증거 검사기 구성됨
 
 ## 1. 목적과 소유 경계
 
@@ -82,11 +82,27 @@ INCIDENT_SIMULATION_ACCESS_TOKEN=lab-simulation-20260916 \
 아닌 이 격리 실습의 제어 값만 사용한다.
 
 - `scenario.json`: `scenarioId`, `runId`, `simulation=true`, PG·카드 호출 여부
-- `response.json`, `services.log`: 고정 이벤트와 `corr=<correlationId>` 형식
+- `request.json`: 경로·실행 ID·상관 ID, 제어 토큰은 `redacted`로만 보관
+- `response.json`, `bookwave-health.json`, `services.log`: 고정 이벤트와 `corr=<correlationId>` 형식
 - `result.json`, `summary.txt`: S3 `ALERT`, S4 차단·추가 검증 `PASS`
 - `correlation-report.tsv`: Bookwave만 `yes`, Mock PG·해온카드는 `no (expected)`인지 확인
 - `detection/result.json`, `detection/summary.txt`, `detection/event-sequence.tsv`:
   범위 제한 탐지의 판정·이벤트 순서·서비스별 상관 로그 대사
+- `evidence-check.json`, `evidence-manifest.json`: 필수 증거 파일의 내용 검증 결과와
+  파일별 SHA-256 해시. manifest는 자기 자신을 해시 대상에 포함하지 않는다.
+
+`tools/payment-server-incident-evidence-check.sh`는 저장된 증거만 읽는다. 일반 결제,
+시뮬레이션 경로, Mock PG, 해온카드, DB를 호출하지 않으며, 동일 실행의 증거를 다시
+검사할 때 사용한다.
+
+최종 증거 패키지 검증 실행은 `INCIDENT-SIM-20260916T030000Z`이며, 이후 정상 결제
+회귀 실행은 `POST-EVIDENCE-FLOW-20260916T034500Z`이다.
+
+```bash
+RUN_ID=INCIDENT-SIM-<실행ID> \
+CORRELATION_ID=<해당-correlationId> \
+  bash tools/payment-server-incident-evidence-check.sh
+```
 
 ## 5. 회귀 보호 조건
 
@@ -100,3 +116,6 @@ INCIDENT_SIMULATION_ACCESS_TOKEN=lab-simulation-20260916 \
 5. `tools/payment-server-incident-detection-check.sh`가 지정된 `runId`·`correlationId`
    범위에서 S1 관측 → S2 접근 시도 → S3 `ALERT` → S4 차단·추가 검증 `PASS` 순서를
    확인한다. Mock PG·해온카드의 해당 상관 로그가 있거나 이벤트가 누락·중복되면 `FAIL`이다.
+6. `tools/payment-server-incident-evidence-check.sh`가 다섯 필수 파일(`scenario.json`,
+   `services.log`, `result.json`, `summary.txt`, `correlation-report.tsv`)과 보조 증거의
+   내용·범위를 검사하고 `evidence-manifest.json`을 생성한다.

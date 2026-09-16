@@ -11,7 +11,8 @@
 - 원격 저장소: `https://github.com/chaeeun-dragon/pen_testing`
 - 사전 준비 커밋: `6acc978 feat: harden payment flow and prepare incident simulation`
 - 시뮬레이션 구현 커밋: `56cda20 feat: add isolated payment server incident simulation`
-- 최신 원격 커밋: `88f910f feat: automate card03 detection and demo rehearsal` (원격 push 재확인 대기)
+- S1~S4 탐지 커밋: `227eca5 feat: add scoped incident sequence detection`
+- 원격 브랜치에는 위 S1~S4 커밋까지 반영되어 있다
 - 개발 환경: WSL Ubuntu 24.04, Docker Compose, Java 21, Spring Boot 3.4.5, MySQL 8.0
 - 데이터: 실제 카드·회원·금융망이 아닌 합성 데이터만 사용
 
@@ -139,8 +140,10 @@ db/haeon-card/fixtures/005_card03_demo_amount_range.sql
 - 실행 ID는 증거·로그 식별자일 뿐 승인 판단이나 권한으로 사용하지 않음
 - `tools/payment-server-incident-detection-check.sh`가 같은 `runId`·`correlationId` 범위에서
   S1 관측 → S2 접근 시도 → S3 ALERT → S4 차단·추가 검증 PASS 순서와 미호출을 대사
-- 최종 검증 실행: `INCIDENT-SIM-20260916T020000Z`; 이후 정상 흐름 회귀:
-  `POST-S1S4-FLOW-20260916T022000Z`
+- `tools/payment-server-incident-evidence-check.sh`가 필수 증거·토큰 마스킹·범위·해시
+  manifest를 검사하며, 저장된 파일만 읽는다
+- 최종 증거 검증 실행: `INCIDENT-SIM-20260916T030000Z`; 이후 정상 흐름 회귀:
+  `POST-EVIDENCE-FLOW-20260916T034500Z`
 
 ## 4. 탐지 자동화
 

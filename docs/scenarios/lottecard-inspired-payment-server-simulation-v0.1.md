@@ -1,7 +1,7 @@
 # 실제 카드사 침해사고 착안 결제 서버 침해 시뮬레이션과 CARD-03 연결 v0.1
 
 작성일: 2026-09-16
-상태: S1~S4 순서 로그·탐지 구현·검증됨 — 실제 침입·웹쉘은 미구현·비범위
+상태: S1~S4 순서 로그·탐지와 실행 증거 패키지 구현·검증됨 — 실제 침입·웹쉘은 미구현·비범위
 대상: 북웨이브 → Mock PG → 해온카드 합성 결제 실습 환경
 
 ## 1. 이 문서가 정하는 프로젝트 표현
@@ -102,11 +102,12 @@ CARD-03은 침입 이후의 부정결제 경로를 증명하는 자료가 아니
 해온카드를 호출하지 않는다. 세부 계약은
 `docs/contracts/incident-simulation-contract-v0.1.md`를 따른다.
 
-전용 경로의 S1~S4 최종 검증 실행은 `INCIDENT-SIM-20260916T020000Z`로 남겼다. S3
-`ALERT`, S4 `BLOCKED`·추가 검증 `PASS`를 포함한 고정 이벤트 일곱 개가 Bookwave
-로그에서만 확인됐고, 범위 제한 탐지 결과는 `PASS`였다. 응답·증거 모두
+전용 경로의 S1~S4·증거 패키지 최종 검증 실행은 `INCIDENT-SIM-20260916T030000Z`로
+남겼다. S3 `ALERT`, S4 `BLOCKED`·추가 검증 `PASS`를 포함한 고정 이벤트 일곱 개가
+Bookwave 로그에서만 확인됐고, 범위 제한 탐지·독립 증거 검사 결과는 모두 `PASS`였다.
+응답·증거 모두
 `mockPgCalled=false`, `haeonCardCalled=false`였다. 이후
-`POST-S1S4-FLOW-20260916T022000Z`로 정상 결제 동시 멱등성 회귀를 통과했으며,
+`POST-EVIDENCE-FLOW-20260916T034500Z`로 정상 결제 동시 멱등성 회귀를 통과했으며,
 최종 합성 카드 DB는 한도 100,000원, 사용액 0원, 버전 0으로 복원했다.
 
 ## 4. 구현된 최소 시나리오: 결제 서버 침입 징후의 안전한 시뮬레이션
@@ -140,11 +141,14 @@ CARD-03은 침입 이후의 부정결제 경로를 증명하는 자료가 아니
 충돌하지 않는다.
 
 - `scenario.json`: `scenarioId`, `simulation=true`, Mock PG·해온카드 호출 없음
+- `request.json`: 제어 토큰을 `redacted`로 마스킹한 전용 경로 실행 요청
+- `bookwave-health.json`: 실행 전 Bookwave 상태
 - `services.log`: S1~S4의 `correlationId`별 고정 구조화 이벤트
 - `result.json`: S3 `ALERT`, S4 차단·추가 검증 `PASS`
 - `detection/result.json`, `event-sequence.tsv`: 범위 제한 탐지 결과와 순서 대사
 - `summary.txt`: 합성 데이터만 사용했으며 실제 웹쉘·실제 정보유출이 아니라는 문구
 - `correlation-report.tsv`: 북웨이브만 상관 로그가 있고 Mock PG·해온카드는 없음
+- `evidence-check.json`, `evidence-manifest.json`: 필수 증거 검증과 파일별 SHA-256 대사
 
 ## 5. 최신 기술과의 연결 기준
 
