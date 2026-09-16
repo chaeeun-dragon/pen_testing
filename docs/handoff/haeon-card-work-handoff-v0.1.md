@@ -9,7 +9,8 @@
 - 프로젝트 경로(WSL): `/mnt/c/study/docker/bookwave-haeon-lab`
 - Git 브랜치: `feat/haeon-lab-baseline`
 - 원격 저장소: `https://github.com/chaeeun-dragon/pen_testing`
-- 최신 로컬 커밋: `6acc978 feat: harden payment flow and prepare incident simulation`
+- 사전 준비 커밋: `6acc978 feat: harden payment flow and prepare incident simulation`
+- 시뮬레이션 구현 커밋: `56cda20 feat: add isolated payment server incident simulation`
 - 최신 원격 커밋: `88f910f feat: automate card03 detection and demo rehearsal` (원격 push 재확인 대기)
 - 개발 환경: WSL Ubuntu 24.04, Docker Compose, Java 21, Spring Boot 3.4.5, MySQL 8.0
 - 데이터: 실제 카드·회원·금융망이 아닌 합성 데이터만 사용
