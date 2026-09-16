@@ -7,5 +7,5 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
  * This setting must never change the normal payment route by itself.
  */
 @ConfigurationProperties(prefix = "bookwave.incident-simulation")
-public record IncidentSimulationProperties(boolean enabled) {
+public record IncidentSimulationProperties(boolean enabled, String accessToken) {
 }

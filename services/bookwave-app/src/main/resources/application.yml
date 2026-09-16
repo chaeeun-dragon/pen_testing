@@ -25,6 +25,7 @@ bookwave:
   lab-profile: ${LAB_PROFILE:normal}
   incident-simulation:
     enabled: ${INCIDENT_SIMULATION_ENABLED:false}
+    access-token: ${INCIDENT_SIMULATION_ACCESS_TOKEN:}
 
 logging:
   pattern:

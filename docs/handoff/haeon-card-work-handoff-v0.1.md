@@ -9,7 +9,8 @@
 - 프로젝트 경로(WSL): `/mnt/c/study/docker/bookwave-haeon-lab`
 - Git 브랜치: `feat/haeon-lab-baseline`
 - 원격 저장소: `https://github.com/chaeeun-dragon/pen_testing`
-- 최신 원격 커밋: `88f910f feat: automate card03 detection and demo rehearsal`
+- 최신 로컬 커밋: `6acc978 feat: harden payment flow and prepare incident simulation`
+- 최신 원격 커밋: `88f910f feat: automate card03 detection and demo rehearsal` (원격 push 재확인 대기)
 - 개발 환경: WSL Ubuntu 24.04, Docker Compose, Java 21, Spring Boot 3.4.5, MySQL 8.0
 - 데이터: 실제 카드·회원·금융망이 아닌 합성 데이터만 사용
 
@@ -44,6 +45,11 @@ haeon-card-mysql
 - `haeon-card`: `127.0.0.1:8084->8084`, healthy
 - `haeon-card-mysql`: 내부 전용, healthy
 - `bookwave-chatbot`, `bookwave-cover-upload`: 현재 임시 컨테이너
+
+Bookwave의 전용 침입 징후 시뮬레이션 경로는 일반 결제와 별도다.
+`POST /internal/v1/lab/incident-simulations/payment-server`는 기본 비활성화 상태이며,
+활성화·랩 제어 토큰·합성 실행 ID를 모두 요구한다. 이 경로는 Mock PG·해온카드 API와
+해온카드 DB를 호출하지 않고 고정 이벤트만 기록한다.
 
 주요 네트워크:
 
@@ -123,6 +129,16 @@ db/haeon-card/fixtures/005_card03_demo_amount_range.sql
 ```
 
 새로 생성되는 DB는 수정된 `001_haeon_card_schema.sql`을 사용한다.
+
+### 3.5 결제 서버 침입 징후 합성 시뮬레이션
+
+- 전용 비결제 경로와 `INCIDENT_SIMULATION_ENABLED=false` 기본 차단 구현
+- 랩 제어 토큰과 `INCIDENT-SIM-` 실행 ID 검증
+- 고정 `RECORDED → ALERT → BLOCKED → PASS` 이벤트만 생성
+- 실행 ID는 증거·로그 식별자일 뿐 승인 판단이나 권한으로 사용하지 않음
+- `tools/payment-server-incident-simulation.sh`가 Mock PG·해온카드 미호출을 대사
+- 최종 검증 실행: `INCIDENT-SIM-20260916T015100Z`; 이후 정상 흐름 회귀:
+  `POST-INCIDENT-FLOW-20260916T015300Z`
 
 ## 4. 탐지 자동화
 
@@ -350,13 +366,11 @@ LAB_PROFILE=normal BEFORE_BARRIER_ENABLED=false \
 
 ## 8. 현재 Git 상태 주의사항
 
-마지막 커밋에는 탐지 자동화·시연 프로파일·체크리스트만 포함했다. 현재 작업 트리에
-다음 사용자 작업이 남아 있을 수 있다.
+현재 작업 트리에 다음 사용자 작업이 남아 있을 수 있다.
 
-- 수정됨: `services/bookwave-app/src/main/resources/static/index.html`
 - 추적되지 않음: `중간발표_프로젝트이해_퀘스트.html`
 
-이 두 파일은 인수인계 시 임의로 되돌리거나 커밋하지 않는다. 커밋할 때는 반드시
+이 파일은 인수인계 시 임의로 되돌리거나 커밋하지 않는다. 커밋할 때는 반드시
 `git add -- <명시적 파일 목록>`을 사용한다. `evidence/runs/`는 `.gitignore` 대상이다.
 
 ## 9. 남은 작업
@@ -373,7 +387,7 @@ LAB_PROFILE=normal BEFORE_BARRIER_ENABLED=false \
 8. [ ] 챗봇·표지 업로드 임시 컨테이너를 실제 서비스로 교체할지 결정
 9. [ ] 공격 단계별 탐지 결과와 MITRE ATT&CK 매핑 최종 확정
 10. [ ] 최종 시나리오 보고서·증거 목록·발표용 영상 정리
-11. [ ] 별도 승인 후, 실제 웹쉘이 아닌 결제 서버 침입 징후의 합성 시뮬레이션(S1~S4)을
+11. [x] 실제 웹쉘이 아닌 결제 서버 침입 징후의 고정 합성 시뮬레이션(S1~S4)을
     구현하고 ALERT·차단·PASS 증거를 추가
 
 ## 10. MITRE ATT&CK 현재 판단
