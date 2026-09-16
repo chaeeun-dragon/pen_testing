@@ -59,7 +59,7 @@
       const setLoggedIn = (loggedIn, profile = {}) => { $('myLoginView').hidden = loggedIn; $('myAccountView').hidden = !loggedIn; $('headerLogin').textContent = loggedIn ? '로그아웃' : '로그인'; if (profile.name) $('myGreeting').textContent = `${profile.name}님, 좋은 하루 되세요!`; if (profile.cardName) $('myCardName').textContent = profile.cardName; };
       window.haeonCardUi = { setLoggedIn };
       $('loginForm').addEventListener('submit', (event) => { event.preventDefault(); if (!$('loginId').value.trim() || !$('loginPassword').value.trim()) return; $('loginStatus').hidden = false; $('loginStatus').textContent = '로그인 서비스는 준비 중입니다. 현재 입력한 정보는 전송되지 않습니다.'; });
-      $('myNav').addEventListener('click', focusMy); $('headerLogin').addEventListener('click', (event) => { if ($('myAccountView').hidden) focusMy(event); else setLoggedIn(false); }); $('myPageLink').addEventListener('click', focusMy); $('myPaymentButton').addEventListener('click', openModal);
+      $('myNav').addEventListener('click', focusMy); $('headerLogin').addEventListener('click', (event) => { if ($('myAccountView').hidden) { activateLogin(false); focusMy(event); } else setLoggedIn(false); }); $('myPageLink').addEventListener('click', focusMy); $('myPaymentButton').addEventListener('click', openModal);
       const infoDialog = $('infoDialog');
       const searchDialog = $('searchDialog');
       const infoCopy = {
@@ -113,7 +113,6 @@
         tabs[next].click(); tabs[next].focus();
       }));
       document.querySelectorAll('a[href="#myPanel"]').forEach(link => link.addEventListener('click', () => activateLogin(false)));
-      $('headerLogin').addEventListener('click', () => activateLogin(false));
       const menuItems = [
         ['나의 카드 · 이용내역', '#myPanel', 'MY'], ['결제예정금액 · 이용가능한도', '#myPanel', 'MY'],
         ['해온 데일리 · 생활·교통', '#cards', '카드'], ['해온 플러스 · 쇼핑·구독', '#cards', '카드'], ['해온 트래블 · 여행·해외', '#cards', '카드'],
