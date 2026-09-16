@@ -47,3 +47,50 @@
 @media(max-width:800px){html{scroll-padding-top:135px}.wrap{padding:0 20px}.utility-right{display:none}.main-header .wrap{flex-wrap:wrap;gap:0;min-height:0;padding-top:13px}.brand-name{font-size:23px}.brand-symbol{width:29px;height:29px;border-width:6px}.header-actions{margin-left:auto}.gnb{order:3;width:100%;justify-content:space-between;height:49px;gap:20px;font-size:14px}.gnb a{height:49px}.page{padding-top:20px}.home-top{grid-template-columns:minmax(0,1fr)}.hero-panel{height:315px}.hero-copy h1{font-size:34px}.hero-card-art{right:60px;width:134px;height:219px;top:34px}.hero-card-back{right:133px;width:132px;height:212px;top:70px}.hero-copy{max-width:60%}.my-card{padding:21px}.my-login-form{display:grid;grid-template-columns:1fr 1fr 100px;gap:8px}.login-input{margin:0}.login-submit{height:41px}.login-status{grid-column:1/-1}.login-tabs{max-width:280px}.my-heading p{margin-bottom:8px}.login-links{justify-content:start}.quick-links{grid-template-columns:repeat(3,1fr);padding:8px 0}.quick-link{padding:13px 5px;min-height:60px;font-size:12px}.quick-link:nth-child(3){border-right:0}.quick-link:nth-child(-n+3){border-bottom:1px solid var(--line)}.section{margin-top:36px}.section-head h2{font-size:22px}.product-card{padding-inline:10px}.benefits{gap:7px}.benefit-chip{font-size:11px}.benefit-chip strong{font-size:15px}.product-card p{font-size:11px}.finance-grid{grid-template-columns:repeat(2,1fr)}.finance-card:nth-child(2){border-right:0}.finance-card:nth-child(-n+2){border-bottom:1px solid var(--line)}.service-grid{gap:10px}.life-card{padding:18px}.life-icon{float:none;font-size:24px;margin-bottom:10px}.notice-section{gap:25px}.middle-grid{gap:14px}.benefit-banner{padding:24px}.benefit-banner h3{font-size:20px}.event-art{display:none}.footer-note{max-width:220px}.modal-content{grid-template-columns:1fr!important}.modal-form{border-right:0!important}}
 @media(max-width:540px){.wrap{padding:0 16px}.utility-bar{font-size:11px}.utility-left{gap:14px}.utility-left span{display:none}.main-header .wrap{padding-top:11px}.gnb{gap:0;font-size:13px}.header-btn{padding:7px 10px;font-size:11px}.brand-name{font-size:21px}.hero-tabs{padding:0 20px;gap:22px;height:46px}.hero-tabs button{font-size:12px}.hero-panel{height:365px}.hero-copy{padding:25px 23px;max-width:100%}.hero-copy .overline{font-size:11px}.hero-copy h1{font-size:29px;margin:10px 0}.hero-copy p{font-size:12px;max-width:190px}.hero-buttons{margin-top:18px}.hero-card-art{right:28px;top:182px;width:86px;height:138px;padding:12px;transform:rotate(12deg)}.hero-card-art:before{font-size:20px;top:35px;left:5px}.hero-card-art .card-label{font-size:11px;letter-spacing:1px}.hero-card-art .chip{left:12px;bottom:42px;width:17px;height:13px}.hero-card-art strong{font-size:11px;bottom:23px;left:12px}.hero-card-art span{font-size:11px;bottom:12px;left:12px}.hero-card-back{right:83px;top:198px;width:84px;height:134px;font-size:11px;padding:12px}.hero-card-back:after{font-size:65px}.hero-controls{left:23px;bottom:25px}.my-login-form{grid-template-columns:1fr 1fr}.login-submit{grid-column:1/-1}.quick-link{flex-direction:column;gap:6px;font-size:11px;min-height:76px}.section-head{align-items:center}.section-head h2{font-size:21px}.section-head p{font-size:11px;max-width:240px}.more{font-size:11px}.product-toolbar{margin-bottom:12px}.product-filters{gap:6px}.product-filters button{font-size:11px;padding:6px 13px}.product-grid{grid-template-columns:1fr;padding:0}.product-card{display:block;text-align:left;padding:24px 8px 24px 130px;min-height:225px;border-right:0;border-bottom:1px solid var(--line)}.product-card .card-mini{position:absolute;left:10px;top:31px;width:96px;height:153px}.product-card .tag{margin:0;display:inline-block;font-size:11px}.product-card h3{font-size:18px}.product-card p{font-size:11px}.benefits{justify-content:start;gap:13px;margin-top:12px}.product-card .detail{display:inline-block;margin-top:13px;font-size:11px}.middle-grid,.service-grid,.notice-section{grid-template-columns:1fr}.benefit-banner{min-height:210px}.event-art{display:grid;opacity:.65;right:24px;bottom:33px}.service-grid{gap:12px}.life-card{min-height:145px;padding:22px}.life-icon{float:right;font-size:32px}.finance-card{padding:21px 16px}.finance-card h3{font-size:14px}.finance-value strong{font-size:18px}.finance-icon{width:27px;height:27px;font-size:17px}.notice-section{gap:24px}.notice-list li{font-size:11px}.support-links button{font-size:11px;padding:10px}.footer-note{text-align:left;max-width:none}footer .wrap{flex-direction:column}.footer-note{align-self:start}.to-top{right:13px;bottom:16px;width:34px;height:34px}.my-actions button{flex:1}}
 @media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}*,*:before,*:after{animation:none!important;transition:none!important}}
+/* 합성 데모: FAQ 아코디언 · 이용내역 · 카드요약 다이얼로그 */
+.faq-list{display:grid;gap:8px;margin-top:16px}
+.faq-item{border:1px solid var(--line);border-radius:8px;padding:0 14px}
+.faq-item summary{cursor:pointer;list-style:none;padding:13px 0;font-size:13px;font-weight:700;color:var(--ink);display:flex;justify-content:space-between;align-items:center;gap:10px}
+.faq-item summary::-webkit-details-marker{display:none}
+.faq-item summary:after{content:"+";color:var(--blue);font-size:18px;font-weight:400;line-height:1}
+.faq-item[open] summary:after{content:"−"}
+.faq-item p{margin:0 0 14px;font-size:12px;color:var(--sub);line-height:1.7}
+.history-list{display:grid;margin-top:14px}
+.history-row{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:12px 2px;border-bottom:1px solid var(--line)}
+.history-main{display:flex;flex-direction:column;gap:3px;min-width:0}
+.history-main strong{font-size:13px;color:var(--ink)}
+.history-main span{font-size:11px;color:var(--sub)}
+.history-amount{display:flex;flex-direction:column;align-items:flex-end;gap:4px;white-space:nowrap}
+.history-amount strong{font-size:13px;color:var(--ink)}
+.history-pill{font-size:10px;padding:2px 8px;border-radius:20px;background:#eef6f2;color:#2f7d5f}
+.history-pill.cancel{background:#fbeeee;color:#b4524a}
+.history-pill.pending{background:#f1f3f7;color:#5a6b86}
+.card-list{display:grid;gap:10px;margin-top:14px}
+.card-row{border:1px solid var(--line);border-radius:8px;padding:15px}
+.card-row-head{display:flex;align-items:center;gap:8px}
+.card-row-head strong{font-size:14px}
+.card-row-head span{font-size:12px;color:var(--sub)}
+.card-tag{margin-left:auto;font-size:10px;color:var(--blue);border:1px solid #cfe6dd;border-radius:20px;padding:2px 8px}
+.card-usage{margin-top:12px}
+.usage-bar{height:6px;border-radius:6px;background:#eef2f0;overflow:hidden}
+.usage-bar i{display:block;height:100%;background:var(--blue);border-radius:6px}
+.card-usage span{display:block;margin-top:7px;font-size:11px;color:var(--sub)}
+/* 합성 데모 상세: 이용내역 통계·포인트·카드 메타 */
+.history-stat{display:flex;justify-content:space-between;gap:10px;margin-top:12px;padding:10px 12px;background:#f4f8f6;border-radius:8px;font-size:12px;color:#3f5b50}
+.history-stat span:last-child{font-weight:700}
+.history-badges{display:flex;align-items:center;gap:6px}
+.history-point{font-size:10px;color:var(--blue);font-weight:700}
+.card-meta{margin-top:8px;font-size:11px;color:var(--sub)}
+.card-benefit{margin-top:10px;font-size:11px;color:#3f5b50;line-height:1.6}
+.point-balance{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-top:16px;padding:18px;border-radius:10px;background:linear-gradient(135deg,#0d7060,#127a63);color:#fff}
+.point-balance span{font-size:12px;opacity:.9}
+.point-balance strong{font-size:22px;letter-spacing:-.5px}
+.point-list{display:grid;margin-top:14px}
+.point-row{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:12px 2px;border-bottom:1px solid var(--line)}
+.point-main{display:flex;flex-direction:column;gap:3px;min-width:0}
+.point-main strong{font-size:13px;color:var(--ink)}
+.point-main span{font-size:11px;color:var(--sub)}
+.point-delta{font-size:13px;white-space:nowrap}
+.point-delta.plus{color:#2f7d5f}
+.point-delta.minus{color:#b4524a}
+.point-note{margin:14px 0 0;font-size:11px;color:var(--sub)}

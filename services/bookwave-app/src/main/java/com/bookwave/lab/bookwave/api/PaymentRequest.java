@@ -1,5 +1,6 @@
 package com.bookwave.lab.bookwave.api;
 
+import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Positive;
@@ -18,6 +19,7 @@ public record PaymentRequest(
         String merchantRequestId,
 
         @Positive
+        @Max(10000000)
         long amount,
 
         @NotBlank
