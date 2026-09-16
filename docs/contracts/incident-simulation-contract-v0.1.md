@@ -1,7 +1,7 @@
 # 결제 서버 침입 징후 합성 시뮬레이션 실행 계약 v0.1
 
 작성일: 2026-09-16
-상태: 5단계 구현·검증 완료 - 실행 도구·증거 패키지·범위 제한 탐지·증거 검사기 구성됨
+상태: 6단계 회귀·보안 검증 완료 - 실행 도구·증거 패키지·범위 제한 탐지·DB 격리·포트 점검 구성됨
 
 ## 1. 목적과 소유 경계
 
@@ -90,6 +90,10 @@ INCIDENT_SIMULATION_ACCESS_TOKEN=lab-simulation-20260916 \
   범위 제한 탐지의 판정·이벤트 순서·서비스별 상관 로그 대사
 - `evidence-check.json`, `evidence-manifest.json`: 필수 증거 파일의 내용 검증 결과와
   파일별 SHA-256 해시. manifest는 자기 자신을 해시 대상에 포함하지 않는다.
+- `haeon-db-before.tsv`, `haeon-db-after.tsv`, `haeon-db-isolation.json`: 선택적으로
+  `tools/payment-server-incident-db-isolation-check.sh`가 해온카드 DB의 네 테이블
+  (`card_limits`, `authorization_requests`, `card_transactions`, `audit_events`)을 시뮬레이션
+  전후 비교해 변경 없음(`haeonCardDbChanged=false`)을 증명한다.
 
 `tools/payment-server-incident-evidence-check.sh`는 저장된 증거만 읽는다. 일반 결제,
 시뮬레이션 경로, Mock PG, 해온카드, DB를 호출하지 않으며, 동일 실행의 증거를 다시
@@ -119,3 +123,9 @@ CORRELATION_ID=<해당-correlationId> \
 6. `tools/payment-server-incident-evidence-check.sh`가 다섯 필수 파일(`scenario.json`,
    `services.log`, `result.json`, `summary.txt`, `correlation-report.tsv`)과 보조 증거의
    내용·범위를 검사하고 `evidence-manifest.json`을 생성한다.
+7. `tools/payment-server-incident-db-isolation-check.sh`는 시뮬레이션 전후 해온카드
+   승인 DB 스냅샷이 동일한지 검사한다. 이 도구를 쓸 때 증거 검사기는 스냅샷·격리
+   결과 파일까지 manifest에 포함해 검증한다.
+8. `tools/network-port-security-check.sh`는 읽기 전용으로 `127.0.0.1` 허용 포트
+   (Bookwave 8080, Mock PG 8083, 선택적 해온카드 디버그 8084)와 내부 DB·카드·감사
+   네트워크 경계를 검사한다.
