@@ -29,7 +29,8 @@ public class HaeonCardAuthorizationClient implements CardAuthorizationGateway {
     @Override
     public AuthorizationResult authorize(AuthorizationRequest request) {
         try {
-            log.info("event=authorization_forward merchantNo={} merchantRequestId={} amount={} synthetic=true",
+            log.info("event=authorization_forward merchantNo={} merchantRequestId={} amount={} "
+                            + "paymentMethod=synthetic_card targetService=haeon-card synthetic=true",
                     request.merchantNo(), request.merchantRequestId(), request.amount());
             return haeonCardClient.post()
                     .uri("/internal/v1/authorizations")

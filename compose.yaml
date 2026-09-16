@@ -15,6 +15,7 @@ services:
       SERVICE_NAME: bookwave-app
       LAB_PROFILE: ${LAB_PROFILE:-normal}
       MOCK_PG_BASE_URL: http://mock-pg:8083
+      INCIDENT_SIMULATION_ENABLED: ${INCIDENT_SIMULATION_ENABLED:-false}
     ports:
       - "127.0.0.1:${BOOKWAVE_APP_PORT:-8080}:8080"
     networks:

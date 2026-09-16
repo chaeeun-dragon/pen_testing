@@ -23,6 +23,8 @@ bookwave:
   connect-timeout-ms: ${BOOKWAVE_CONNECT_TIMEOUT_MS:2000}
   read-timeout-ms: ${BOOKWAVE_READ_TIMEOUT_MS:5000}
   lab-profile: ${LAB_PROFILE:normal}
+  incident-simulation:
+    enabled: ${INCIDENT_SIMULATION_ENABLED:false}
 
 logging:
   pattern:

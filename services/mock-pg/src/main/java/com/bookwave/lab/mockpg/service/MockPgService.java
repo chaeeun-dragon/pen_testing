@@ -41,26 +41,35 @@ public class MockPgService {
         validateHeaders(request, correlationHeader, idempotencyKey);
         String fingerprint = requestFingerprint.of(request);
 
-        var previous = idempotencyStore.find(request.merchantRequestId());
-        if (previous.isPresent()) {
-            if (!previous.get().requestFingerprint().equals(fingerprint)) {
+        IdempotencyStore.Claim claim = idempotencyStore.claim(request.merchantRequestId());
+        if (!claim.owner()) {
+            IdempotencyStore.StoredPayment previous = idempotencyStore.await(claim);
+            if (!previous.requestFingerprint().equals(fingerprint)) {
                 throw new MockPgException(HttpStatus.CONFLICT, "IDEMPOTENCY_CONFLICT",
                         "같은 요청 키에 다른 결제 내용이 사용되었습니다.", false);
             }
             log.info("event=idempotent_replay merchantRequestId={} pgTid={}",
-                    request.merchantRequestId(), previous.get().result().pgTid());
-            return previous.get().result();
+                    request.merchantRequestId(), previous.result().pgTid());
+            return previous.result();
         }
 
-        String pgTid = "PG-LAB-" + shortId();
-        String paymentId = "PAY-LAB-" + shortId();
-        AuthorizationResult authorization = requestAuthorization(request, fingerprint);
-        PaymentResult result = paymentResultMapper.toPaymentResult(
-                request, authorization, paymentId, pgTid);
-        idempotencyStore.put(request.merchantRequestId(), new IdempotencyStore.StoredPayment(fingerprint, result));
-        log.info("event=pg_charge_completed orderNo={} merchantRequestId={} pgTid={} decision={} amount={} synthetic=true",
-                request.orderNo(), request.merchantRequestId(), pgTid, result.decision(), result.approvedAmount());
-        return result;
+        try {
+            String pgTid = "PG-LAB-" + shortId();
+            String paymentId = "PAY-LAB-" + shortId();
+            AuthorizationResult authorization = requestAuthorization(request, fingerprint);
+            PaymentResult result = paymentResultMapper.toPaymentResult(
+                    request, authorization, paymentId, pgTid);
+            idempotencyStore.complete(claim,
+                    new IdempotencyStore.StoredPayment(fingerprint, result));
+            log.info("event=pg_charge_completed orderNo={} merchantRequestId={} paymentId={} pgTid={} "
+                            + "decision={} reasonCode={} approvedAmount={} authorizationNo={} synthetic=true",
+                    request.orderNo(), request.merchantRequestId(), paymentId, pgTid, result.decision(),
+                    result.reasonCode(), result.approvedAmount(), result.authorizationNo());
+            return result;
+        } catch (RuntimeException ex) {
+            idempotencyStore.fail(request.merchantRequestId(), claim, ex);
+            throw ex;
+        }
     }
 
     private AuthorizationResult requestAuthorization(PaymentRequest request, String fingerprint) {

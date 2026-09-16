@@ -31,26 +31,29 @@ public class PaymentService {
         validateHeaders(request, correlationHeader, idempotencyKey);
         String fingerprint = requestFingerprint.of(request);
 
-        var previous = paymentStore.findPayment(request.merchantRequestId());
-        if (previous.isPresent()) {
-            if (!previous.get().requestFingerprint().equals(fingerprint)) {
+        PaymentStore.Claim claim = paymentStore.claim(request.merchantRequestId());
+        if (!claim.owner()) {
+            PaymentStore.StoredPayment previous = paymentStore.await(claim);
+            if (!previous.requestFingerprint().equals(fingerprint)) {
                 throw new BookwaveException(HttpStatus.CONFLICT, "IDEMPOTENCY_CONFLICT",
                         "같은 요청 키에 다른 주문 또는 금액이 사용되었습니다.", false);
             }
             log.info("event=payment_idempotent_replay orderNo={} merchantRequestId={} pgTid={}",
-                    request.orderNo(), request.merchantRequestId(), previous.get().result().pgTid());
-            return previous.get().result();
+                    request.orderNo(), request.merchantRequestId(), previous.result().pgTid());
+            return previous.result();
         }
 
         paymentStore.markOrder(request.orderNo(), OrderStatus.PAYMENT_PENDING);
-        log.info("event=payment_requested orderNo={} merchantRequestId={} amount={} synthetic=true",
+        log.info("event=payment_requested orderNo={} merchantRequestId={} amount={} "
+                        + "paymentMethod=synthetic_card synthetic=true",
                 request.orderNo(), request.merchantRequestId(), request.amount());
 
         PaymentResult result;
         try {
             result = mockPgClient.charge(request);
-        } catch (BookwaveException ex) {
+        } catch (RuntimeException ex) {
             paymentStore.markOrder(request.orderNo(), OrderStatus.PAYMENT_UNKNOWN);
+            paymentStore.fail(request.merchantRequestId(), claim, ex);
             throw ex;
         }
 
@@ -59,9 +62,11 @@ public class PaymentService {
         } else if (result.decision() == Decision.DECLINED) {
             paymentStore.markOrder(request.orderNo(), OrderStatus.PAYMENT_DECLINED);
         }
-        paymentStore.putPayment(request.merchantRequestId(), new PaymentStore.StoredPayment(fingerprint, result));
-        log.info("event=payment_completed orderNo={} paymentId={} pgTid={} decision={} amount={} synthetic=true",
-                result.orderNo(), result.paymentId(), result.pgTid(), result.decision(), result.approvedAmount());
+        paymentStore.complete(claim, new PaymentStore.StoredPayment(fingerprint, result));
+        log.info("event=payment_completed orderNo={} paymentId={} pgTid={} decision={} reasonCode={} "
+                        + "approvedAmount={} authorizationNo={} synthetic=true",
+                result.orderNo(), result.paymentId(), result.pgTid(), result.decision(), result.reasonCode(),
+                result.approvedAmount(), result.authorizationNo());
         return result;
     }
 

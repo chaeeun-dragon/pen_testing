@@ -91,6 +91,7 @@ Before에서 초과 승인이 나오지 않으면 공격 재현이 실패한 것
 ```bash
 SERVICES_LOG=evidence/runs/<실행ID>/services.log \
 CORRELATION_IDS=<승인ID>,<거절ID> \
+BASELINE_USED_AMOUNT=0 \
 EXPECTED_SERVICES=haeon-card \
 bash tools/card03-detection-check.sh
 ```
@@ -98,6 +99,8 @@ bash tools/card03-detection-check.sh
 card03-concurrency.sh는 해온카드 내부 승인 API를 직접 호출하므로
 EXPECTED_SERVICES=haeon-card를 사용한다. 북웨이브 → Mock PG → 해온카드 전체
 결제 흐름을 점검할 때는 이 값을 생략해 세 서비스를 모두 필수로 검사한다.
+`CORRELATION_IDS`(또는 `MERCHANT_REQUEST_IDS`)와 `BASELINE_USED_AMOUNT`는 필수다.
+이 값이 없으면 전체 DB를 검사하지 않고 실행을 중단한다.
 
 스크립트가 확인하는 항목:
 

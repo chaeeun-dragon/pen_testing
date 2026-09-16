@@ -61,18 +61,38 @@ post_payment() {
     "${BOOKWAVE_URL}/api/v1/payments"
 }
 
-first_status="$(post_payment "${OUT_DIR}/first-response.json")"
-test "$first_status" = "200" \
-  || { echo "첫 결제 요청 HTTP=${first_status}" >&2; cat "${OUT_DIR}/first-response.json" >&2; exit 1; }
+# 같은 멱등키를 동시에 두 번 보낸다. 상위 두 서비스도 하나의 진행 요청을 공유해야
+# 하므로 응답의 paymentId·pgTid까지 완전히 같아야 한다.
+post_payment "${OUT_DIR}/concurrent-first-response.json" > "${OUT_DIR}/concurrent-first-status.txt" &
+first_pid=$!
+post_payment "${OUT_DIR}/concurrent-second-response.json" > "${OUT_DIR}/concurrent-second-status.txt" &
+second_pid=$!
 
-grep -Eq '"decision":"(APPROVED|DECLINED)"' "${OUT_DIR}/first-response.json" \
-  || { echo "첫 결제 응답에 decision이 없습니다." >&2; exit 1; }
+if ! wait "$first_pid" || ! wait "$second_pid"; then
+  echo "동시 결제 요청 전송에 실패했습니다." >&2
+  exit 1
+fi
+
+first_status="$(<"${OUT_DIR}/concurrent-first-status.txt")"
+second_status="$(<"${OUT_DIR}/concurrent-second-status.txt")"
+test "$first_status" = "200" \
+  || { echo "첫 동시 결제 요청 HTTP=${first_status}" >&2; cat "${OUT_DIR}/concurrent-first-response.json" >&2; exit 1; }
+test "$second_status" = "200" \
+  || { echo "두 번째 동시 결제 요청 HTTP=${second_status}" >&2; cat "${OUT_DIR}/concurrent-second-response.json" >&2; exit 1; }
+
+if ! cmp -s "${OUT_DIR}/concurrent-first-response.json" "${OUT_DIR}/concurrent-second-response.json"; then
+  echo "동일 Idempotency-Key 동시 2건의 응답이 다릅니다." >&2
+  exit 1
+fi
+
+grep -Eq '"decision":"(APPROVED|DECLINED)"' "${OUT_DIR}/concurrent-first-response.json" \
+  || { echo "동시 결제 응답에 decision이 없습니다." >&2; exit 1; }
 
 replay_status="$(post_payment "${OUT_DIR}/replay-response.json")"
 test "$replay_status" = "200" \
   || { echo "멱등 재시도 HTTP=${replay_status}" >&2; cat "${OUT_DIR}/replay-response.json" >&2; exit 1; }
 
-if ! cmp -s "${OUT_DIR}/first-response.json" "${OUT_DIR}/replay-response.json"; then
+if ! cmp -s "${OUT_DIR}/concurrent-first-response.json" "${OUT_DIR}/replay-response.json"; then
   echo "같은 Idempotency-Key 재시도의 응답이 최초 응답과 다릅니다." >&2
   exit 1
 fi
@@ -92,14 +112,14 @@ done
 
 if test -n "$missing"; then
   echo "correlation ID를 찾지 못한 서비스:${missing}" >&2
-  printf '{"runId":"%s","baseUrl":"%s","firstStatus":%s,"replayStatus":%s,"sameResponse":true,"missingLogServices":"%s","synthetic":true}\n' \
-    "$RUN_ID" "$BOOKWAVE_URL" "$first_status" "$replay_status" "$missing" \
+  printf '{"runId":"%s","baseUrl":"%s","concurrentFirstStatus":%s,"concurrentSecondStatus":%s,"replayStatus":%s,"sameConcurrentResponse":true,"sameReplayResponse":true,"missingLogServices":"%s","synthetic":true}\n' \
+    "$RUN_ID" "$BOOKWAVE_URL" "$first_status" "$second_status" "$replay_status" "$missing" \
     > "${OUT_DIR}/run.json"
   exit 1
 fi
 
-printf '{"runId":"%s","baseUrl":"%s","firstStatus":%s,"replayStatus":%s,"sameResponse":true,"correlationId":"%s","logServices":["bookwave-app","mock-pg","haeon-card"],"synthetic":true}\n' \
-  "$RUN_ID" "$BOOKWAVE_URL" "$first_status" "$replay_status" "$CORRELATION_ID" \
+printf '{"runId":"%s","baseUrl":"%s","concurrentFirstStatus":%s,"concurrentSecondStatus":%s,"replayStatus":%s,"sameConcurrentResponse":true,"sameReplayResponse":true,"correlationId":"%s","logServices":["bookwave-app","mock-pg","haeon-card"],"synthetic":true}\n' \
+  "$RUN_ID" "$BOOKWAVE_URL" "$first_status" "$second_status" "$replay_status" "$CORRELATION_ID" \
   > "${OUT_DIR}/run.json"
 
 echo "전체 결제 API 계약 확인 완료: ${OUT_DIR}"

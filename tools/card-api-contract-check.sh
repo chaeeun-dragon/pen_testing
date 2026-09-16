@@ -170,6 +170,24 @@ test "$bad_status" = "403" \
 grep -q 'MERCHANT_NOT_ALLOWED' "${OUT_DIR}/invalid-token-response.json" \
   || { echo "잘못된 토큰 오류 코드가 없습니다." >&2; exit 1; }
 
+# Bearer 헤더를 생략한 요청도 본문의 merchantNo를 신뢰하지 않고 거절해야 한다.
+missing_auth_corr="${CORRELATION_ID}-NOAUTH"
+missing_auth_req="${MERCHANT_REQUEST_ID}-NOAUTH"
+missing_auth_body="${body/${CORRELATION_ID}/${missing_auth_corr}}"
+missing_auth_body="${missing_auth_body/${MERCHANT_REQUEST_ID}/${missing_auth_req}}"
+missing_auth_status="$(curl --silent --show-error --max-time 15 \
+  -H 'Content-Type: application/json' \
+  -H "X-Correlation-Id: ${missing_auth_corr}" \
+  -H "Idempotency-Key: ${missing_auth_req}" \
+  -d "${missing_auth_body}" \
+  -o "${OUT_DIR}/missing-token-response.json" \
+  -w '%{http_code}' \
+  "${BASE_URL}/internal/v1/authorizations")"
+test "$missing_auth_status" = "403" \
+  || { echo "Bearer 헤더 누락 요청이 HTTP 403이 아닙니다: ${missing_auth_status}" >&2; exit 1; }
+grep -q 'MERCHANT_NOT_ALLOWED' "${OUT_DIR}/missing-token-response.json" \
+  || { echo "Bearer 헤더 누락 오류 코드가 없습니다." >&2; exit 1; }
+
 cat > "${OUT_DIR}/mapping-check.json" <<JSON
 {
   "requestMapping": {
@@ -190,8 +208,8 @@ cat > "${OUT_DIR}/mapping-check.json" <<JSON
 }
 JSON
 
-printf '{"runId":"%s","baseUrl":"%s","approvalStatus":%s,"replayStatus":%s,"declineStatus":%s,"conflictStatus":%s,"forgedFieldsStatus":%s,"invalidTokenStatus":%s,"sameAuthorizationId":true,"mappingChecked":true,"synthetic":true}\n' \
+printf '{"runId":"%s","baseUrl":"%s","approvalStatus":%s,"replayStatus":%s,"declineStatus":%s,"conflictStatus":%s,"forgedFieldsStatus":%s,"invalidTokenStatus":%s,"missingTokenStatus":%s,"sameAuthorizationId":true,"mappingChecked":true,"synthetic":true}\n' \
   "$RUN_ID" "$BASE_URL" "$first_status" "$second_status" "$decline_status" \
-  "$conflict_status" "$forged_status" "$bad_status" > "${OUT_DIR}/run.json"
+  "$conflict_status" "$forged_status" "$bad_status" "$missing_auth_status" > "${OUT_DIR}/run.json"
 
 echo "카드 API 계약 확인 완료: ${OUT_DIR}"

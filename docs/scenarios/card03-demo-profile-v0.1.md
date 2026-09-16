@@ -28,16 +28,16 @@
 수정된 schema를 사용하므로 이 단계가 필요 없다.
 
 ```bash
-docker compose exec -T haeon-card-mysql mysql \
-  -uroot -p"$HAEON_DB_ROOT_PASSWORD" haeon_card \
+docker compose --env-file .env exec -T haeon-card-mysql \
+  sh -c 'mysql -uroot -p"$MYSQL_ROOT_PASSWORD" "$MYSQL_DATABASE"' \
   < db/haeon-card/fixtures/005_card03_demo_amount_range.sql
 ```
 
 ### 3.1 시연 기준선 복원
 
 ```bash
-docker compose exec -T haeon-card-mysql mysql \
-  -uroot -p"$HAEON_DB_ROOT_PASSWORD" haeon_card \
+docker compose --env-file .env exec -T haeon-card-mysql \
+  sh -c 'mysql -uroot -p"$MYSQL_ROOT_PASSWORD" "$MYSQL_DATABASE"' \
   < db/haeon-card/fixtures/004_card03_demo_reset.sql
 ```
 
@@ -59,8 +59,8 @@ bash tools/card03-concurrency.sh
 ### 3.3 After 검증
 
 ```bash
-docker compose exec -T haeon-card-mysql mysql \
-  -uroot -p"$HAEON_DB_ROOT_PASSWORD" haeon_card \
+docker compose --env-file .env exec -T haeon-card-mysql \
+  sh -c 'mysql -uroot -p"$MYSQL_ROOT_PASSWORD" "$MYSQL_DATABASE"' \
   < db/haeon-card/fixtures/004_card03_demo_reset.sql
 
 LAB_PROFILE=after BEFORE_BARRIER_ENABLED=false \

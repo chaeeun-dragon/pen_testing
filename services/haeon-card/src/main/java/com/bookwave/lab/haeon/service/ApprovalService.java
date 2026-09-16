@@ -57,7 +57,7 @@ public class ApprovalService {
                                             String idempotencyKey, String authorizationHeader) {
         validateHeaders(request, correlationHeader, idempotencyKey);
         validateCurrency(request, correlationHeader);
-        String merchantNo = resolveMerchantNo(request, authorizationHeader, correlationHeader);
+        String merchantNo = resolveMerchantNo(authorizationHeader, correlationHeader);
         log.info("event=auth_received merchantRequestId={} amount={} synthetic=true",
                 request.merchantRequestId(), request.amount());
 
@@ -120,8 +120,9 @@ public class ApprovalService {
         Long lockElapsedMs = before ? null : Math.max(0, (System.nanoTime() - lockStarted) / 1_000_000);
         Instant lockAcquiredAt = before ? null : Instant.now();
         BigDecimal remaining = cardLimit.limitAmount().subtract(cardLimit.usedAmount());
-        log.info("event=limit_read cardId={} readUsedAmount={} readLimitVersion={} mode={}",
-                card.cardId(), cardLimit.usedAmount(), cardLimit.version(), readMode(before));
+        log.info("event=limit_read cardId={} merchantRequestId={} amount={} readUsedAmount={} readLimitVersion={} mode={}",
+                card.cardId(), request.merchantRequestId(), request.amount(), cardLimit.usedAmount(),
+                cardLimit.version(), readMode(before));
 
         Decision decision;
         String reasonCode;
@@ -172,8 +173,10 @@ public class ApprovalService {
                     "승인 감사 기록을 저장하지 못했습니다.", correlationHeader, true);
         }
 
-        log.info("event=auth_committed authId={} merchantRequestId={} decision={} amount={} synthetic=true",
-                authId, request.merchantRequestId(), decision, approved ? request.amount() : 0);
+        log.info("event=auth_committed authId={} merchantRequestId={} decision={} decisionCode={} "
+                        + "approvedAmount={} authorizationNo={} synthetic=true",
+                authId, request.merchantRequestId(), decision, reasonCode,
+                approved ? request.amount() : 0, authNo);
 
         long remainingLimit = remaining.subtract(approved ? amount : BigDecimal.ZERO).longValueExact();
         return new AuthorizationResponse(request.correlationId(), authId, authNo, decision,
@@ -188,10 +191,15 @@ public class ApprovalService {
                 decision, approvedAmount, null, existing.decisionCode());
     }
 
-    private String resolveMerchantNo(AuthorizationRequest request, String authorizationHeader,
-                                     String correlationId) {
+    /**
+     * The request body keeps merchantNo only for the v0.1 wire contract.  The caller identity
+     * always comes from the configured bearer credential; accepting the body value here would
+     * allow a caller without a credential to choose a merchant principal.
+     */
+    private String resolveMerchantNo(String authorizationHeader, String correlationId) {
         if (authorizationHeader == null || authorizationHeader.isBlank()) {
-            return request.merchantNo();
+            throw error(HttpStatus.FORBIDDEN, "MERCHANT_NOT_ALLOWED",
+                    "합성 가맹점 인증이 필요합니다.", correlationId, false);
         }
         String expected = "Bearer " + properties.merchantToken();
         if (!Objects.equals(expected, authorizationHeader)) {

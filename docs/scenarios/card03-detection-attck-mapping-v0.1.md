@@ -5,6 +5,11 @@
 범위: 동일 카드에 승인 요청을 동시에 보내 한도를 두 번 쓰는 상황
 데이터: 실제 카드번호·CVC·금융망을 사용하지 않고 합성 토큰만 사용
 
+> 범위 주의: CARD-03은 실제 카드사 침해사고의 결제 서버 침입 또는 웹쉘을 재현하는
+> 시나리오가 아니다. 정상 형식의 동시 승인 요청에 대한 카드 승인 코어의 무결성
+> 방어를 검증한다. 실제 사건 참고, 합성 침입 시뮬레이션의 후속 범위 및 발표 표현은
+> [실제 카드사 침해사고 착안 결제 서버 침해 시뮬레이션과 CARD-03 연결](lottecard-inspired-payment-server-simulation-v0.1.md)을 따른다.
+
 ## 1. 이 문서의 목적
 
 CARD-03에서는 “두 요청이 거의 같은 순간에 들어오면 카드 한도를 두 번 계산할 수
@@ -31,6 +36,11 @@ Mock PG(mock-pg)
 해온카드 MySQL
 ```
 
+모든 서비스 로그는 Spring MDC 접두사 `corr=<correlationId>`와 `key=value` 이벤트
+필드로 출력한다. `correlationId`와 `runId`를 별도 JSON 필드라고 가정하지 않는다.
+실행 묶음 `runId`는 증거 폴더와 `run.json`에서 관리하며, 원시 카드·결제 토큰은 로그에
+남기지 않는다.
+
 ## 2. 단계별 탐지 지점
 
 ### 2.1 단계 1 — 승인 요청이 들어온 순간
@@ -43,12 +53,13 @@ Mock PG(mock-pg)
 
 - 서비스: `bookwave-app`
 - 이벤트 예: `payment_requested`
-- 필드: `correlationId`, `orderNo`, `merchantRequestId`, `amount`,
-  `paymentMethodToken`
+- 필드: MDC `corr`, `orderNo`, `merchantRequestId`, `amount`,
+  `paymentMethod=synthetic_card`
 
 **탐지 포인트**
 
-- 짧은 시간 안에 같은 `paymentMethodToken`으로 요청이 반복되는가
+- 짧은 시간 안에 같은 합성 결제수단 유형으로 요청이 반복되는가. 실제 토큰의 동일성은
+  해온카드 DB의 `card_id`로 확인한다.
 - 서로 다른 주문인데 같은 `merchantRequestId`가 재사용되는가
 - 요청의 `amount`와 다음 서비스로 전달된 금액이 달라지는가
 - `correlationId`가 없거나 요청마다 새 값으로 끊기는가
@@ -63,8 +74,8 @@ Mock PG는 북웨이브 요청을 해온카드 승인 요청으로 전달한다.
 
 - 서비스: `mock-pg`
 - 이벤트 예: `authorization_forward`
-- 필드: `correlationId`, `merchantNo`, `merchantRequestId`, `amount`,
-  `cardToken`, `targetService`
+- 필드: MDC `corr`, `merchantNo`, `merchantRequestId`, `amount`,
+  `paymentMethod=synthetic_card`, `targetService=haeon-card`
 
 **탐지 포인트**
 
@@ -124,8 +135,8 @@ Mock PG가 받은 카드 승인 결과를 북웨이브에 돌려주고, 북웨�
 **확인할 로그**
 
 - 서비스: `mock-pg`, `bookwave-app`
-- 이벤트 예: `authorization_result`, `payment_completed`
-- 필드: `correlationId`, `orderNo`, `pgTid`, `decision`, `reasonCode`,
+- 이벤트 예: `pg_charge_completed`, `payment_completed`
+- 필드: MDC `corr`, `orderNo`, `paymentId`, `pgTid`, `decision`, `reasonCode`,
   `approvedAmount`, `authorizationNo`
 
 **탐지 포인트**
@@ -234,7 +245,9 @@ ORDER BY created_at;
 ### 5.1 자동 점검기
 
 반복 검증을 위해 tools/card03-detection-check.sh를 추가했다. 이 스크립트는
-공격을 실행하지 않고, 저장된 로그와 현재 합성 DB를 읽어 다음 파일을 만든다.
+공격을 실행하지 않고, **지정한 `correlationId` 또는 `merchantRequestId` 범위만**
+저장된 로그와 합성 DB에서 읽어 다음 파일을 만든다. 실행 전 `used_amount`는
+`BASELINE_USED_AMOUNT`로 함께 넘겨 과거 실행 데이터와 섞이지 않게 한다.
 
 - result.json: PASS, ALERT, FAIL 결과
 - summary.txt: 사람이 읽는 요약
@@ -307,3 +320,5 @@ docker compose -f compose.yaml -f compose.debug.yaml --env-file .env \
 3. 카드사 시나리오의 탐지 결과를 최종 보고서와 증거 목록에 연결
 4. 이후 WBS 7.2의 메인 북웨이브 공격 재현으로 이동할 때, CARD-03 자료와
    북웨이브 자료를 별도 시나리오로 구분
+5. 결제 서버 침입 징후 시뮬레이션을 구현하기 전에는 `simulation=true`, 합성 데이터,
+   외부 미노출이라는 범위를 먼저 문서·실행 계약에 고정
