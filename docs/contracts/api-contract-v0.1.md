@@ -23,24 +23,26 @@
 ## 2. 서비스와 호출 방향
 
 ```text
-사용자/테스트 도구
-        |
-        v
-bookwave-app:8080
-        |
-        | POST /internal/v1/pg/charges
-        v
-mock-pg:8083
-        |
-        | POST /internal/v1/authorizations
-        v
-haeon-card:8084
-        |
-        v
-haeon-card-mysql (내부 전용)
+회원 (브라우저)
+   |                                        \
+   | 결제 시작                                 \  로그인·조회
+   v                                           v
+bookwave-app:8080                        haeon-card:8085 (회원 포털)
+        |                                      |
+        | POST /internal/v1/pg/charges         | GET /portal/v1/me/...
+        v                                      |
+mock-pg:8083                                   |
+        |                                      |
+        | POST /internal/v1/authorizations     |
+        v                                      v
+haeon-card:8084 (승인) -----------------> haeon-card-mysql (내부 전용)
 ```
 
-북웨이브는 해온카드 DB를 직접 읽거나 쓰지 않는다. Mock PG만 해온카드 API를 호출하며, 해온카드는 자신의 DB만 관리한다.
+북웨이브는 해온카드 DB를 직접 읽거나 쓰지 않는다. Mock PG만 해온카드 승인 API를 호출하며, 해온카드는 자신의 DB만 관리한다.
+
+결제를 시작하는 곳은 북웨이브뿐이다. 해온카드 화면에는 결제 시작 기능을 두지 않는다. 회원은 해온카드 회원 포털(`8085`)에서 자기 카드의 한도와 승인·거절 내역을 조회만 한다. 포털 계약은 `docs/contracts/haeon-card-portal-api-v0.1.md`에 따로 둔다.
+
+해온카드는 두 포트를 다르게 쓴다. 승인 포트(`8084`)는 `/internal/**`만, 포털 포트(`8085`)는 `/portal/**`와 회원 화면만 응답하고 서로의 경로는 404로 막는다.
 
 ## 3. 공통 통신 규칙
 
@@ -353,7 +355,7 @@ Before/After 훅은 외부 요청자가 보내는 `decision` 필드가 아니다
 
 ## 12. 변경 규칙
 
-- API 경로, 필드명, 상태값을 바꿀 때는 이 문서와 `openapi.yaml`을 먼저 함께 수정한다.
+- API 경로, 필드명, 상태값을 바꿀 때는 이 문서와 `openapi.yaml`을 먼저 함께 수정한다. 회원 포털 조회 API는 `haeon-card-portal-api-v0.1.md`와 `openapi.yaml`을 함께 고친다.
 - 구현 코드가 문서보다 앞서지 않게 한다.
 - 하위 호환이 필요한 변경은 `v0.2`로 올리고, 기존 필드를 바로 삭제하지 않는다.
 - 해온카드 DDL 변경은 API 계약 변경과 별도로 검토한다.

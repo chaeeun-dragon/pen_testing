@@ -9,20 +9,26 @@ POST /api/v1/payments
 GET  /actuator/health
 ```
 
-## 브라우저 화면
+## 브라우저 화면 (연동 확인용 임시 화면)
 
-컨테이너가 실행되면 `http://localhost:8080/`에서 해온카드 개인 홈페이지 형태의 화면을
-열 수 있다. 카드·혜택·금융·라이프 메뉴와 MY 요약 영역을 제공하며, 빠른 메뉴의
-`즉시결제`에서 주문번호·금액·테스트 카드 토큰을 입력하고 결제 요청을 보낼 수 있다.
-요청은 같은 출처의 `POST /api/v1/payments`를 호출한다. 실제 카드번호는 사용하지 않으며,
-승인 결과의 `paymentId`, `pgTid`, `authorizationNo`, `correlationId`를 모달에서 확인한다.
+> `src/main/resources/static/`의 `index.html` · `bookwave.css` · `bookwave.js`는
+> **북웨이브 담당자의 실제 화면이 들어오기 전까지 쓰는 자리채움**이다. 해온카드 쪽에서
+> 결제를 시작할 가맹점 화면이 필요해 만든 것이고, 도서 목록·가격은 전부 표시용 값이다.
+> 실제 화면으로 교체할 때는 이 세 파일을 지우거나 덮어쓰면 된다. `POST /api/v1/payments`
+> 백엔드와 해온카드 서비스는 이 파일들에 의존하지 않는다.
+> 교체 시 맞춰야 하는 계약은 `docs/handoff/bookwave-merchant-integration-handoff-v0.1.md`에 있다.
 
-`같은 요청 다시 보내기` 버튼은 동일한 `merchantRequestId`를 재사용해 멱등 재시도를
+컨테이너가 실행되면 `http://localhost:8080/`에서 북웨이브 온라인 서점 화면을 열 수 있다.
+도서를 고르면 주문서가 열리고, 결제 금액과 결제 카드를 확인한 뒤 결제를 요청한다.
+요청은 같은 출처의 `POST /api/v1/payments`를 호출하며, 결과의 `paymentId`, `pgTid`,
+`authorizationNo`, `correlationId`를 주문서에서 바로 확인한다.
+
+결제 시작은 북웨이브만 담당한다. 승인·거절 결과는 해온카드 승인 DB에 기록되고, 회원은
+해온카드 홈페이지(`http://localhost:8085/`) 마이페이지의 이용내역에서 같은 승인번호로 확인한다.
+
+`같은 주문 결과 재조회` 버튼은 동일한 `merchantRequestId`를 재사용해 멱등 재시도를
 눈으로 확인하는 용도다. 실패 시에는 서버가 돌려준 오류 코드와 메시지를 함께 보여준다.
-
-초기 화면은 비로그인 상태의 로그인 폼을 표시한다. 실제 인증 API를 연결할 때 인증 성공
-후 프론트에서 `window.haeonCardUi.setLoggedIn(true, {name, cardName})`을 호출하면
-`MY 해온` 요약 화면으로 전환된다. 로그아웃 시에는 `setLoggedIn(false)`를 호출한다.
+실제 카드번호는 사용하지 않으며, 주문서의 결제 카드 목록은 합성 카드 토큰을 가리킨다.
 
 요청 헤더:
 

@@ -19,7 +19,10 @@ Windows 파일시스템보다 WSL Linux 파일시스템 안에 프로젝트를 �
 - `mock-pg`만 `card_net`에 연결되며, 북웨이브 서비스는 `haeon-card`를 직접 호출하지 않는다.
 - `haeon-card-mysql`과 `bookwave-mysql`은 소유자를 분리한다.
 - DB 포트는 호스트에 공개하지 않는다. 앱 포트는 로컬호스트에만 바인딩한다.
-- `haeon-card`는 기본 구성에서 내부 전용이며, localhost 직접 확인은 `compose.debug.yaml`을 사용할 때만 허용한다.
+- `haeon-card`의 승인 API(`8084`)는 내부 전용이며, localhost 직접 확인은 `compose.debug.yaml`을 사용할 때만 허용한다.
+- `haeon-card`의 회원 포털(`8085`)만 호스트에 공개한다. 포트별 경로 제한으로 포털 포트에서는 승인 API가 열리지 않는다.
+- 결제 시작은 북웨이브(`8080`)만 담당한다. 해온카드 화면에는 결제 시작 기능을 두지 않는다.
+- 포털 조회 API는 로그인 세션의 회원에 연결된 카드와 그 카드의 승인 내역만 반환한다.
 - 카드 API 필드 매핑과 계약 테스트 기준은 `docs/contracts/card-api-field-mapping-v0.1.md`에 정리한다.
 - 로컬 카드 API 호환성·승인·거절·재시도 검증은 `docs/contracts/card-api-compatibility-check-v0.2.md`와 `tools/card-api-contract-check.sh`를 기준으로 한다.
 - 전체 결제 왕복 계약 테스트는 `tools/payment-flow-contract-check.sh`로 실행한다.
@@ -83,9 +86,46 @@ docker compose -f compose.yaml -f compose.debug.yaml --env-file .env \
 docker compose --env-file .env up -d haeon-card
 ```
 
-## 북웨이브 결제 화면
+## 화면 두 곳
 
-`bookwave-app`을 실행한 뒤 브라우저에서 `http://localhost:8080/`을 열면 해온카드
-스타일의 모의 결제 화면을 사용할 수 있다. 실제 카드정보 없이 테스트 토큰으로 결제
-요청을 보내고, 승인 결과·PG 거래번호·카드 승인번호·요청 추적 ID를 한 화면에서
-확인한다. 같은 요청 재시도 버튼으로 멱등 처리도 눈으로 확인할 수 있다.
+| 주소 | 역할 |
+|---|---|
+| `http://localhost:8080/` | 북웨이브 온라인 서점. 도서를 고르고 해온카드로 **결제를 시작**한다. |
+| `http://localhost:8085/` | 해온카드 홈. 카드·혜택·금융 안내와 로그인. 회원 조회 영역은 두지 않는다. |
+| `http://localhost:8085/mypage` | 해온카드 **마이페이지(단독 화면)**. 로그인한 회원만 보유 카드 한도와 승인·거절 이용내역을 조회한다. |
+
+상단 `MY` 메뉴와 빠른 메뉴는 모두 `/mypage`로 이동한다. 로그아웃 상태로 들어오면 그 화면에서
+바로 로그인하고, 성공하면 같은 자리에서 조회 화면으로 바뀐다.
+
+결제는 북웨이브에서만 시작한다. 결과는 해온카드 승인 DB에 기록되고, 회원은 해온카드
+마이페이지 이용내역에서 같은 승인번호로 확인한다. 합성 로그인 계정과 포털 조회 API는
+`services/haeon-card/README.md`에 정리한다.
+
+`8080`의 서점 화면(`services/bookwave-app/.../static/`)은 북웨이브 담당자의 실제 화면이
+들어오기 전까지 쓰는 임시 자리채움이다. 교체 절차와 지켜야 하는 연동 계약은
+`docs/handoff/bookwave-merchant-integration-handoff-v0.1.md`에 정리한다.
+
+화면이 정상인지 한 번에 확인하려면 실제 브라우저로 도는 점검 스크립트를 쓴다.
+
+```bash
+bash tools/portal-ui-check.sh
+```
+
+랜딩 → 마이페이지 → 로그인 → 조회 → 로그아웃 흐름과 JS 오류·4xx/5xx 유무를 확인하고,
+화면 캡처와 판정을 `evidence/runs/PORTAL-UI-*/`에 남긴다.
+
+실행 결과를 한 장으로 모아 보려면 증거 리포트를 만든다.
+
+```bash
+bash tools/evidence-report.sh     # -> evidence/report.html (브라우저로 열기)
+```
+
+`evidence/runs/` 의 최신 실행에서만 값을 읽는다. CARD-03 Before/After 판정, 회원 화면 점검,
+네트워크 격리, 결제 왕복 결과를 한 화면에 모은다.
+
+시연 순서는 `docs/scenarios/haeon-lab-demo-runbook-v1.0.md`를 따른다. 같은 내용의 인쇄용
+PDF가 `docs/scenarios/haeon-lab-demo-runbook-v1.0.pdf`에 있다. 문서를 고친 뒤에는 다시 만든다.
+
+```bash
+bash tools/md-to-pdf.sh docs/scenarios/haeon-lab-demo-runbook-v1.0.md
+```

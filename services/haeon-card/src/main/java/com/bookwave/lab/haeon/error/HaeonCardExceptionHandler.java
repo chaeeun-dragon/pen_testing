@@ -9,6 +9,7 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.bind.MissingRequestHeaderException;
+import org.springframework.web.servlet.resource.NoResourceFoundException;
 
 @RestControllerAdvice
 public class HaeonCardExceptionHandler {
@@ -44,6 +45,18 @@ public class HaeonCardExceptionHandler {
                 ? "Idempotency-Key가 필요합니다." : "필수 헤더가 없습니다.";
         return ResponseEntity.badRequest()
                 .body(new ErrorResponse(correlationId(request), code, message, false));
+    }
+
+    /**
+     * 없는 경로·정적 파일은 404로 돌려준다. 아래 Exception 핸들러가 먼저 잡으면
+     * 브라우저의 favicon 요청 같은 평범한 404까지 500 INTERNAL_ERROR가 된다.
+     */
+    @ExceptionHandler(NoResourceFoundException.class)
+    public ResponseEntity<ErrorResponse> handleNoResource(NoResourceFoundException ex,
+                                                          HttpServletRequest request) {
+        return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                .body(new ErrorResponse(correlationId(request), "NOT_FOUND",
+                        "요청한 경로를 찾을 수 없습니다.", false));
     }
 
     @ExceptionHandler(Exception.class)

@@ -1,0 +1,137 @@
+/*
+ * 북웨이브 가맹점 화면 — 연동 확인용 임시 자리채움(stand-in)입니다.
+ *
+ * 해온카드 쪽에서 "결제를 시작하는 가맹점 화면"이 필요해 만든 임시 화면입니다.
+ * 도서 목록·가격·베스트셀러는 전부 지어낸 표시용 값이고, 북웨이브 담당자의 실제
+ * 화면이 들어오면 이 디렉터리(index.html / bookwave.css / bookwave.js)를 통째로
+ * 지우거나 덮어쓰면 됩니다. 백엔드(POST /api/v1/payments)와 해온카드 쪽 코드는
+ * 이 파일들에 의존하지 않습니다.
+ *
+ * 교체할 때 지켜야 하는 연동 계약:
+ *   docs/handoff/bookwave-merchant-integration-handoff-v0.1.md
+ */
+:root{--ink:#1b2333;--sub:#6f7b8f;--line:#e3e8f0;--navy:#23408e;--navy-dark:#1a3070;--accent:#f0b429;--page:#fff;--soft:#f5f7fb}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth;scroll-padding-top:88px}
+body{margin:0;color:var(--ink);background:var(--page);font-family:"Pretendard Variable",Pretendard,"Noto Sans KR","Malgun Gothic",system-ui,sans-serif;font-size:14px;line-height:1.6;word-break:keep-all}
+button,input,select{font:inherit}
+button{cursor:pointer}
+a{color:inherit;text-decoration:none}
+button:disabled{cursor:default}
+a:focus-visible,button:focus-visible,input:focus-visible,select:focus-visible{outline:3px solid #4d74d8;outline-offset:3px}
+[hidden]{display:none!important}
+.wrap{max-width:1160px;margin:auto;padding:0 28px}
+.skip-link{position:fixed;top:-60px;left:20px;z-index:100;background:#fff;padding:12px}
+.skip-link:focus{top:10px}
+
+.site-header{position:sticky;top:0;z-index:20;background:#fffffff2;backdrop-filter:blur(10px);border-bottom:1px solid var(--line)}
+.site-header .wrap{display:flex;align-items:center;gap:40px;min-height:74px}
+.brand{display:flex;align-items:center;gap:11px;flex-shrink:0}
+.brand-mark{width:38px;height:38px;display:grid;place-items:center;border-radius:11px;background:var(--navy);color:#fff;font-weight:800;font-size:14px;letter-spacing:.5px}
+.brand-name{font-size:22px;font-weight:800;letter-spacing:-1px;line-height:1.1}
+.brand-name small{display:block;font-size:11px;font-weight:500;color:var(--sub);letter-spacing:0}
+.gnb{display:flex;gap:28px;font-weight:700;font-size:15px}
+.gnb a{position:relative;padding:6px 0}
+.gnb a:hover,.gnb a.active{color:var(--navy)}
+.header-actions{margin-left:auto}
+.header-link{font-size:12px;color:var(--navy);border:1px solid #ccd8f0;background:#f2f6fd;border-radius:6px;padding:9px 13px;white-space:nowrap}
+
+.hero{background:linear-gradient(120deg,#22336b,#23408e 55%,#3559b5)}
+.hero-inner{display:grid;grid-template-columns:minmax(0,1fr) 260px;gap:24px;align-items:center;padding-block:56px;color:#fff}
+.hero .overline{margin:0;font-size:11px;letter-spacing:1.8px;font-weight:700;color:#b9c9ee}
+.hero h1{margin:12px 0 14px;font-size:38px;line-height:1.3;letter-spacing:-1.6px}
+.hero-text{margin:0;font-size:13px;line-height:1.9;color:#d5deef}
+.hero-cta{display:inline-block;margin-top:24px;padding:12px 24px;border-radius:8px;background:#fff;color:var(--navy);font-weight:800;font-size:13px}
+.hero-cta:hover{background:var(--accent);color:#3a2b00}
+.hero-art{position:relative;height:190px}
+.hero-art .book{position:absolute;bottom:0;width:66px;border-radius:4px 8px 8px 4px;box-shadow:0 14px 30px #0b163266}
+.book-1{height:150px;left:6px;background:linear-gradient(160deg,#f0b429,#d99a12);transform:rotate(-7deg)}
+.book-2{height:178px;left:76px;background:linear-gradient(160deg,#fdfdff,#d9e2f5)}
+.book-3{height:132px;left:146px;background:linear-gradient(160deg,#6d8fe0,#3f61b8);transform:rotate(7deg)}
+
+.section{padding:56px 0}
+.section:nth-of-type(even){background:var(--soft)}
+.section-head{display:flex;align-items:end;justify-content:space-between;gap:16px;margin-bottom:26px}
+.section-head h2{margin:0;font-size:25px;letter-spacing:-1px}
+.section-head p{margin:6px 0 0;color:var(--sub);font-size:12px}
+.section-note{font-size:12px;color:var(--sub);white-space:nowrap}
+
+.book-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:18px}
+.book-card{display:flex;flex-direction:column;border:1px solid var(--line);border-radius:12px;background:#fff;padding:20px;min-width:0}
+.book-cover{height:120px;border-radius:8px;display:grid;place-items:center;color:#fff;font-size:26px;font-weight:800;letter-spacing:-1px}
+.book-card h3{margin:16px 0 4px;font-size:16px;letter-spacing:-.4px}
+.book-card .author{margin:0;font-size:12px;color:var(--sub)}
+.book-card .summary{margin:10px 0 0;font-size:12px;color:var(--sub);line-height:1.7;flex:1}
+.book-foot{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:16px}
+.book-price{font-size:17px;font-weight:800;letter-spacing:-.5px}
+.buy-button{border:0;border-radius:8px;background:var(--navy);color:#fff;font-size:12px;font-weight:800;padding:10px 18px}
+.buy-button:hover{background:var(--navy-dark)}
+
+.rank-list{list-style:none;counter-reset:rank;margin:0;padding:0;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.rank-list li{counter-increment:rank;display:flex;align-items:center;gap:14px;background:#fff;border:1px solid var(--line);border-radius:10px;padding:14px 18px}
+.rank-list li:before{content:counter(rank);width:26px;height:26px;display:grid;place-items:center;border-radius:50%;background:#eef2fb;color:var(--navy);font-size:12px;font-weight:800;flex-shrink:0}
+.rank-list strong{font-size:14px}
+.rank-list span{font-size:12px;color:var(--sub);margin-left:auto;white-space:nowrap}
+
+.order-empty{border:1px dashed #cdd6e6;border-radius:12px;padding:30px;text-align:center;color:var(--sub);font-size:13px;background:#fff}
+.order-list{display:grid;gap:10px}
+.order-row{display:flex;align-items:center;gap:14px;flex-wrap:wrap;border:1px solid var(--line);border-radius:10px;background:#fff;padding:16px 18px}
+.order-main{display:flex;flex-direction:column;gap:3px;min-width:0}
+.order-main strong{font-size:14px}
+.order-main span{font-size:11px;color:var(--sub);overflow-wrap:anywhere}
+.order-amount{margin-left:auto;font-size:15px;font-weight:800;white-space:nowrap}
+.order-pill{font-size:11px;font-weight:800;padding:5px 11px;border-radius:20px;background:#e3f5ef;color:#0d7060}
+.order-pill.declined,.order-pill.error{background:#fdecee;color:#b03a4a}
+
+.guide-list{list-style:none;counter-reset:step;margin:0;padding:0;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px}
+.guide-list li{counter-increment:step;background:#fff;border:1px solid var(--line);border-radius:12px;padding:20px}
+.guide-list li:before{content:"0" counter(step);display:block;font-size:12px;font-weight:800;color:var(--navy);margin-bottom:10px}
+.guide-list strong{display:block;font-size:15px;margin-bottom:6px}
+.guide-list span{font-size:12px;color:var(--sub);line-height:1.7}
+
+footer{background:#1b2333;color:#9aa6bb;padding:34px 0;font-size:12px}
+footer .wrap{display:flex;justify-content:space-between;gap:24px;flex-wrap:wrap}
+footer strong{display:block;color:#e7ecf5;font-size:19px;letter-spacing:-.8px;margin-bottom:8px}
+footer p{margin:0;line-height:1.8}
+.footer-note{align-self:end;text-align:right}
+.footer-note a{color:#c6d4ee;border-bottom:1px solid #4a5773}
+
+.modal-backdrop{display:none;position:fixed;inset:0;z-index:50;padding:20px;background:#0e1d2e94}
+.modal-backdrop.show{display:grid;place-items:center}
+.order-modal{width:min(720px,100%);max-height:calc(100vh - 40px);overflow:auto;border-radius:16px;background:#fff;box-shadow:0 28px 85px #03142752}
+.modal-head{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:21px 23px 17px;border-bottom:1px solid #edf0f4}
+.modal-head h2{margin:0;font-size:18px;letter-spacing:-.5px}
+.modal-head p{margin:3px 0 0;color:var(--sub);font-size:11px}
+.modal-close{width:30px;height:30px;border:0;border-radius:7px;color:#5c6c7e;background:#f2f5f8;font-size:18px;line-height:1}
+.modal-content{display:grid;grid-template-columns:1fr 1fr;gap:18px;padding:21px 23px 24px}
+.modal-form{padding-right:18px;border-right:1px solid #edf0f4}
+.modal-form label{display:block;margin:0 0 6px;color:#4d5d70;font-size:11px;font-weight:800}
+.modal-form input,.modal-form select{width:100%;height:40px;margin-bottom:13px;padding:0 10px;border:1px solid #d4dee8;border-radius:8px;outline:none;font-size:12px;background:#fff}
+.modal-form input[readonly]{background:#f6f8fb;color:#55637a}
+.modal-submit,.modal-replay{width:100%;height:41px;border-radius:8px;font-size:12px;font-weight:800}
+.modal-submit{border:0;color:#fff;background:var(--navy)}
+.modal-submit:disabled{opacity:.58;cursor:wait}
+.modal-replay{margin-top:8px;border:1px solid #c9d8e7;color:var(--navy);background:#fff}
+.modal-replay:disabled{color:#a5b0bc;background:#f5f7f9;cursor:not-allowed}
+.modal-note{margin:13px 0 0;color:#8996a4;font-size:11px}
+.modal-result{min-height:280px;padding:17px;border-radius:11px;background:#f8fafc}
+.modal-result.empty{display:grid;place-items:center;text-align:center;color:#8996a4;font-size:12px}
+.modal-result.empty svg{margin-bottom:9px;color:#7f97c8}
+.result-state{display:none}
+.result-state.show{display:block}
+.result-pill{display:inline-flex;align-items:center;gap:6px;padding:6px 9px;border-radius:7px;font-size:11px;font-weight:800}
+.result-pill.approved{color:#0d7060;background:#e0f7f1}
+.result-pill.declined,.result-pill.error{color:#a7424c;background:#ffedf0}
+.result-pill::before{content:"";width:6px;height:6px;border-radius:50%;background:currentColor}
+.result-state h3{margin:13px 0 4px;font-size:17px;letter-spacing:-.4px}
+.result-state p{margin:0 0 14px;color:var(--sub);font-size:11px}
+.result-table{width:100%;border-collapse:collapse}
+.result-table th,.result-table td{padding:7px 0;border-top:1px solid #e7edf3;text-align:left;font-size:11px}
+.result-table th{width:42%;color:#8491a0;font-weight:600}
+.result-table td{color:#304459;font-weight:700;overflow-wrap:anywhere}
+.result-error{margin-top:13px!important;color:#a7424c!important}
+.result-link{display:inline-block;margin-top:14px;font-size:12px;font-weight:700;color:var(--navy);border-bottom:1px solid #c3d1ec;padding-bottom:2px}
+
+@media(max-width:900px){.hero-inner{grid-template-columns:1fr}.hero-art{display:none}.book-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.guide-list{grid-template-columns:repeat(2,minmax(0,1fr))}.rank-list{grid-template-columns:1fr}}
+@media(max-width:640px){.wrap{padding:0 18px}.site-header .wrap{flex-wrap:wrap;gap:12px;padding-block:12px}.gnb{order:3;width:100%;justify-content:space-between;gap:12px;font-size:14px}.header-actions{margin-left:auto}.hero h1{font-size:30px}.book-grid,.guide-list{grid-template-columns:1fr}.modal-content{grid-template-columns:1fr}.modal-form{border-right:0;padding-right:0}.footer-note{text-align:left}}
+@media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}*,*:before,*:after{animation:none!important;transition:none!important}}

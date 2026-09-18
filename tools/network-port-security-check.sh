@@ -61,8 +61,10 @@ check_service_ports() {
       [[ "$ports" == '127.0.0.1:8083->8083/tcp' ]] || result='FAIL'
       ;;
     haeon-card)
-      # The debug override may be omitted; when enabled it must remain loopback-only.
-      [[ -z "$ports" || "$ports" == '127.0.0.1:8084->8084/tcp' ]] || result='FAIL'
+      # The member portal (8085) is published; the approval API (8084) stays internal unless the
+      # debug override is in use. Either way the bindings must remain loopback-only.
+      [[ "$ports" == '127.0.0.1:8085->8085/tcp' \
+        || "$ports" == '127.0.0.1:8084->8084/tcp;127.0.0.1:8085->8085/tcp' ]] || result='FAIL'
       ;;
     internal-only)
       [[ -z "$ports" ]] || result='FAIL'
@@ -104,10 +106,13 @@ check_network() {
     record_failure "network $network internal=$internal (expected $expected_internal)"
   fi
 
-  if [[ "$network" == 'haeon_haeon_debug_net' ]]; then
+  # The debug network may linger with no containers after `compose rm`; that is harmless.
+  # The portal network must exist and carry haeon-card alone.
+  if [[ "$network" == 'haeon_haeon_debug_net' && -n "$containers" ]] \
+    || [[ "$network" == 'haeon_card_portal_net' ]]; then
     if [[ "$containers" != *'-haeon-card-'* || "$containers" == *,*,* ]]; then
       result='FAIL'
-      record_failure "debug network must contain only haeon-card: $containers"
+      record_failure "$network must contain only haeon-card: ${containers:-(none)}"
     fi
   fi
 
@@ -128,6 +133,7 @@ check_network bookwave_dmz_net false
 check_network bookwave_db_net true
 check_network haeon_card_net true
 check_network lab_audit_net true
+check_network haeon_card_portal_net false
 check_network haeon_haeon_debug_net false
 
 if (( failures == 0 )); then
