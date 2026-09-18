@@ -50,12 +50,18 @@ const latestJudged = (prefix) => {
   return { run: runs[idx], detect: detectFor(runs[idx]), skipped: idx };
 };
 const stamp = (dir) => (dir ? (dir.match(/(\d{8})T(\d{6})Z/) || []).slice(1).join('T') : null);
+const inKst = (date) => {
+  const parts = Object.fromEntries(new Intl.DateTimeFormat('en-CA', {
+    timeZone: 'Asia/Seoul', year: 'numeric', month: '2-digit', day: '2-digit',
+    hour: '2-digit', minute: '2-digit', hourCycle: 'h23',
+  }).formatToParts(date).filter(x => x.type !== 'literal').map(x => [x.type, x.value]));
+  return `${parts.year}.${parts.month}.${parts.day} ${parts.hour}:${parts.minute} KST`;
+};
 const when = (dir) => {
   const m = dir && dir.match(/(\d{4})(\d{2})(\d{2})T(\d{2})(\d{2})(\d{2})Z/);
   if (!m) return '';
   const d = new Date(Date.UTC(+m[1], +m[2] - 1, +m[3], +m[4], +m[5], +m[6]));
-  const p = n => String(n).padStart(2, '0');
-  return `${d.getFullYear()}.${p(d.getMonth() + 1)}.${p(d.getDate())} ${p(d.getHours())}:${p(d.getMinutes())}`;
+  return inKst(d);
 };
 const rel = (p) => (p ? path.relative(path.dirname(OUT), p).split(path.sep).join('/') : '');
 
@@ -164,10 +170,7 @@ const card03Block = (c, expect) => {
       여기 표시한 값은 <strong>탐지까지 끝난 가장 최근 실행</strong>(${esc(path.basename(c.run))})이다.</p>` : ''}`;
 };
 
-const generated = new Date();
-const p2 = n => String(n).padStart(2, '0');
-const genAt = `${generated.getFullYear()}.${p2(generated.getMonth() + 1)}.${p2(generated.getDate())} `
-  + `${p2(generated.getHours())}:${p2(generated.getMinutes())}`;
+const genAt = inKst(new Date());
 
 const html = `<!doctype html>
 <html lang="ko"><head><meta charset="utf-8">
@@ -218,10 +221,18 @@ const html = `<!doctype html>
   .shots figure{margin:0}
   .shots img{width:100%;border:1px solid var(--line);border-radius:8px;display:block}
   .shots figcaption{margin-top:6px;font-size:11px;color:var(--sub)}
+  .review{display:grid;grid-template-columns:1.2fr .8fr;gap:18px}
+  .review ul{margin:8px 0 0;padding-left:20px;font-size:13px}
+  .review li{margin:7px 0}
+  .profile{width:100%;border-collapse:collapse;font-size:12px;margin-top:8px}
+  .profile th,.profile td{padding:8px;border-bottom:1px solid var(--line);text-align:left}
+  .profile th{background:#f4f8f7;color:#3f5b55}
+  .quicklinks{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px}
+  .quicklinks a{display:inline-flex;padding:8px 12px;border-radius:8px;background:#fff;color:#0b5c4f;text-decoration:none;font-size:12px;font-weight:700;border:1px solid #cddbd7}
   .empty{background:#fff;border:1px dashed #c8d4d1;border-radius:10px;padding:26px;text-align:center;color:var(--sub);font-size:13px}
   .cols2{columns:2;column-gap:22px}
   footer.foot{margin-top:40px;padding-top:18px;border-top:1px solid var(--line);font-size:11.5px;color:var(--sub)}
-  @media(max-width:860px){.pair,.cols2{grid-template-columns:1fr;columns:1}}
+  @media(max-width:860px){.pair,.review,.cols2{grid-template-columns:1fr;columns:1}}
   @media print{body{background:#fff}.tile,.panel{break-inside:avoid}}
 </style></head>
 <body>
@@ -234,7 +245,7 @@ const html = `<!doctype html>
 
 <section>
   <h2>판정 요약</h2>
-  <p class="lead">가장 최근 실행 기준이다.</p>
+  <p class="lead">가장 최근 실행 기준이다. Before의 ALERT는 취약 상태가 의도대로 재현됐다는 합격 신호이며, After는 통제가 작동해야 PASS다.</p>
   <div class="tiles">
     ${tile('가상 웹쉘 기반 침입 징후', incident?.result?.result, [
       ['탐지', incident?.result ? esc(incident.result.detection) : '-'],
@@ -281,6 +292,34 @@ const html = `<!doctype html>
   </div>
 </section>
 
+<section>
+  <h2>최종 검토 결론</h2>
+  <p class="lead">프로젝트 원안, 현재 코드, 합성 데이터, 실행 증거를 교차 확인한 결과다.</p>
+  <div class="review">
+    <div class="panel">
+      <h3>프로젝트 의도와의 정합성</h3>
+      <ul>
+        <li><strong>역할 경계 유지:</strong> 북웨이브는 주문, Mock PG는 중계, 해온카드는 승인 원본과 한도 장부를 소유한다.</li>
+        <li><strong>주 시나리오 유지:</strong> CARD-03은 인증된 서로 다른 두 요청이 같은 한도를 경쟁하는 결함이며, PG 결과 위조나 침입 재현과 판정을 섞지 않는다.</li>
+        <li><strong>Before/After 의미 명확:</strong> 이전 커밋 비교가 아니라 같은 빌드의 취약 경로와 행 잠금 경로 비교다. normal 동작은 After와 같다.</li>
+        <li><strong>안전한 교육 환경:</strong> 실제 카드번호·CVC·금융망·실행 가능한 웹쉘 없이 localhost 합성 데이터만 사용한다.</li>
+      </ul>
+      <div class="quicklinks">
+        <a href="../docs/scenarios/haeon-lab-demo-shooting-guide-v1.0.html">촬영용 한눈에 보기</a>
+        <a href="../docs/scenarios/haeon-lab-demo-runbook-v1.0.pdf">최종 시연 런북 PDF</a>
+      </div>
+    </div>
+    <div class="panel">
+      <h3>금액 프로파일 구분</h3>
+      <table class="profile"><thead><tr><th>프로파일</th><th>한도</th><th>동시 요청</th></tr></thead><tbody>
+        <tr><td><strong>lab</strong> · 원안/자동시험</td><td>100,000원</td><td>80,000원 × 2</td></tr>
+        <tr><td><strong>demo</strong> · 발표 화면</td><td>10,000,000원</td><td>6,000,000원 × 2</td></tr>
+      </tbody></table>
+      <p class="note">금액만 확대한 별도 fixture다. 경쟁 조건과 판정 규칙은 동일하며 한 실행에서 두 프로파일을 섞지 않는다.</p>
+    </div>
+  </div>
+</section>
+
 ${incident ? `<section>
   <h2>가상 웹쉘 기반 결제 서버 침입 재현</h2>
   <p class="lead">실행 가능한 웹쉘이나 명령 실행은 포함하지 않고, 고정된 침입 징후 S1~S4만 남긴 안전한 재현이다.</p>
@@ -295,7 +334,7 @@ ${incident ? `<section>
 
 <section>
   <h2>CARD-03 — 한도 이중 사용 Before / After</h2>
-  <p class="lead">같은 카드에 6,000,000원 결제 두 건을 동시에 보낸 결과다. 한도는 10,000,000원이다.</p>
+  <p class="lead">촬영용 demo 프로파일: 같은 카드에 6,000,000원 결제 두 건을 동시에 보낸 결과다. 한도는 10,000,000원이다.</p>
   <div class="pair">
     <div class="panel"><h3>Before — 잠금 없이 읽기</h3>
       <p class="sub">한도 행을 잠그지 않고 스냅샷만 읽는 경로</p>${card03Block(before, 'Before')}</div>

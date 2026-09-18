@@ -16,12 +16,12 @@ const css = `
   @page { size: A4; margin: 16mm 14mm 18mm; }
   * { box-sizing: border-box; }
   body { margin:0; font-family:"Noto Sans CJK KR","Noto Sans KR",sans-serif;
-         font-size:10.2pt; line-height:1.65; color:#1d2524; word-break:keep-all; }
+         font-size:9.9pt; line-height:1.58; color:#1d2524; word-break:keep-all; }
   h1 { font-size:20pt; letter-spacing:-.5pt; margin:0 0 4pt; padding-bottom:8pt;
        border-bottom:2.5pt solid #087f79; color:#0b3b36; }
-  h2 { font-size:14pt; margin:22pt 0 8pt; padding:6pt 10pt; background:#eef6f2;
+  h2 { font-size:14pt; margin:19pt 0 7pt; padding:6pt 10pt; background:#eef6f2;
        border-left:4pt solid #087f79; color:#0b3b36; break-after:avoid; break-inside:avoid; }
-  h3 { font-size:11.5pt; margin:15pt 0 6pt; color:#14564e; break-after:avoid; }
+  h3 { font-size:11.5pt; margin:13pt 0 5pt; color:#14564e; break-after:avoid; }
   p { margin:6pt 0; }
   ul,ol { margin:6pt 0; padding-left:18pt; }
   li { margin:3pt 0; }

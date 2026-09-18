@@ -472,6 +472,7 @@ components:
           type: integer
           format: int64
           minimum: 1
+          maximum: 10000000
           example: 10000
         currency:
           type: string
@@ -514,6 +515,7 @@ components:
           type: integer
           format: int64
           minimum: 1
+          maximum: 10000000
           example: 10000
         currency:
           type: string
