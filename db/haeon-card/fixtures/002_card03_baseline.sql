@@ -3,10 +3,10 @@
 -- 한도 100,000원, 초기 사용액 0원, 동시 요청 A/B 각 80,000원.
 
 INSERT IGNORE INTO card_members (member_no, display_name)
-VALUES ('HC-MEMBER-001', '회원01');
+VALUES ('HC-MEMBER-001', '김해온');
 
 INSERT IGNORE INTO merchants (merchant_no, name, status)
-VALUES ('BOOKWAVE-LAB', '북웨이브 실습 가맹점', 'ACTIVE');
+VALUES ('BOOKWAVE-LAB', '북웨이브', 'ACTIVE');
 
 INSERT IGNORE INTO cards (card_token, member_id, card_last4, status, status_version)
 SELECT 'card-token-lab-001', member_id, '0001', 'NORMAL', 0

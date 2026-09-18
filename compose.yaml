@@ -122,22 +122,28 @@ services:
       DB_POOL_MIN: ${HAEON_DB_POOL_MIN:-2}
       HAEON_MERCHANT_NO: ${HAEON_MERCHANT_NO:-BOOKWAVE-LAB}
       HAEON_MERCHANT_TOKEN: ${HAEON_MERCHANT_TOKEN:-lab-merchant-bookwave}
-    # Haeon 카드는 card_net/audit_net 내부 전용이다.
-    # localhost 디버깅이 필요할 때만 compose.debug.yaml을 함께 사용한다.
+      PORTAL_PORT: 8085
+      PORTAL_SESSION_TTL_MINUTES: ${HAEON_PORTAL_SESSION_TTL_MINUTES:-30}
+    # 승인 API(8084)는 card_net/audit_net 내부 전용이다. mock-pg만 호출한다.
+    # 회원 포털(8085)만 호스트에 공개하며, 포트별 경로 제한은 애플리케이션이 강제한다.
+    # 8084를 직접 확인해야 할 때만 compose.debug.yaml을 함께 사용한다.
     depends_on:
       haeon-card-mysql:
         condition: service_healthy
+    ports:
+      - "127.0.0.1:${HAEON_PORTAL_PORT:-8085}:8085"
     networks:
       - card_net
       - audit_net
+      - card_portal_net
     healthcheck:
       test: ["CMD-SHELL", "test -f /tmp/service-ready"]
       interval: 10s
       timeout: 3s
       retries: 5
     labels:
-      lab.role: "card-approval-core"
-      lab.note: "CARD-03 approval core; never accept merchant_id or decision from request body"
+      lab.role: "card-approval-core-and-member-portal"
+      lab.note: "CARD-03 approval core on 8084 (mock-pg only); member portal on 8085"
 
   haeon-card-mysql:
     image: mysql:8.0
@@ -153,6 +159,9 @@ services:
       - ./db/haeon-card/init/001_haeon_card_schema.sql:/docker-entrypoint-initdb.d/001_haeon_card.sql:ro
       - ./db/haeon-card/fixtures/002_card03_baseline.sql:/docker-entrypoint-initdb.d/002_card03_baseline.sql:ro
       - ./db/haeon-card/fixtures/003_card03_reset.sql:/docker-entrypoint-initdb.d/003_card03_reset.sql:ro
+      - ./db/haeon-card/init/004_portal_schema.sql:/docker-entrypoint-initdb.d/004_portal_schema.sql:ro
+      - ./db/haeon-card/fixtures/006_portal_seed.sql:/docker-entrypoint-initdb.d/006_portal_seed.sql:ro
+      - ./db/haeon-card/fixtures/007_portal_history_seed.sql:/docker-entrypoint-initdb.d/007_portal_history_seed.sql:ro
     networks:
       - card_net
     healthcheck:
@@ -214,6 +223,9 @@ networks:
   card_net:
     name: haeon_card_net
     internal: true
+  # 회원 포털 공개 포트를 위한 경계다. haeon-card 외에는 어떤 컨테이너도 연결하지 않는다.
+  card_portal_net:
+    name: haeon_card_portal_net
   audit_net:
     name: lab_audit_net
     internal: true

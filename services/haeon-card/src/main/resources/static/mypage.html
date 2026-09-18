@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#087f79">
+  <meta name="robots" content="noindex">
+  <title>마이페이지 · 해온카드</title>
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="/haeon.css?v=20260918-4">
+</head>
+<body>
+  <a class="skip-link" href="#top">본문 바로가기</a>
+  <div class="utility-bar"><div class="wrap"><div class="utility-left"><a href="#top">개인</a><a href="#">법인</a><a href="#">가맹점</a><i class="divider"></i><span>해온카드 고객센터</span></div><div class="utility-right"><a href="#">카드관리</a><a href="#">이용안내</a><a href="#">인증센터</a><a href="#">검색</a></div></div></div>
+  <header class="main-header"><div class="wrap"><a class="brand" href="/" aria-label="해온카드 홈"><span class="brand-symbol">해온</span><span class="brand-name">해온카드<small>당신의 생활에 더 가까이</small></span></a><nav class="gnb" aria-label="주요 메뉴"><a class="active" href="/mypage" id="myNav">MY</a><a href="/#cards">카드</a><a href="/#benefit">혜택</a><a href="/#finance">금융</a><a href="/#life">라이프</a><a href="/#notice">고객센터</a></nav><div class="header-actions"><button class="header-btn" type="button" id="searchButton">검색</button><button class="header-btn primary" type="button" id="headerLogin">로그인</button></div></div></header>
+
+  <main class="page page-sub" id="top"><div class="wrap">
+    <nav class="breadcrumb" aria-label="현재 위치"><a href="/">홈</a><span aria-hidden="true">›</span><span aria-current="page">마이페이지</span></nav>
+
+    <section class="section mypage" id="mypage"><div class="section-head"><div><h2>마이페이지</h2><p>회원 정보와 보유 카드의 이용한도, 최근 이용내역을 확인하세요.</p></div><button class="mypage-refresh" type="button" id="mypageRefresh" hidden>새로고침</button></div>
+      <p class="mypage-error" id="mypageError" role="status" hidden></p>
+
+      <div class="mypage-login" id="mypageLogin">
+        <div class="login-card">
+          <h3>로그인</h3>
+          <p>보유 카드의 이용한도·이용금액·잔여한도와 결제 승인 내역은 로그인 후 조회할 수 있습니다.</p>
+          <form id="loginForm">
+            <label class="sr-only" for="loginId">아이디</label>
+            <input class="login-input" id="loginId" type="text" placeholder="아이디" autocomplete="username" required>
+            <label class="sr-only" for="loginPassword">비밀번호</label>
+            <input class="login-input" id="loginPassword" type="password" placeholder="비밀번호" autocomplete="current-password" required>
+            <button class="login-submit" id="loginSubmit" type="submit">로그인</button>
+            <p id="loginStatus" class="login-status" role="status" hidden></p>
+          </form>
+          <div class="login-links"><a href="#">아이디 찾기</a><a href="#">비밀번호 찾기</a><a href="#">회원가입</a></div>
+        </div>
+      </div>
+
+      <div class="mypage-body" id="mypageBody" hidden>
+        <div class="mypage-profile" id="mypageProfile"></div>
+        <div class="mypage-summary" id="mypageSummary"></div>
+        <div class="mypage-panels">
+          <article class="mypage-panel"><h3>보유 카드</h3><div class="card-list" id="mypageCards"></div></article>
+          <article class="mypage-panel"><h3>최근 이용내역</h3><div id="mypageHistoryStat"></div><div class="history-list" id="mypageHistory"></div></article>
+        </div>
+      </div>
+    </section>
+  </div></main>
+
+  <footer><div class="wrap"><div><strong>해온카드</strong><div class="footer-links"><button type="button" data-info="이용약관">이용약관</button><button type="button" data-info="개인정보처리방침">개인정보처리방침</button><button type="button" data-info="고객권리안내">고객권리안내</button><button type="button" data-info="이용안내">이용안내</button></div><div>© HAEON CARD. All rights reserved.</div></div><div class="footer-note"><span>고객센터</span><br>카드 분실·도난 신고는 24시간 접수합니다.<br>그 밖의 문의는 고객센터 메뉴를 이용해 주세요.</div></div></footer><a class="to-top" href="#top" aria-label="맨 위로">↑</a>
+
+  <dialog class="ui-dialog" id="infoDialog" aria-labelledby="infoTitle"><div class="modal-head"><h2 id="infoTitle"></h2><button type="button" class="modal-close" data-close-dialog aria-label="안내 닫기">×</button></div><div class="dialog-body" id="infoBody"></div></dialog>
+  <dialog class="ui-dialog" id="searchDialog" aria-labelledby="searchTitle"><div class="modal-head"><h2 id="searchTitle">어떤 서비스를 찾으세요?</h2><button type="button" class="modal-close" data-close-dialog aria-label="검색 닫기">×</button></div><div class="dialog-body"><label class="sr-only" for="siteSearch">메뉴와 카드 검색</label><input type="search" id="siteSearch" class="search-input" placeholder="카드, 혜택, 이용내역 등을 검색하세요" autocomplete="off"><div class="search-results" id="searchResults"></div><p class="sr-only" id="searchStatus" role="status"></p></div></dialog>
+
+  <script src="/haeon.js?v=20260918-4" defer></script>
+</body>
+</html>

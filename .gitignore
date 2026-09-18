@@ -3,3 +3,6 @@ evidence/runs/
 evidence/.ready
 **/target/
 *.log
+node_modules/
+package-lock.json
+evidence/report.html

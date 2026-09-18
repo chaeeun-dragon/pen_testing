@@ -15,6 +15,8 @@ tags:
     description: 북웨이브와 해온카드 사이의 결제 전달
   - name: Haeon Card
     description: 카드 승인·한도 판단
+  - name: Haeon Card Portal
+    description: 해온카드 회원 조회(마이페이지). 조회 전용이며 승인 상태를 바꾸지 않는다.
   - name: Health
     description: 서비스 상태 확인
 paths:
@@ -138,6 +140,119 @@ paths:
         '503':
           $ref: '#/components/responses/BeforeBarrierTimeout'
 
+  /portal/v1/sessions:
+    post:
+      tags: [Haeon Card Portal]
+      summary: 회원 로그인
+      description: 합성 회원 자격으로 로그인하고 조회용 세션 토큰을 받는다.
+      operationId: createPortalSession
+      servers:
+        - url: http://localhost:8085
+          description: haeon-card 회원 포털 커넥터
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PortalLoginRequest'
+            example:
+              loginId: haeon01
+              password: Haeon!2026
+      responses:
+        '200':
+          description: 로그인 성공
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PortalLoginResponse'
+        '400':
+          $ref: '#/components/responses/InvalidRequest'
+        '401':
+          $ref: '#/components/responses/PortalUnauthorized'
+    delete:
+      tags: [Haeon Card Portal]
+      summary: 로그아웃
+      description: 세션 토큰을 즉시 무효화한다. 토큰이 이미 없으면 그대로 성공 처리한다.
+      operationId: deletePortalSession
+      servers:
+        - url: http://localhost:8085
+      parameters:
+        - $ref: '#/components/parameters/PortalAuthorization'
+      responses:
+        '204':
+          description: 로그아웃 완료
+
+  /portal/v1/me:
+    get:
+      tags: [Haeon Card Portal]
+      summary: 내 회원 정보 조회
+      operationId: getPortalMember
+      servers:
+        - url: http://localhost:8085
+      parameters:
+        - $ref: '#/components/parameters/PortalAuthorization'
+      responses:
+        '200':
+          description: 로그인한 회원의 정보
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PortalMember'
+        '401':
+          $ref: '#/components/responses/PortalUnauthorized'
+
+  /portal/v1/me/cards:
+    get:
+      tags: [Haeon Card Portal]
+      summary: 내 카드 한도 조회
+      description: |
+        로그인 세션의 회원에 연결된 카드만 돌려준다. 요청으로 회원·카드를 고를 수 없다.
+        card_limits.version은 CARD-03 증거·운영 확인용이므로 이 응답에 넣지 않는다.
+      operationId: getPortalCards
+      servers:
+        - url: http://localhost:8085
+      parameters:
+        - $ref: '#/components/parameters/PortalAuthorization'
+      responses:
+        '200':
+          description: 보유 카드와 이용한도·사용액·잔여한도
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PortalCardList'
+        '401':
+          $ref: '#/components/responses/PortalUnauthorized'
+
+  /portal/v1/me/transactions:
+    get:
+      tags: [Haeon Card Portal]
+      summary: 내 거래내역 조회
+      description: 로그인 회원의 카드로 확정된 승인·거절 내역을 최근 순으로 돌려준다.
+      operationId: getPortalTransactions
+      servers:
+        - url: http://localhost:8085
+      parameters:
+        - $ref: '#/components/parameters/PortalAuthorization'
+        - name: limit
+          in: query
+          required: false
+          description: 조회 건수. 기본 20, 최대 100으로 잘린다.
+          schema:
+            type: integer
+            minimum: 1
+            default: 20
+      responses:
+        '200':
+          description: 최근 승인·거절 내역과 합계
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PortalTransactionList'
+        '400':
+          $ref: '#/components/responses/InvalidRequest'
+        '401':
+          $ref: '#/components/responses/PortalUnauthorized'
+
   /actuator/health:
     get:
       tags: [Health]
@@ -177,6 +292,15 @@ components:
         maxLength: 80
         pattern: '^[A-Za-z0-9_-]+$'
       example: BW-REQ-0001
+    PortalAuthorization:
+      name: Authorization
+      in: header
+      required: true
+      description: 로그인으로 받은 회원 세션 토큰
+      schema:
+        type: string
+        pattern: '^Bearer [A-Za-z0-9_-]+$'
+      example: Bearer 3nS1p0rTaL-synthetic-session-token
     MerchantAuthorization:
       name: Authorization
       in: header
@@ -188,6 +312,148 @@ components:
       example: Bearer lab-merchant-bookwave
 
   schemas:
+    PortalLoginRequest:
+      type: object
+      required: [loginId, password]
+      additionalProperties: false
+      properties:
+        loginId:
+          type: string
+          maxLength: 40
+          pattern: '^[A-Za-z0-9_.-]{1,40}$'
+          example: haeon01
+        password:
+          type: string
+          maxLength: 100
+          description: 합성 회원 비밀번호. 로그·증거 파일에 남기지 않는다.
+    PortalLoginResponse:
+      type: object
+      required: [sessionToken, expiresAt, member]
+      properties:
+        sessionToken:
+          type: string
+          description: 이후 조회 요청의 Bearer 토큰. 서버는 해시만 저장한다.
+        expiresAt:
+          type: string
+          format: date-time
+        member:
+          $ref: '#/components/schemas/PortalMember'
+    PortalMember:
+      type: object
+      required: [memberNo, displayName, joinedAt, cardCount]
+      properties:
+        memberNo:
+          type: string
+          example: HC-MEMBER-001
+        displayName:
+          type: string
+          example: 김해온
+        joinedAt:
+          type: string
+          format: date-time
+        cardCount:
+          type: integer
+          example: 3
+    PortalCard:
+      type: object
+      required: [maskedNumber, cardName, brand, cardType, paymentDay, primary, status,
+                 limitAmount, usedAmount, remainingAmount]
+      properties:
+        maskedNumber:
+          type: string
+          example: '**** **** **** 0001'
+        cardName:
+          type: string
+          example: 해온 플러스
+        brand:
+          type: string
+          example: Mastercard
+        cardType:
+          type: string
+          example: 신용
+        paymentDay:
+          type: integer
+          minimum: 1
+          maximum: 28
+          example: 25
+        benefitSummary:
+          type: string
+        primary:
+          type: boolean
+          description: 회원의 주 이용 카드 여부
+        status:
+          type: string
+          enum: [NORMAL, SUSPENDED, LOST, EXPIRED]
+        limitAmount:
+          type: integer
+          example: 100000
+        usedAmount:
+          type: integer
+          example: 30000
+        remainingAmount:
+          type: integer
+          description: limitAmount - usedAmount. 음수가 되지 않도록 0에서 멈춘다.
+          example: 70000
+    PortalCardList:
+      type: object
+      required: [member, cards, totalLimitAmount, totalUsedAmount, totalRemainingAmount]
+      properties:
+        member:
+          $ref: '#/components/schemas/PortalMember'
+        cards:
+          type: array
+          items:
+            $ref: '#/components/schemas/PortalCard'
+        totalLimitAmount:
+          type: integer
+        totalUsedAmount:
+          type: integer
+        totalRemainingAmount:
+          type: integer
+    PortalTransaction:
+      type: object
+      required: [authorizationNo, occurredAt, merchantName, cardName, maskedNumber, amount, status]
+      properties:
+        authorizationNo:
+          type: string
+          example: AUTH-HC-0f2a91c3d8b47e15
+        occurredAt:
+          type: string
+          format: date-time
+        merchantName:
+          type: string
+          example: 북웨이브
+        cardName:
+          type: string
+          example: 해온 플러스
+        maskedNumber:
+          type: string
+          example: '**** 0001'
+        amount:
+          type: integer
+          example: 21000
+        status:
+          type: string
+          enum: [APPROVED, DECLINED]
+        reasonCode:
+          type: string
+          enum: [APPROVED, LIMIT_EXCEEDED, CARD_BLOCKED]
+    PortalTransactionList:
+      type: object
+      required: [member, transactions, approvedCount, approvedAmount, declinedCount]
+      properties:
+        member:
+          $ref: '#/components/schemas/PortalMember'
+        transactions:
+          type: array
+          items:
+            $ref: '#/components/schemas/PortalTransaction'
+        approvedCount:
+          type: integer
+        approvedAmount:
+          type: integer
+        declinedCount:
+          type: integer
     PaymentRequest:
       type: object
       required: [correlationId, orderNo, merchantRequestId, amount, currency, paymentMethodToken]
@@ -362,6 +628,15 @@ components:
           example: false
 
   responses:
+    PortalUnauthorized:
+      description: |
+        로그인이 필요하거나 세션이 만료됨(SESSION_REQUIRED),
+        또는 아이디·비밀번호가 올바르지 않음(INVALID_CREDENTIALS).
+        두 실패는 계정 존재 여부를 흘리지 않도록 같은 본문을 돌려준다.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
     InvalidRequest:
       description: 요청 형식 오류
       content:

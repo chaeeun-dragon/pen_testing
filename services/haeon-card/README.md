@@ -4,12 +4,26 @@ CARD-03 동시 승인·한도 이중 사용 시나리오를 위한 Java 21 + Spr
 
 ## 현재 범위
 
-- 포트: `8084`
+- 승인 포트: `8084` (가맹점 전용, 호스트에 게시하지 않음)
+- 회원 포털 포트: `8085` (`127.0.0.1:8085`로 게시)
 - DB: Compose 내부 `haeon-card-mysql:3306`
-- 네트워크: 기본 실행 시 `haeon_card_net`·`lab_audit_net` 내부 전용
+- 네트워크: `haeon_card_net`·`lab_audit_net`(내부 전용) + `haeon_card_portal_net`(포털 포트 게시용, 이 서비스만 연결)
 - JDBC와 MySQL 드라이버를 포함한 기본 런타임
-- `/actuator/health` 제공
+- `/actuator/health` 제공 (두 포트 모두)
 - `/internal/v1/authorizations`는 DB 기준 승인·거절과 승인 거래·감사 기록을 처리한다.
+- `/portal/v1/**`와 회원 홈페이지 화면은 조회만 한다. 승인 상태를 바꾸지 않는다.
+
+### 포트별 노출 경계
+
+`PortConfinementFilter`가 요청이 들어온 로컬 포트로 경로를 가른다.
+
+| 포트 | 응답하는 경로 | 404로 막는 경로 |
+|---|---|---|
+| 8084 (승인) | `/internal/**`, `/actuator/**` | `/portal/**`, 회원 화면 정적 파일 |
+| 8085 (포털) | `/portal/**`, 회원 화면, `/actuator/**` | `/internal/**` |
+
+포털 포트가 호스트에 열려 있어도 가맹점 승인 API는 그 포트로 도달하지 못한다.
+승인 API는 여전히 `mock-pg`만 내부망으로 호출한다.
 
 현재 요청 호환성을 위해 `merchantNo` 본문을 받지만, `Authorization: Bearer lab-merchant-bookwave`가 있으면 서버 설정의 합성 가맹점 주체를 사용한다. 실제 인증 비밀은 사용하지 않는다.
 
@@ -20,6 +34,79 @@ docker compose exec -T haeon-card-mysql sh -c 'mysql -u"$MYSQL_USER" -p"$MYSQL_P
 ```
 
 `haeon-card` 요청이 `403 MERCHANT_NOT_ALLOWED`를 반환하면 인증 토큰보다 기준 fixture 누락을 먼저 확인한다. 기존 볼륨에서는 위 명령을 실행한 뒤 smoke test를 다시 수행한다.
+
+## 회원 포털 (마이페이지)
+
+화면은 두 개다.
+
+| 주소 | 화면 | 내용 |
+|---|---|---|
+| `/` | 홈 | 카드·혜택·금융·라이프 안내, 우측 MY 패널의 로그인과 요약 |
+| `/mypage` | 마이페이지 | 회원 정보, 카드별 이용한도·이용금액·잔여한도, 최근 승인·거절 이용내역 |
+
+회원 조회 영역은 랜딩에 두지 않는다. 상단 `MY` 메뉴·빠른 메뉴·MY 패널 버튼이 모두 `/mypage`로
+이동하고, 로그아웃 상태로 들어오면 그 화면에서 바로 로그인한다. 성공하면 주소를 옮기지 않고
+같은 자리에서 조회 화면으로 바뀐다. `/mypage`는 `PortalViewConfig`가 `mypage.html`로 연결한다.
+
+결제 시작 화면은 어느 쪽에도 없다. 결제는 북웨이브(`http://localhost:8080/`)에서만 시작하며,
+그 결과가 해온카드 승인 DB에 기록되어 마이페이지에 나타난다.
+
+화면 점검은 실제 브라우저로 도는 `bash tools/portal-ui-check.sh`를 쓴다.
+
+### 합성 로그인 계정
+
+| 로그인 아이디 | 비밀번호 | 회원 | 보유 카드 |
+|---|---|---|---|
+| `haeon01` | `Haeon!2026` | 김해온 (HC-MEMBER-001) | `**** 0001` 해온 플러스(주), `**** 0002` 해온 데일리, `**** 0003` 해온 트래블 |
+| `haeon02` | `Haeon!2026` | 이해온 (HC-MEMBER-002) | `**** 0011` 해온 데일리 |
+
+비밀번호는 `SHA-256(salt || password)` hex로만 저장한다. 세션 토큰도 원문이 아니라 해시를
+`member_sessions`에 넣는다. 합성 계정 전용이며 실제 개인정보·자격증명은 쓰지 않는다.
+
+### 조회 API
+
+```text
+POST   /portal/v1/sessions          로그인 -> sessionToken 발급
+DELETE /portal/v1/sessions          로그아웃 (Authorization: Bearer <sessionToken>)
+GET    /portal/v1/me                회원 정보
+GET    /portal/v1/me/cards          보유 카드와 한도·사용액·잔여한도
+GET    /portal/v1/me/transactions   최근 승인·거절 내역 (?limit=, 기본 20, 최대 100)
+```
+
+조회 대상 회원은 항상 세션 토큰에서 나온다. 요청 본문이나 질의 문자열로 회원·카드를
+지정할 수 없으므로, 로그인한 회원에 연결된 카드와 그 카드의 승인 내역만 응답한다.
+
+```bash
+TOKEN=$(curl -s -X POST http://localhost:8085/portal/v1/sessions \
+  -H 'Content-Type: application/json' \
+  -d '{"loginId":"haeon01","password":"Haeon!2026"}' | python3 -c 'import json,sys;print(json.load(sys.stdin)["sessionToken"])')
+
+curl -s -H "Authorization: Bearer $TOKEN" http://localhost:8085/portal/v1/me/cards
+curl -s -H "Authorization: Bearer $TOKEN" 'http://localhost:8085/portal/v1/me/transactions?limit=20'
+```
+
+`card_limits.version`은 CARD-03 증거·운영 확인용으로만 DB에 보관하며 회원 응답과 화면에
+넣지 않는다. 이용한도·사용액·잔여한도는 회원 화면에 그대로 표시한다.
+
+### 포털 스키마와 합성 데이터
+
+기존 볼륨에는 init 파일이 다시 실행되지 않으므로 한 번만 직접 적용한다. 세 파일 모두
+재실행해도 결과가 같다.
+
+```bash
+for f in db/haeon-card/init/004_portal_schema.sql \
+         db/haeon-card/fixtures/006_portal_seed.sql \
+         db/haeon-card/fixtures/007_portal_history_seed.sql; do
+  docker exec -i bookwave-haeon-lab-haeon-card-mysql-1 \
+    sh -c 'mysql -uroot -proot_lab_only haeon_card' < "$f"
+done
+```
+
+CARD-03 기준선 복원(`003`/`004`)은 승인 데이터를 모두 지우므로 마이페이지 이용내역도
+함께 비워진다. 화면 내역이 다시 필요하면 `007_portal_history_seed.sql`을 이어서 실행한다.
+이 시드는 `haeon01`의 과거 승인 13건·거절 3건(총 16건)과 카드 한도 사용액을 함께 복원한다.
+기준선 복원은 `card-token-lab-001`의 한도만 실습 값으로 되돌리고, 나머지 카드의 한도는
+그대로 둔 채 사용액만 0으로 맞춘다.
 
 ## 구현 순서
 

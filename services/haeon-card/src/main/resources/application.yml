@@ -28,6 +28,12 @@ management:
       probes:
         enabled: true
 
+haeon-portal:
+  port: ${PORTAL_PORT:8085}
+  session-ttl-minutes: ${PORTAL_SESSION_TTL_MINUTES:30}
+  transaction-page-size: ${PORTAL_TRANSACTION_PAGE_SIZE:20}
+  transaction-max-page-size: ${PORTAL_TRANSACTION_MAX_PAGE_SIZE:100}
+
 haeon-card:
   lab-profile: ${LAB_PROFILE:normal}
   instance-id: ${HAEON_CARD_INSTANCE_ID:haeon-card-1}
