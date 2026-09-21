@@ -61,4 +61,19 @@ public class PortalController {
         Member member = portalService.requireMember(authorization);
         return ResponseEntity.ok(portalService.transactions(member, limit));
     }
+
+    @GetMapping("/me/protection-notices")
+    public ResponseEntity<ProtectionNoticeListResponse> protectionNotices(
+            @RequestHeader(value = "Authorization", required = false) String authorization) {
+        Member member = portalService.requireMember(authorization);
+        return ResponseEntity.ok(portalService.protectionNotices(member));
+    }
+
+    @PostMapping("/me/protection-notices/{noticeId}/acknowledgement")
+    public ResponseEntity<ProtectionNoticeResponse> acknowledgeProtectionNotice(
+            @RequestHeader(value = "Authorization", required = false) String authorization,
+            @org.springframework.web.bind.annotation.PathVariable long noticeId) {
+        Member member = portalService.requireMember(authorization);
+        return ResponseEntity.ok(portalService.acknowledgeProtectionNotice(member, noticeId));
+    }
 }

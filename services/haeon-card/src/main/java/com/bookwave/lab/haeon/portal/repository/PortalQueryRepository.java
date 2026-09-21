@@ -20,6 +20,11 @@ public class PortalQueryRepository {
         this.jdbc = jdbc;
     }
 
+    /** PortalService가 회원 세션 범위를 적용한 보호 안내를 조회할 때만 사용한다. */
+    public JdbcTemplate jdbc() {
+        return jdbc;
+    }
+
     public List<MemberCard> findCardsByMember(long memberId) {
         return jdbc.query(
                 "SELECT c.card_id, c.card_last4, c.card_name, c.brand, c.card_type, c.payment_day, "

@@ -1,5 +1,29 @@
 # Bookwave · Mock PG · Haeon Card 실습 환경
 
+> **2026-09-21 해온카드 시나리오:** [결제 연동 진단 API → 모의 웹쉘 → 합성정보 반출 시나리오 v0.2](docs/scenarios/haeon-diagnostic-api-attack-scenario-v0.2.md)를 기준으로 서버 우선 MVP를 구현했다. 현재 Docker의 북웨이브는 팀원의 실제 북웨이브와 별개인 임시 연동용이며, 사용자 담당 범위는 해온카드다.
+> **서버 우선 MVP 구현:** `haeon-merchant-support`(가맹점 진단·제한된 모의 세션), `haeon-lab-receiver`(내부 합성자료 수신), `haeon-lab-gateway`(로컬 `haeon.localhost:8090`)가 추가되었다. 실제 서비스·실제 업로드·외부 공격은 없다. 명령행 검증은 `bash tools/haeon-diagnostic-lab.sh normal|before|after|respond|verify|reset`을 사용한다.
+
+### 해온카드 가상 진단 실습 MVP
+
+```bash
+# 이미지·서비스 기동
+docker compose build haeon-card haeon-merchant-support haeon-lab-receiver
+docker compose up -d haeon-card haeon-merchant-support haeon-lab-receiver haeon-lab-gateway
+
+# 정상 업무와 Before/After 검증
+bash tools/haeon-diagnostic-lab.sh normal
+bash tools/haeon-diagnostic-lab.sh before
+bash tools/haeon-diagnostic-lab.sh after
+
+# Before 실행의 수동 대응·이벤트 확인
+RUN_ID=HAEON-DIAG-<실행ID> bash tools/haeon-diagnostic-lab.sh respond
+RUN_ID=HAEON-DIAG-<실행ID> bash tools/haeon-diagnostic-lab.sh verify
+```
+
+가맹점 정상 화면은 `http://haeon.localhost:8090/merchant` 또는 `http://127.0.0.1:8090/merchant`에서 연다. 실습 제어 API는 `127.0.0.1:8092`에만 게시되며 `X-Lab-Control-Token`이 필요하다. 내부 수신기에는 호스트 포트가 없다. 모든 합성자료는 `HC-MEMBER-001`에 연결된 20건이며, 대응 후 회원 포털 `http://127.0.0.1:8085/mypage`의 보호 안내에서 확인 상태를 기록한다.
+
+기존 MySQL 볼륨을 재사용하면 `009_lab_diagnostic_schema.sql`, `009_lab_diagnostic_seed.sql`, `010_lab_support_grants.sql`을 root 합성 비밀번호로 한 번 적용한다. 새 볼륨에서는 Compose init 순서로 자동 적용된다.
+
 이 폴더는 WSL2에서 실행할 Docker Compose 기준선이다. 현재 `bookwave-app`과 `mock-pg`는 Java 21 + Spring Boot 최소 뼈대가 연결되어 있고, `haeon-card`는 Java 21 + Spring Boot·JDBC 기반 승인 코어 뼈대까지 생성되었다. 챗봇·표지 업로드 서비스는 실제 서비스 이미지로 교체하기 전의 Java 런타임 대기 상태다.
 
 ## 시작

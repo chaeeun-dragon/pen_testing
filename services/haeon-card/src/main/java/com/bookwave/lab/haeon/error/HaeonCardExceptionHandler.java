@@ -10,9 +10,12 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.bind.MissingRequestHeaderException;
 import org.springframework.web.servlet.resource.NoResourceFoundException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 @RestControllerAdvice
 public class HaeonCardExceptionHandler {
+    private static final Logger log = LoggerFactory.getLogger(HaeonCardExceptionHandler.class);
 
     @ExceptionHandler(HaeonCardException.class)
     public ResponseEntity<ErrorResponse> handleDomain(HaeonCardException ex) {
@@ -61,6 +64,7 @@ public class HaeonCardExceptionHandler {
 
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ErrorResponse> handleUnexpected(Exception ex, HttpServletRequest request) {
+        log.error("event=unexpected_error path={}", request.getRequestURI(), ex);
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                 .body(new ErrorResponse(correlationId(request), "INTERNAL_ERROR",
                         "해온카드 내부 처리 중 오류가 발생했습니다.", false));

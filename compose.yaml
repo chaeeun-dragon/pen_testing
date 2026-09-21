@@ -162,8 +162,12 @@ services:
       - ./db/haeon-card/init/004_portal_schema.sql:/docker-entrypoint-initdb.d/004_portal_schema.sql:ro
       - ./db/haeon-card/fixtures/006_portal_seed.sql:/docker-entrypoint-initdb.d/006_portal_seed.sql:ro
       - ./db/haeon-card/fixtures/007_portal_history_seed.sql:/docker-entrypoint-initdb.d/007_portal_history_seed.sql:ro
+      - ./db/haeon-card/init/009_lab_diagnostic_schema.sql:/docker-entrypoint-initdb.d/009_lab_diagnostic_schema.sql:ro
+      - ./db/haeon-card/fixtures/009_lab_diagnostic_seed.sql:/docker-entrypoint-initdb.d/009_lab_diagnostic_seed.sql:ro
+      - ./db/haeon-card/init/010_lab_support_grants.sql:/docker-entrypoint-initdb.d/010_lab_support_grants.sql:ro
     networks:
       - card_net
+      - haeon_lab_net
     healthcheck:
       test: ["CMD-SHELL", "mysqladmin ping -h localhost -u root -p\"$${MYSQL_ROOT_PASSWORD}\" --silent"]
       interval: 10s
@@ -212,6 +216,89 @@ services:
       lab.role: "read-only-evidence-volume"
       lab.note: "Application code must not use this as a business database"
 
+  haeon-merchant-support:
+    build:
+      context: ./services/haeon-merchant-support
+    image: bookwave/haeon-merchant-support:lab
+    restart: unless-stopped
+    environment:
+      SERVICE_NAME: haeon-merchant-support
+      SERVER_PORT: 8091
+      DB_HOST: haeon-card-mysql
+      DB_NAME: ${HAEON_DB_NAME:-haeon_card}
+      DB_USER: ${HAEON_LAB_DB_USER:-haeon_lab_support}
+      DB_PASSWORD: ${HAEON_LAB_DB_PASSWORD:-haeon_lab_support_only}
+      LAB_CONTROL_TOKEN: ${HAEON_LAB_CONTROL_TOKEN:-lab-control-token-2026}
+      LAB_DIAGNOSTIC_PROFILE: ${HAEON_DIAGNOSTIC_PROFILE:-after}
+      LAB_RECEIVER_URL: http://haeon-lab-receiver:8093/v1/ingest
+    expose:
+      - "8091"
+    ports:
+      - "127.0.0.1:${HAEON_LAB_CONTROL_PORT:-8092}:8091"
+    networks:
+      - card_portal_net
+      - haeon_lab_net
+    depends_on:
+      haeon-card-mysql:
+        condition: service_healthy
+      haeon-lab-receiver:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1:8091/actuator/health >/dev/null"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+    labels:
+      lab.role: "haeon-merchant-diagnostic-and-simulation"
+      lab.note: "Synthetic lab only; no arbitrary OS command execution"
+
+  haeon-lab-receiver:
+    build:
+      context: ./services/haeon-lab-receiver
+    image: bookwave/haeon-lab-receiver:lab
+    restart: unless-stopped
+    environment:
+      RECEIVER_PORT: 8093
+      RECEIVER_DATA_DIR: /data
+    expose:
+      - "8093"
+    volumes:
+      - ./evidence/receiver:/data
+    networks:
+      - haeon_lab_net
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1:8093/health >/dev/null"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+    labels:
+      lab.role: "synthetic-exfiltration-receiver"
+      lab.note: "Internal-only receiver; synthetic records only"
+
+  haeon-lab-gateway:
+    image: nginx:1.27-alpine
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:${HAEON_GATEWAY_PORT:-8090}:8090"
+    volumes:
+      - ./services/haeon-lab-gateway/nginx.conf:/etc/nginx/nginx.conf:ro
+    depends_on:
+      haeon-card:
+        condition: service_healthy
+      haeon-merchant-support:
+        condition: service_healthy
+    networks:
+      - card_portal_net
+      - haeon_lab_net
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1:8090/actuator/health >/dev/null || wget -qO- http://127.0.0.1:8090/ >/dev/null"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+    labels:
+      lab.role: "haeon-local-domain-gateway"
+      lab.note: "Local-only virtual service entrypoint at haeon.localhost"
+
 networks:
   front_net:
     name: bookwave_front_net
@@ -228,6 +315,9 @@ networks:
     name: haeon_card_portal_net
   audit_net:
     name: lab_audit_net
+    internal: true
+  haeon_lab_net:
+    name: haeon_lab_net
     internal: true
 
 volumes:
