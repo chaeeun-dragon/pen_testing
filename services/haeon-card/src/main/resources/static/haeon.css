@@ -72,6 +72,12 @@
 .mypage-guest p{margin:0;font-size:12px;color:var(--sub);line-height:1.7}
 .mypage-guest-link{display:inline-block;margin-top:14px;font-size:12px;color:var(--blue);border-bottom:1px solid #cfe6dd;padding-bottom:3px}
 .mypage-error{margin:0 0 14px;padding:12px 14px;border-radius:8px;background:#fbeeee;color:#b4524a;font-size:12px}
+.protection-notices{margin:0 0 18px;border:1px solid #e8d4a0;border-radius:12px;background:#fffaf0;padding:16px 18px}
+.protection-notices-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:8px}
+.protection-notices-head h3{margin:0;font-size:15px}.protection-notices-head span{font-size:10px;color:#9b7a2e}
+.protection-notice{display:flex;align-items:center;gap:14px;border-top:1px solid #f0e5c8;padding:12px 0}
+.protection-notice p{flex:1;margin:0;color:#766545;font-size:12px}.protection-ack{border:1px solid #d7bd74;background:#fff;border-radius:18px;padding:6px 12px;color:#80621c;font-size:11px;white-space:nowrap}
+.protection-notice.acknowledged{opacity:.7}.protection-notice.acknowledged strong{color:#437b62}
 .mypage-profile{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));border:1px solid var(--line);border-radius:12px;overflow:hidden;background:#fff}
 .profile-item{padding:18px 20px;border-right:1px solid var(--line);min-width:0}
 .profile-item:last-child{border-right:0}

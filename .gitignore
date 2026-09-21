@@ -1,5 +1,6 @@
 .env
 evidence/runs/
+evidence/receiver/
 evidence/.ready
 **/target/
 *.log

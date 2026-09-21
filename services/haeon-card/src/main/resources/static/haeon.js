@@ -65,6 +65,7 @@
   let member = null;
   let cardList = null;
   let transactionList = null;
+  let protectionNotices = null;
 
   const reasonText = {
     APPROVED: '정상 승인',
@@ -167,6 +168,32 @@
     transactionList.transactions.forEach(item => listTarget.append(transactionRow(item)));
   };
 
+  const renderProtectionNotices = () => {
+    const section = $('protectionNotices');
+    const target = $('protectionNoticeList');
+    if (!section || !target) return;
+    target.replaceChildren();
+    const notices = protectionNotices && protectionNotices.notices ? protectionNotices.notices : [];
+    section.hidden = notices.length === 0;
+    notices.forEach((notice) => {
+      const row = el('article', `protection-notice${notice.acknowledged ? ' acknowledged' : ''}`);
+      const title = el('strong', null, notice.acknowledged ? '확인 완료' : '추가 확인이 필요합니다');
+      const detail = el('p', null, `${notice.message} · ${dateTime(notice.createdAt)}`);
+      row.append(title, detail);
+      if (!notice.acknowledged) {
+        const button = el('button', 'protection-ack', '확인했습니다');
+        button.type = 'button';
+        button.addEventListener('click', async () => {
+          button.disabled = true;
+          try { await call(`/me/protection-notices/${notice.noticeId}/acknowledgement`, { method: 'POST' }); await loadMypage(); }
+          catch (error) { setMypageError(error.message); button.disabled = false; }
+        });
+        row.append(button);
+      }
+      target.append(row);
+    });
+  };
+
   /* ================================================================ 랜딩 MY 요약 패널 */
   const renderMyPanel = () => {
     if (!hasMyPanel || !member) return;
@@ -181,7 +208,7 @@
 
   /* ================================================================ 로그인 상태 전환 */
   const showLoggedOut = () => {
-    member = null; cardList = null; transactionList = null;
+    member = null; cardList = null; transactionList = null; protectionNotices = null;
     setHidden('myLoginView', false);
     setHidden('myAccountView', true);
     setText('headerLogin', '로그인');
@@ -224,13 +251,14 @@
     const refresh = $('mypageRefresh');
     if (refresh) refresh.disabled = true;
     try {
-      const [cards, transactions] = await Promise.all([call('/me/cards'), call('/me/transactions?limit=20')]);
+      const [cards, transactions, notices] = await Promise.all([call('/me/cards'), call('/me/transactions?limit=20'), call('/me/protection-notices')]);
       cardList = cards;
       transactionList = transactions;
+      protectionNotices = notices;
       member = cards.member;
       setMypageError('');
       showLoggedIn();
-      renderProfile(); renderSummary(); renderCards(); renderTransactions();
+      renderProfile(); renderSummary(); renderCards(); renderTransactions(); renderProtectionNotices();
     } catch (error) {
       if (error.status === 401) { handleSessionLoss(error); return; }
       setMypageError(error.message);
