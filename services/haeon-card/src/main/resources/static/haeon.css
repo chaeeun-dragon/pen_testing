@@ -113,3 +113,14 @@
 .login-card .login-input{margin-bottom:10px}
 .login-card .login-links{margin-top:16px}
 @media(max-width:540px){.login-card{padding:24px}.my-actions{flex-wrap:wrap}}
+
+/* Protection notices remain readable as the run history grows. */
+.protection-notice{flex-wrap:wrap;align-items:flex-start;gap:10px 16px}
+.protection-notice>strong{min-width:142px;font-size:14px}
+.protection-notice p{min-width:220px;line-height:1.8}
+.protection-notice.acknowledged{opacity:1;background:#fffdf8}
+.ack-time{color:#52665d;font-size:12px}
+.protection-ack{min-height:40px;cursor:pointer;font-size:13px}
+.protection-notices-head span{font-size:12px}
+#protectionNoticeList{max-height:380px;overflow:auto;padding-right:6px}
+@media(max-width:540px){.protection-notice{display:block}.protection-notice p{min-width:0;margin:7px 0}.protection-notice small{display:block}.protection-ack{width:100%}}

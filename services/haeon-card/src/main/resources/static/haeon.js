@@ -28,8 +28,11 @@
   /* ================================================================ 회원 포털 API */
   const API_BASE = '/portal/v1';
   const TOKEN_KEY = 'haeon.session.token';
-  const readToken = () => { try { return localStorage.getItem(TOKEN_KEY); } catch (error) { return null; } };
+  let memoryToken = null;
+  let authGeneration = 0;
+  const readToken = () => { try { return localStorage.getItem(TOKEN_KEY) || memoryToken; } catch (error) { return memoryToken; } };
   const writeToken = (token) => {
+    memoryToken = token;
     try { if (token) localStorage.setItem(TOKEN_KEY, token); else localStorage.removeItem(TOKEN_KEY); }
     catch (error) { /* 저장소를 쓸 수 없으면 이번 세션에서만 유지한다. */ }
   };
@@ -175,11 +178,14 @@
     target.replaceChildren();
     const notices = protectionNotices && protectionNotices.notices ? protectionNotices.notices : [];
     section.hidden = notices.length === 0;
+    const pending = notices.filter(n => !n.acknowledged).length;
+    setText('protectionNoticeStatus', pending ? `미확인 ${pending}건` : '모든 안내 확인 완료');
     notices.forEach((notice) => {
       const row = el('article', `protection-notice${notice.acknowledged ? ' acknowledged' : ''}`);
       const title = el('strong', null, notice.acknowledged ? '확인 완료' : '추가 확인이 필요합니다');
       const detail = el('p', null, `${notice.message} · ${dateTime(notice.createdAt)}`);
       row.append(title, detail);
+      if (notice.acknowledged) row.append(el('small', 'ack-time', `확인일시 ${dateTime(notice.acknowledgedAt)}`));
       if (!notice.acknowledged) {
         const button = el('button', 'protection-ack', '확인했습니다');
         button.type = 'button';
@@ -208,7 +214,10 @@
 
   /* ================================================================ 로그인 상태 전환 */
   const showLoggedOut = () => {
+    authGeneration++;
     member = null; cardList = null; transactionList = null; protectionNotices = null;
+    setHidden('protectionNotices', true);
+    ['protectionNoticeList','mypageProfile','mypageCards','mypageSummary','mypageHistory','mypageHistoryStat'].forEach(id => $(id)?.replaceChildren());
     setHidden('myLoginView', false);
     setHidden('myAccountView', true);
     setText('headerLogin', '로그인');
@@ -235,8 +244,11 @@
 
   /** 랜딩: 요약만 필요하므로 카드 조회 한 번. */
   const loadSummary = async () => {
+    const generation = authGeneration;
     try {
-      cardList = await call('/me/cards');
+      const cards = await call('/me/cards');
+      if (generation !== authGeneration) return;
+      cardList = cards;
       member = cardList.member;
       showLoggedIn();
       renderMyPanel();
@@ -248,10 +260,12 @@
 
   /** 마이페이지: 카드와 이용내역을 함께 조회한다. */
   const loadMypage = async () => {
+    const generation = authGeneration;
     const refresh = $('mypageRefresh');
     if (refresh) refresh.disabled = true;
     try {
       const [cards, transactions, notices] = await Promise.all([call('/me/cards'), call('/me/transactions?limit=20'), call('/me/protection-notices')]);
+      if (generation !== authGeneration) return;
       cardList = cards;
       transactionList = transactions;
       protectionNotices = notices;
@@ -316,12 +330,13 @@
   });
 
   const logout = async () => {
-    try { await call('/sessions', { method: 'DELETE' }); }
-    catch (error) { /* 세션이 이미 없으면 화면만 정리한다. */ }
+    const pending = call('/sessions', { method: 'DELETE' }).catch(() => {});
     writeToken(null);
     showLoggedOut();
     loginStatus('');
+    await pending;
   };
+  window.addEventListener('storage', event => { if (event.key === TOKEN_KEY) { memoryToken = null; showLoggedOut(); restoreSession(); } });
 
   on('headerLogin', 'click', (event) => {
     if (member) { logout(); return; }
@@ -442,7 +457,7 @@
 
   /* ================================================================ 검색 */
   const menuItems = [
-    ['마이페이지 · 이용내역 조회', '/mypage', 'MY'], ['보유 카드 · 이용가능한도', '/mypage', 'MY'],
+    ['가맹점 · 결제 연동 점검', '/merchant/', '가맹점'], ['마이페이지 · 이용내역 조회', '/mypage', 'MY'], ['보유 카드 · 이용가능한도', '/mypage', 'MY'],
     ['해온 데일리 · 생활·교통', '/#cards', '카드'], ['해온 플러스 · 쇼핑·구독', '/#cards', '카드'], ['해온 트래블 · 여행·해외', '/#cards', '카드'],
     ['이벤트 · 캐시백 혜택', '/#benefit', '혜택'], ['장기·단기카드대출 · 리볼빙', '/#finance', '금융'],
     ['자동납부 · 해외 안심 케어 · 포인트', '/#life', '라이프'], ['공지사항 · 분실 신고 · 고객센터', '/#notice', '고객센터']
