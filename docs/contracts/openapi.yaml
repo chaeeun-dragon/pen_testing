@@ -137,8 +137,6 @@ paths:
           $ref: '#/components/responses/IdempotencyConflict'
         '500':
           $ref: '#/components/responses/InternalError'
-        '503':
-          $ref: '#/components/responses/BeforeBarrierTimeout'
 
   /portal/v1/sessions:
     post:
@@ -207,7 +205,7 @@ paths:
       summary: 내 카드 한도 조회
       description: |
         로그인 세션의 회원에 연결된 카드만 돌려준다. 요청으로 회원·카드를 고를 수 없다.
-        card_limits.version은 CARD-03 증거·운영 확인용이므로 이 응답에 넣지 않는다.
+        Card limit version is internal persistence metadata and is not returned here.
       operationId: getPortalCards
       servers:
         - url: http://localhost:8085
@@ -625,9 +623,6 @@ components:
         profile:
           type: string
           example: normal
-        beforeBarrierEnabled:
-          type: boolean
-          example: false
 
   responses:
     PortalUnauthorized:
@@ -671,12 +666,6 @@ components:
             $ref: '#/components/schemas/ErrorResponse'
     InternalError:
       description: 예상하지 못한 내부 오류
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/ErrorResponse'
-    BeforeBarrierTimeout:
-      description: Before 동시성 실습의 짝 요청이 제한 시간 안에 도착하지 않음
       content:
         application/json:
           schema:

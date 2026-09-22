@@ -6,7 +6,7 @@
 ## 1. 목적과 소유 경계
 
 이 계약은 북웨이브의 미래 **결제 서버 침입 징후 합성 시뮬레이션**만 다룬다. 정상
-결제 흐름인 `bookwave-app → mock-pg → haeon-card`와 CARD-03 한도 검증은 별도다.
+결제 흐름인 `bookwave-app → mock-pg → haeon-card`와 해온카드 자체 진단 시나리오 `HAEON-DIAG-01`은 독립된 실행 흐름이다.
 
 - 시뮬레이션은 Mock PG와 해온카드 API를 호출하지 않는다.
 - 시뮬레이션은 해온카드 DB와 `audit_events`를 읽거나 쓰지 않는다.
@@ -115,7 +115,7 @@ CORRELATION_ID=<해당-correlationId> \
 1. `tools/card-api-contract-check.sh`가 승인·재조회·거절·가맹점 인증 경계를 통과한다.
 2. `tools/payment-flow-contract-check.sh`가 Bookwave → Mock PG → 해온카드의 동시 멱등성과
    세 서비스 `correlationId` 연결을 통과한다.
-3. `tools/card03-detection-check.sh`가 지정된 실행 범위에서 `PASS`를 반환한다.
+3. `tools/card-api-contract-check.sh`가 승인·멱등성·가맹점 인증 경계를 통과한다.
 4. 실행 뒤 합성 카드 DB를 한도 100,000원, 사용액 0원, 버전 0으로 복원한다.
 5. `tools/payment-server-incident-detection-check.sh`가 지정된 `runId`·`correlationId`
    범위에서 S1 관측 → S2 접근 시도 → S3 `ALERT` → S4 차단·추가 검증 `PASS` 순서를

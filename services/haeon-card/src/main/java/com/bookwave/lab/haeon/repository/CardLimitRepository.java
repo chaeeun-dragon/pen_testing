@@ -14,18 +14,13 @@ public class CardLimitRepository {
     }
 
     public Optional<CardLimit> findForUpdate(long cardId) {
-        return find(cardId, true);
+        return find(cardId);
     }
 
-    public Optional<CardLimit> findSnapshot(long cardId) {
-        return find(cardId, false);
-    }
-
-    private Optional<CardLimit> find(long cardId, boolean lock) {
-        String lockClause = lock ? " FOR UPDATE" : "";
+    private Optional<CardLimit> find(long cardId) {
         return jdbc.query(
                 "SELECT card_id, limit_amount, used_amount, version "
-                        + "FROM card_limits WHERE card_id = ?" + lockClause,
+                        + "FROM card_limits WHERE card_id = ? FOR UPDATE",
                 rs -> {
                     if (!rs.next()) {
                         return Optional.empty();

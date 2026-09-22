@@ -63,7 +63,7 @@ haeon-card-mysql
 - `paymentMethodToken`은 `card-token-lab-*` 형식의 합성 토큰이다.
 - `requestFingerprint`는 정규화된 요청 내용의 SHA-256 hex 64자리다.
 - `amount`는 원 단위 양의 정수다. 북웨이브와 Haeon API는 현재 최대 10,000,000원을 검증한다.
-  `100,000원`은 CARD-03 `lab` 프로파일의 카드 한도이지 API 입력 상한이 아니다.
+  100,000원은 초기 결제 fixture의 기준 한도이지 API 입력 상한이 아니다.
 - `merchantNo`는 클라이언트가 고르는 값이 아니다. Mock PG 서버 설정의 값을 사용한다.
 - `Authorization: Bearer lab-merchant-bookwave`가 있으면 Haeon은 서버 설정의 합성 가맹점 주체를 우선한다.
 

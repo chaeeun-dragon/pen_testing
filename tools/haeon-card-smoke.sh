@@ -49,7 +49,7 @@ request() {
 request "${OUT_DIR}/first-response.json"
 request "${OUT_DIR}/replay-response.json"
 
-printf '{"run_id":"%s","profile":"%s","base_url":"%s","amount":10000,"requests":2,"same_idempotency_key":true}\n' \
-  "$RUN_ID" "${LAB_PROFILE:-normal}" "$BASE_URL" > "${OUT_DIR}/run.json"
+printf '{"run_id":"%s","profile":"normal","base_url":"%s","amount":10000,"requests":2,"same_idempotency_key":true}\n' \
+  "$RUN_ID" "$BASE_URL" > "${OUT_DIR}/run.json"
 
 echo "해온카드 정상 승인·멱등 재시도 완료: ${OUT_DIR}"

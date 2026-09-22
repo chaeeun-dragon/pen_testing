@@ -199,12 +199,12 @@ curl -s -H "Authorization: Bearer $TOKEN" http://localhost:8085/portal/v1/me/car
 
 | 카드 토큰 | 표시 | 소유 회원 | 한도 |
 |---|---|---|---|
-| `card-token-lab-001` | 해온 플러스 `**** 0001` (주) | `HC-MEMBER-001` 김해온 | 100,000 (CARD-03 실험 대상) |
+| `card-token-lab-001` | 해온 플러스 `**** 0001` (주) | `HC-MEMBER-001` 김해온 | 100,000 합성 결제 기준값 |
 | `card-token-lab-002` | 해온 데일리 `**** 0002` | `HC-MEMBER-001` | 3,000,000 |
 | `card-token-lab-003` | 해온 트래블 `**** 0003` | `HC-MEMBER-001` | 2,000,000 |
 | `card-token-lab-011` | 해온 데일리 `**** 0011` | `HC-MEMBER-002` 이해온 | 1,500,000 |
 
-- `card-token-lab-001`은 CARD-03 동시성 실험이 한도를 100,000 ↔ 10,000,000으로 오르내린다.
+- `card-token-lab-001`은 카드 API·결제 왕복 회귀용 합성 카드다. 진단 시나리오는 전용 `lab_` 자료를 사용한다.
   **일반 결제 시연에는 `002`를 쓰는 편이 안정적이다.**
 - 새 카드가 필요하면 `db/haeon-card/fixtures/006_portal_seed.sql`에 추가한다. 카드 행과
   `card_limits` 행을 **같이** 만들어야 하고, 한도 행이 없으면 승인이 거부된다.

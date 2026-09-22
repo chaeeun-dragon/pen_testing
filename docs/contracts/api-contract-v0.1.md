@@ -266,7 +266,6 @@ API의 `merchantNo`는 현재 v0.1 호환을 위한 합성 가맹점 번호다. 
 | 409 | `DUPLICATE_REQUEST` | 이미 처리된 요청의 충돌 |
 | 502 | `UPSTREAM_ERROR` | 다음 서비스 응답 오류 |
 | 503 | `UPSTREAM_UNAVAILABLE` | 다음 서비스 연결 불가 |
-| 503 | `BEFORE_BARRIER_TIMEOUT` | Before 동시성 실습의 짝 요청이 제한 시간 안에 오지 않음 |
 | 500 | `INTERNAL_ERROR` | 예상하지 못한 내부 오류 |
 
 오류 응답 형식:

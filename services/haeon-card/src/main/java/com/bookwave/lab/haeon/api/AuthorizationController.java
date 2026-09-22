@@ -1,6 +1,5 @@
 package com.bookwave.lab.haeon.api;
 
-import com.bookwave.lab.haeon.config.HaeonCardProperties;
 import com.bookwave.lab.haeon.service.ApprovalService;
 import jakarta.validation.Valid;
 import java.util.Map;
@@ -17,11 +16,9 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/internal/v1")
 public class AuthorizationController {
     private final ApprovalService approvalService;
-    private final HaeonCardProperties properties;
 
-    public AuthorizationController(ApprovalService approvalService, HaeonCardProperties properties) {
+    public AuthorizationController(ApprovalService approvalService) {
         this.approvalService = approvalService;
-        this.properties = properties;
     }
 
     @PostMapping("/authorizations")
@@ -41,15 +38,6 @@ public class AuthorizationController {
         return ResponseEntity.ok(Map.of(
                 "status", "UP",
                 "service", "haeon-card",
-                "profile", safeProfile(),
-                "beforeBarrierEnabled", beforeBarrierActive()));
-    }
-
-    private String safeProfile() {
-        return properties.labProfile() == null ? "normal" : properties.labProfile();
-    }
-
-    private boolean beforeBarrierActive() {
-        return properties.beforeBarrierEnabled() && "before".equalsIgnoreCase(safeProfile());
+                "profile", "normal"));
     }
 }

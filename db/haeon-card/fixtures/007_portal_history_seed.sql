@@ -1,6 +1,6 @@
 -- 해온카드 포털 이용내역 합성 기준 데이터 v1.0
 -- 마이페이지 "이용내역"이 처음부터 비어 있지 않도록 haeon01의 승인 13건·거절 3건(총 16건)을 채운다.
--- card-token-lab-001(CARD-03 기준선 카드)에는 한 건도 넣지 않는다. 증거 집계를 건드리지 않기 위해서다.
+-- card-token-lab-001 baseline card has no seeded transactions so normal account history is consistent.
 -- 003/004 기준선 복원 SQL은 승인 데이터를 모두 지우므로, 화면 내역이 필요하면 이 파일을 다시 실행한다.
 -- 재실행해도 결과가 같다(auth_no 고유키로 중복 방지). 실제 거래·개인정보가 아니다.
 SET NAMES utf8mb4;

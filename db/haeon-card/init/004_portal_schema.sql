@@ -56,5 +56,5 @@ CREATE TABLE IF NOT EXISTS member_sessions (
 
 -- 조회 서비스 책임 (DDL로 강제할 수 없는 조건)
 -- 1. 포털 조회 API는 항상 세션의 member_id로 카드·거래를 제한한다. 요청 값으로 회원을 고르지 않는다.
--- 2. card_limits.version은 CARD-03 증거·운영 확인용으로만 보관하며 회원 화면에 노출하지 않는다.
+-- 2. card_limits.version is internal persistence metadata and is not exposed by the member portal.
 -- 3. 세션 토큰 원문은 로그·증거 파일에 남기지 않는다.
