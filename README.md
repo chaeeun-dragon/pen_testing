@@ -1,7 +1,23 @@
 # Bookwave · Mock PG · Haeon Card 실습 환경
 
 > **2026-09-22 해온카드 시나리오:** [결제 연동 진단 API → 웹쉘 세션 → 자료 전송 시나리오](docs/scenarios/haeon-diagnostic-api-attack-scenario-v0.2.md)를 기준으로 가맹점 진단·탐지·대응 흐름을 구현했다. 현재 Docker의 북웨이브는 팀원의 사이트와 별개인 임시 연동용이며, 사용자 담당 범위는 해온카드다.
-> **구현:** `haeon-merchant-support`(가맹점 진단·제한 세션), `haeon-lab-receiver`(내부 자료 수신), `haeon-lab-gateway`(로컬 `haeon.localhost:8090`)가 연결되어 있다. 시나리오 흐름은 해온카드에서 독립 실행하며 명령행 검증은 `bash tools/haeon-diagnostic-lab.sh normal|before|after|respond|verify|reset`을 사용한다.
+> **구현:** `haeon-merchant-support`(가맹점 진단·제한 세션), `haeon-lab-receiver`(내부 자료 수신), `haeon-lab-gateway`(로컬 대상·콘솔 게이트웨이), `haeon-attack-console`(시나리오 실행·로그 화면)가 연결되어 있다. 해온카드 공격 콘솔은 `haeon-attack.localhost:8090` 또는 `127.0.0.1:8094`에서 연다. 콘솔 백엔드는 내부 실습 API만 호출하며 제어 토큰을 브라우저에 보내지 않는다. 명령행 검증은 `bash tools/haeon-diagnostic-lab.sh normal|before|after|respond|verify|reset`을 사용할 수 있다.
+
+### 별도 공격 콘솔
+
+공격 콘솔에서 정상 진단, Before 흐름, 수동 대응, After 차단 검증을 순서대로 실행한다. 왼쪽 메뉴의 북웨이브와 PG 항목은 각각 독립된 시나리오를 위한 자리이며 아직 실행 API에 연결하지 않았다.
+
+```bash
+# 콘솔과 해온카드 대상 서비스 기동
+docker compose --env-file .env up -d --build haeon-lab-gateway
+docker compose --env-file .env ps haeon-attack-console haeon-lab-gateway
+
+# 브라우저에서 연다
+# http://haeon-attack.localhost:8090/
+# 또는 http://127.0.0.1:8094/
+```
+
+실행 화면에서 **정상 진단 → Before 공격 흐름 → 대응 실행 → After 차단 검증**을 선택한다. Before 실행에서는 합성 자료 조회와 내부 수신 결과가 단계 로그에 나타난다. After 실행은 차단 결과를 확인하고 선행 후속 동작을 실행하지 않는다. 공격 콘솔 서비스는 내부 Docker 네트워크에만 연결하고, 게이트웨이는 loopback 주소에만 포트를 공개한다. 콘솔의 시나리오 목록·실행 단계·이벤트 타임라인은 북웨이브와 PG 시나리오 및 이후 BAS 검증 항목을 각각 독립적으로 추가할 수 있도록 분리했다.
 
 ### 해온카드 진단 시나리오
 
@@ -17,11 +33,22 @@ bash tools/haeon-diagnostic-lab.sh after
 # Before 실행의 수동 대응·이벤트 확인
 RUN_ID=HAEON-DIAG-<실행ID> bash tools/haeon-diagnostic-lab.sh respond
 RUN_ID=HAEON-DIAG-<실행ID> bash tools/haeon-diagnostic-lab.sh verify
+
+# 합성 실행·세션·보호 안내만 정리한다. 결제 데이터와 evidence/runs는 유지된다.
+bash tools/haeon-diagnostic-lab.sh reset
 ```
 
 가맹점 정상 화면은 `http://haeon.localhost:8090/merchant` 또는 `http://127.0.0.1:8090/merchant`에서 연다. 실습 제어 API는 `127.0.0.1:8092`에만 게시되며 `X-Lab-Control-Token`이 필요하다. 내부 수신기에는 호스트 포트가 없다. 모든 합성자료는 `HC-MEMBER-001`에 연결된 20건이며, 대응 후 회원 포털 `http://127.0.0.1:8085/mypage`의 보호 안내에서 확인 상태를 기록한다.
 
 기존 MySQL 볼륨을 재사용하면 `009_lab_diagnostic_schema.sql`, `009_lab_diagnostic_seed.sql`, `010_lab_support_grants.sql`을 root 합성 비밀번호로 한 번 적용한다. 새 볼륨에서는 Compose init 순서로 자동 적용된다.
+
+브라우저 기준 회귀 점검은 다음 명령으로 실행한다. 두 도구 모두 합성 계정만 사용하며, 가맹점 로그인·정상 진단·공격 콘솔 기준선 실행의 화면 증거와 해시를 `evidence/runs/`에 남긴다.
+
+```bash
+bash tools/portal-ui-check.sh
+bash tools/merchant-console-ui-check.sh
+python3 tools/haeon-ux-scenario-check.py --faults
+```
 
 이 폴더는 WSL2에서 실행할 Docker Compose 기준선이다. 현재 `bookwave-app`과 `mock-pg`는 Java 21 + Spring Boot 최소 뼈대가 연결되어 있고, `haeon-card`는 Java 21 + Spring Boot·JDBC 기반 승인 코어 뼈대까지 생성되었다. 챗봇·표지 업로드 서비스는 실제 서비스 이미지로 교체하기 전의 Java 런타임 대기 상태다.
 
@@ -109,10 +136,12 @@ docker compose -f compose.yaml -f compose.debug.yaml --env-file .env \
 docker compose --env-file .env up -d haeon-card
 ```
 
-## 화면 두 곳
+## 화면과 운영 콘솔
 
 | 주소 | 역할 |
 |---|---|
+| `http://127.0.0.1:8094/` | 해온카드 공격 시나리오 실행·탐지 로그 콘솔. `http://haeon-attack.localhost:8090/`에서도 연다. |
+| `http://haeon.localhost:8090/merchant/` | 해온카드 가맹점 결제 연동 점검. 직접 포털 `8085`에서 가맹점을 선택해도 이 주소로 이동한다. |
 | `http://localhost:8080/` | 북웨이브 온라인 서점. 도서를 고르고 해온카드로 **결제를 시작**한다. |
 | `http://localhost:8085/` | 해온카드 홈. 카드·혜택·금융 안내와 로그인. 회원 조회 영역은 두지 않는다. |
 | `http://localhost:8085/mypage` | 해온카드 **마이페이지(단독 화면)**. 로그인한 회원만 보유 카드 한도와 승인·거절 이용내역을 조회한다. |

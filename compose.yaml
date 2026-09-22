@@ -272,17 +272,49 @@ services:
       lab.role: "synthetic-exfiltration-receiver"
       lab.note: "Internal-only receiver; synthetic records only"
 
+  haeon-attack-console:
+    build:
+      context: ./services/haeon-attack-console
+    image: bookwave/haeon-attack-console:lab
+    restart: unless-stopped
+    environment:
+      CONSOLE_PORT: 8094
+      SUPPORT_BASE_URL: http://haeon-merchant-support:8091
+      LAB_CONTROL_TOKEN: ${HAEON_LAB_CONTROL_TOKEN:-lab-control-token-2026}
+      LAB_MERCHANT_LOGIN: ${HAEON_LAB_MERCHANT_LOGIN:-labmart}
+      LAB_MERCHANT_PASSWORD: ${HAEON_LAB_MERCHANT_PASSWORD:-LabMart!2026}
+      CONSOLE_DATA_DIR: /data
+    expose:
+      - "8094"
+    volumes:
+      - haeon_attack_console_data:/data
+    networks:
+      - haeon_lab_net
+    depends_on:
+      haeon-merchant-support:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8094/api/health').read()"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+    labels:
+      lab.role: "haeon-scenario-operator-console"
+      lab.note: "Host-local operator UI; calls only fixed synthetic Haeon scenario APIs"
   haeon-lab-gateway:
     image: nginx:1.27-alpine
     restart: unless-stopped
     ports:
       - "127.0.0.1:${HAEON_GATEWAY_PORT:-8090}:8090"
+      - "127.0.0.1:${HAEON_ATTACK_CONSOLE_PORT:-8094}:8091"
     volumes:
       - ./services/haeon-lab-gateway/nginx.conf:/etc/nginx/nginx.conf:ro
     depends_on:
       haeon-card:
         condition: service_healthy
       haeon-merchant-support:
+        condition: service_healthy
+      haeon-attack-console:
         condition: service_healthy
     networks:
       - card_portal_net
@@ -322,3 +354,5 @@ volumes:
     name: bookwave_haeon_card_mysql_data
   bookwave_mysql_data:
     name: bookwave_bookwave_mysql_data
+  haeon_attack_console_data:
+    name: bookwave_haeon_attack_console_data
