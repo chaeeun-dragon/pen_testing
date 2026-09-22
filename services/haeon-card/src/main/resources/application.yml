@@ -35,12 +35,9 @@ haeon-portal:
   transaction-max-page-size: ${PORTAL_TRANSACTION_MAX_PAGE_SIZE:100}
 
 haeon-card:
-  lab-profile: ${LAB_PROFILE:normal}
   instance-id: ${HAEON_CARD_INSTANCE_ID:haeon-card-1}
   merchant-no: ${HAEON_MERCHANT_NO:BOOKWAVE-LAB}
   merchant-token: ${HAEON_MERCHANT_TOKEN:lab-merchant-bookwave}
-  before-barrier-enabled: ${BEFORE_BARRIER_ENABLED:false}
-  barrier-timeout-seconds: ${BARRIER_TIMEOUT_SECONDS:5}
 
 logging:
   pattern:

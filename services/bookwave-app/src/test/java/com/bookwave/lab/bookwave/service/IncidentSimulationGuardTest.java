@@ -25,7 +25,7 @@ class IncidentSimulationGuardTest {
     void enabledModeStillRequiresSyntheticRunId() {
         IncidentSimulationGuard guard = new IncidentSimulationGuard(new IncidentSimulationProperties(true, "lab-control"));
 
-        assertThatThrownBy(() -> guard.requireEnabled("CARD03-BEFORE-20260916"))
+        assertThatThrownBy(() -> guard.requireEnabled("invalid-run-id"))
                 .isInstanceOfSatisfying(BookwaveException.class, error -> {
                     assertThat(error.status()).isEqualTo(HttpStatus.BAD_REQUEST);
                     assertThat(error.errorCode()).isEqualTo("INVALID_SIMULATION_RUN_ID");

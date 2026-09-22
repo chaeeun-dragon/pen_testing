@@ -1,14 +1,13 @@
 # Bookwave · Mock PG · Haeon Card 실습 환경
 
-> **2026-09-21 해온카드 시나리오:** [결제 연동 진단 API → 모의 웹쉘 → 합성정보 반출 시나리오 v0.2](docs/scenarios/haeon-diagnostic-api-attack-scenario-v0.2.md)를 기준으로 서버 우선 MVP를 구현했다. 현재 Docker의 북웨이브는 팀원의 실제 북웨이브와 별개인 임시 연동용이며, 사용자 담당 범위는 해온카드다.
-> **서버 우선 MVP 구현:** `haeon-merchant-support`(가맹점 진단·제한된 모의 세션), `haeon-lab-receiver`(내부 합성자료 수신), `haeon-lab-gateway`(로컬 `haeon.localhost:8090`)가 추가되었다. 실제 서비스·실제 업로드·외부 공격은 없다. 명령행 검증은 `bash tools/haeon-diagnostic-lab.sh normal|before|after|respond|verify|reset`을 사용한다.
+> **2026-09-22 해온카드 시나리오:** [결제 연동 진단 API → 웹쉘 세션 → 자료 전송 시나리오](docs/scenarios/haeon-diagnostic-api-attack-scenario-v0.2.md)를 기준으로 가맹점 진단·탐지·대응 흐름을 구현했다. 현재 Docker의 북웨이브는 팀원의 사이트와 별개인 임시 연동용이며, 사용자 담당 범위는 해온카드다.
+> **구현:** `haeon-merchant-support`(가맹점 진단·제한 세션), `haeon-lab-receiver`(내부 자료 수신), `haeon-lab-gateway`(로컬 `haeon.localhost:8090`)가 연결되어 있다. 시나리오 흐름은 해온카드에서 독립 실행하며 명령행 검증은 `bash tools/haeon-diagnostic-lab.sh normal|before|after|respond|verify|reset`을 사용한다.
 
-### 해온카드 가상 진단 실습 MVP
+### 해온카드 진단 시나리오
 
 ```bash
-# 이미지·서비스 기동
-docker compose build haeon-card haeon-merchant-support haeon-lab-receiver
-docker compose up -d haeon-card haeon-merchant-support haeon-lab-receiver haeon-lab-gateway
+# 해온카드 구성만 기동
+docker compose --env-file .env up -d --build haeon-lab-gateway
 
 # 정상 업무와 Before/After 검증
 bash tools/haeon-diagnostic-lab.sh normal
@@ -58,7 +57,7 @@ Windows 파일시스템보다 WSL Linux 파일시스템 안에 프로젝트를 �
 1. `bookwave-chatbot`과 `bookwave-cover-upload`의 대기 명령을 각 실습 이미지로 교체한다. `bookwave-app`, `mock-pg`, `haeon-card`는 Spring Boot 뼈대가 연결되어 있다.
 2. `bookwave-cover-upload`는 우선 Java/Spring 실습 서비스로 시작한다. SCN-05B를 레거시 동작으로 재현하기로 확정할 때만 Apache/PHP 전용 이미지로 교체한다.
 3. 해온카드 컨테이너에 H0 DDL 기준 합성 fixture와 API 계약 smoke test를 붙인다. 정상 프로파일은 DB 기준 승인·거절과 승인 거래·감사 기록을 처리한다.
-4. 정상 결제 왕복이 통과한 뒤에만 CARD-03 Before/After 비교, OD-02-X 오류 주입과 북웨이브 SCN-05A/SCN-05B를 활성화한다.
+4. 해온카드 진단 API 시나리오는 북웨이브·PG 실행 없이 단독으로 확인한다. 정상 결제 왕복 계약은 별도 회귀 검증으로 유지한다.
 
 ## Mock PG만 먼저 확인하기
 
@@ -68,14 +67,14 @@ docker compose --env-file .env up -d mock-pg
 curl http://localhost:8083/actuator/health
 ```
 
-정상 프로파일에서는 `/internal/v1/authorizations`가 DB 기준 승인·거절을 반환한다. CARD-03 동시성은 `services/haeon-card/README.md`와 `tools/card03-concurrency.sh`의 별도 실습 절차로 확인한다.
+정상 프로파일에서는 `/internal/v1/authorizations`가 DB 기준 승인·거절을 반환한다. 해온카드 가맹점 진단 흐름은 [공격 시나리오](docs/scenarios/haeon-diagnostic-api-attack-scenario-v0.2.md)에서 별도로 확인한다.
 
 카드 API 자체의 필드 매핑과 호환성(승인·멱등 재시도·한도 초과·멱등키 충돌·위조 결과 필드·가맹점 인증)을 확인하려면 합성 fixture를 먼저 복원한 뒤 다음을 실행한다.
 
 ```bash
 docker compose exec -T haeon-card-mysql sh -c \
   'mysql -uroot -p"$MYSQL_ROOT_PASSWORD" "$MYSQL_DATABASE" \
-   < /docker-entrypoint-initdb.d/003_card03_reset.sql'
+   < /docker-entrypoint-initdb.d/003_haeon_payment_baseline.sql'
 HAEON_CARD_URL=http://localhost:8084 bash tools/card-api-contract-check.sh
 ```
 
@@ -144,8 +143,8 @@ bash tools/portal-ui-check.sh
 bash tools/evidence-report.sh     # -> evidence/report.html (브라우저로 열기)
 ```
 
-`evidence/runs/` 의 최신 실행에서만 값을 읽는다. CARD-03 Before/After 판정, 회원 화면 점검,
-네트워크 격리, 결제 왕복 결과를 한 화면에 모은다.
+`evidence/runs/`의 최신 실행에서 해온카드 Before/After 판정, 회원 보호 안내, 네트워크 격리,
+정상 결제 회귀 결과를 한 화면에 모은다.
 
 시연 순서는 `docs/scenarios/haeon-lab-demo-runbook-v1.0.md`를 따른다. 같은 내용의 인쇄용
 PDF가 `docs/scenarios/haeon-lab-demo-runbook-v1.0.pdf`에 있다. 문서를 고친 뒤에는 다시 만든다.

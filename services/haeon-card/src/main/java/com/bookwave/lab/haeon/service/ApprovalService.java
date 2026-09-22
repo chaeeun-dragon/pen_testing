@@ -5,7 +5,6 @@ import com.bookwave.lab.haeon.api.AuthorizationResponse;
 import com.bookwave.lab.haeon.api.Decision;
 import com.bookwave.lab.haeon.config.HaeonCardProperties;
 import com.bookwave.lab.haeon.error.HaeonCardException;
-import com.bookwave.lab.haeon.lab.BeforeBarrier;
 import com.bookwave.lab.haeon.repository.AuthorizationRepository;
 import com.bookwave.lab.haeon.repository.AuthorizationRepository.ExistingAuthorization;
 import com.bookwave.lab.haeon.repository.CardLimitRepository;
@@ -36,20 +35,17 @@ public class ApprovalService {
     private final CardLimitRepository cardLimitRepository;
     private final AuthorizationRepository authorizationRepository;
     private final HaeonCardProperties properties;
-    private final BeforeBarrier beforeBarrier;
 
     public ApprovalService(MerchantRepository merchantRepository,
                            CardRepository cardRepository,
                            CardLimitRepository cardLimitRepository,
                            AuthorizationRepository authorizationRepository,
-                           HaeonCardProperties properties,
-                           BeforeBarrier beforeBarrier) {
+                           HaeonCardProperties properties) {
         this.merchantRepository = merchantRepository;
         this.cardRepository = cardRepository;
         this.cardLimitRepository = cardLimitRepository;
         this.authorizationRepository = authorizationRepository;
         this.properties = properties;
-        this.beforeBarrier = beforeBarrier;
     }
 
     @Transactional(isolation = Isolation.READ_COMMITTED, timeout = 10, rollbackFor = Exception.class)
@@ -110,34 +106,20 @@ public class ApprovalService {
                     "같은 요청이 아직 확정되지 않았습니다.", correlationHeader, true);
         }
 
-        boolean before = beforeBarrier.enabled();
         long lockStarted = System.nanoTime();
-        CardLimit cardLimit = (before
-                ? cardLimitRepository.findSnapshot(card.cardId())
-                : cardLimitRepository.findForUpdate(card.cardId()))
+        CardLimit cardLimit = cardLimitRepository.findForUpdate(card.cardId())
                 .orElseThrow(() -> error(HttpStatus.INTERNAL_SERVER_ERROR, "CARD_LIMIT_NOT_FOUND",
                         "카드 한도 행을 찾을 수 없습니다.", correlationHeader, false));
-        Long lockElapsedMs = before ? null : Math.max(0, (System.nanoTime() - lockStarted) / 1_000_000);
-        Instant lockAcquiredAt = before ? null : Instant.now();
+        Long lockElapsedMs = Math.max(0, (System.nanoTime() - lockStarted) / 1_000_000);
+        Instant lockAcquiredAt = Instant.now();
         BigDecimal remaining = cardLimit.limitAmount().subtract(cardLimit.usedAmount());
-        log.info("event=limit_read cardId={} merchantRequestId={} amount={} readUsedAmount={} readLimitVersion={} mode={}",
+        log.info("event=limit_read cardId={} merchantRequestId={} amount={} readUsedAmount={} readLimitVersion={} mode=normal",
                 card.cardId(), request.merchantRequestId(), request.amount(), cardLimit.usedAmount(),
-                cardLimit.version(), readMode(before));
+                cardLimit.version());
 
         Decision decision;
         String reasonCode;
         boolean approved = "NORMAL".equals(card.status()) && amount.compareTo(remaining) <= 0;
-        if (before) {
-            try {
-                beforeBarrier.awaitAfterRead();
-                log.info("event=before_barrier_released cardId={} merchantRequestId={}",
-                        card.cardId(), request.merchantRequestId());
-            } catch (IllegalStateException ex) {
-                throw error(HttpStatus.SERVICE_UNAVAILABLE, "BEFORE_BARRIER_TIMEOUT",
-                        "Before 재현 장벽의 짝 요청이 제한 시간 안에 도착하지 않았습니다.",
-                        correlationHeader, true);
-            }
-        }
         if (approved) {
             decision = Decision.APPROVED;
             reasonCode = "APPROVED";
@@ -233,20 +215,12 @@ public class ApprovalService {
     }
 
     private String detailsJson(CardLimit cardLimit, Long lockElapsedMs) {
-        String profile = properties.labProfile() == null ? "normal" : properties.labProfile();
         String instanceId = properties.instanceId() == null ? "haeon-card-1" : properties.instanceId();
         return String.format(Locale.ROOT,
                 "{\"profile\":\"%s\",\"instanceId\":\"%s\",\"readUsedAmount\":%s,"
                         + "\"readLimitVersion\":%d,\"lockQueryElapsedMs\":%s}",
-                jsonSafe(profile), jsonSafe(instanceId), cardLimit.usedAmount(),
+                "normal", jsonSafe(instanceId), cardLimit.usedAmount(),
                 cardLimit.version(), lockElapsedMs == null ? "null" : lockElapsedMs);
-    }
-
-    private String readMode(boolean before) {
-        if (before) {
-            return "before";
-        }
-        return "after".equalsIgnoreCase(properties.labProfile()) ? "after" : "normal";
     }
 
     private HaeonCardException error(HttpStatus status, String code, String message,

@@ -1,6 +1,6 @@
-# 해온카드 승인 코어
+# 해온카드 승인 코어·회원 포털
 
-CARD-03 동시 승인·한도 이중 사용 시나리오를 위한 Java 21 + Spring Boot 서비스 뼈대다.
+Java 21 + Spring Boot 기반의 정상 결제 승인 API와 회원 조회 포털이다. 해온카드 단독 진단 시나리오는 별도 `haeon-merchant-support` 서비스가 담당한다.
 
 ## 현재 범위
 
@@ -30,7 +30,7 @@ CARD-03 동시 승인·한도 이중 사용 시나리오를 위한 Java 21 + Spr
 이미 생성된 MySQL 볼륨에는 init 파일이 다시 실행되지 않는다. 그런 경우에는 증거를 보존한 뒤 다음처럼 fixture를 한 번 적용한다.
 
 ```bash
-docker compose exec -T haeon-card-mysql sh -c 'mysql -u"$MYSQL_USER" -p"$MYSQL_PASSWORD" "$MYSQL_DATABASE" < /docker-entrypoint-initdb.d/002_card03_baseline.sql'
+docker compose exec -T haeon-card-mysql sh -c 'mysql -u"$MYSQL_USER" -p"$MYSQL_PASSWORD" "$MYSQL_DATABASE" < /docker-entrypoint-initdb.d/002_haeon_payment_seed.sql'
 ```
 
 `haeon-card` 요청이 `403 MERCHANT_NOT_ALLOWED`를 반환하면 인증 토큰보다 기준 fixture 누락을 먼저 확인한다. 기존 볼륨에서는 위 명령을 실행한 뒤 smoke test를 다시 수행한다.
@@ -85,7 +85,7 @@ curl -s -H "Authorization: Bearer $TOKEN" http://localhost:8085/portal/v1/me/car
 curl -s -H "Authorization: Bearer $TOKEN" 'http://localhost:8085/portal/v1/me/transactions?limit=20'
 ```
 
-`card_limits.version`은 CARD-03 증거·운영 확인용으로만 DB에 보관하며 회원 응답과 화면에
+`card_limits.version`은 내부 동시성 제어용 값이며 회원 응답과 화면에
 넣지 않는다. 이용한도·사용액·잔여한도는 회원 화면에 그대로 표시한다.
 
 ### 포털 스키마와 합성 데이터
@@ -102,21 +102,17 @@ for f in db/haeon-card/init/004_portal_schema.sql \
 done
 ```
 
-CARD-03 기준선 복원(`003`/`004`)은 승인 데이터를 모두 지우므로 마이페이지 이용내역도
-함께 비워진다. 화면 내역이 다시 필요하면 `007_portal_history_seed.sql`을 이어서 실행한다.
-이 시드는 `haeon01`의 과거 승인 13건·거절 3건(총 16건)과 카드 한도 사용액을 함께 복원한다.
-기준선 복원은 `card-token-lab-001`의 한도만 실습 값으로 되돌리고, 나머지 카드의 한도는
-그대로 둔 채 사용액만 0으로 맞춘다.
+결제 기준선 복원은 승인 데이터를 삭제하므로 마이페이지 이용내역도 함께 비워질 수 있다.
+화면 내역이 필요하면 `007_portal_history_seed.sql`을 이어서 실행한다. fixture 동작과
+데이터 보존 주의사항은 [fixture 안내](../../db/haeon-card/fixtures/README.md)에 정리한다.
 
 ## 구현 순서
 
-1. API 계약과 Bearer 가맹점 주체를 확정한다.
-2. 기존 H0 DDL의 7개 테이블에 합성 fixture를 넣는다.
-3. 정상 승인 트랜잭션을 구현한다.
-4. `before` 프로파일에서 읽기 장벽과 재검사 없는 증가를 재현한다.
-5. 기본 `normal`/`after` 프로파일에서 `card_limits` 행 잠금과 최신 한도 기준 판정을 확인한다.
+1. API 계약과 Bearer 가맹점 주체를 확인한다.
+2. 합성 fixture로 카드·회원 기준 데이터를 준비한다.
+3. 정상 승인·거절·멱등 재시도와 한도 행 잠금을 회귀 검증한다.
 
-실제 카드번호·CVC·금융망 자격증명은 사용하지 않는다. `before` 장벽은 정상 왕복 확인 후 동시 요청 실습에서만 켠다.
+승인 코어에는 Before/After 취약 프로파일이 없다. 결제 연동 진단과 웹쉘 세션 시나리오는 [HAEON-DIAG-01](../../docs/scenarios/haeon-diagnostic-api-attack-scenario-v0.2.md)에서 별도 서비스로 수행한다.
 
 ## localhost:8084 디버깅
 
@@ -151,25 +147,17 @@ docker run --rm --network haeon_card_net busybox:1.36 \
   wget -qO- http://haeon-card:8084/actuator/health
 ```
 
-`LAB_PROFILE=before`와 `BEFORE_BARRIER_ENABLED=true` 조합은 같은 카드에 동시에 들어오는 두 요청 A/B에만 사용한다. 일반 요청을 한 건만 보내면 장벽 제한 시간 후 실패하므로, 운영 프로파일이나 기본 `normal`에 켜지 않는다.
+## 승인·멱등 회귀 확인
 
-## CARD-03 실행 순서
+아래 명령은 프로젝트 루트에서 실행한다. 카드 승인 회귀는 웹쉘 진단 시나리오와 독립적으로 확인한다.
 
-아래 명령은 프로젝트 루트(`/mnt/c/study/docker/bookwave-haeon-lab`)에서 실행한다.
-
-기본 `normal`과 `after`는 한도 행을 `SELECT ... FOR UPDATE`로 잠근 뒤 최신 값을 기준으로 판정한다. `after`는 개선된 동작을 구분해 기록하기 위한 프로파일 이름이며, 일반 승인 흐름과 같은 안전한 잠금 경로를 사용한다.
-
-### 정상 승인·멱등 smoke test
-
-컨테이너를 처음 올린 뒤에는 동시성보다 먼저 다음 스크립트로 정상 왕복과 같은 키 재시도를 확인한다.
+컨테이너를 처음 올린 뒤에는 다음 스크립트로 정상 왕복과 같은 키 재시도를 확인한다.
 
 ```bash
 bash tools/haeon-card-smoke.sh
 ```
 
 `first-response.json`과 `replay-response.json`의 `authorizationId`가 같고, DB에 승인 1건·거래 1건만 남으면 정상이다. 실행 결과는 `evidence/runs/HC-SMOKE-.../`에 저장된다.
-
-### 카드 API 계약 확인
 
 필드 매핑과 인증·멱등 경계를 한 번에 확인하려면 다음 스크립트를 실행한다.
 디버그 포트를 쓰지 않는 기본 구성에서는 `HAEON_CARD_URL`을 Haeon 컨테이너가
@@ -187,45 +175,4 @@ HAEON_CARD_URL=http://localhost:8084 \
 - 잘못된 Bearer 토큰이 HTTP 403 `MERCHANT_NOT_ALLOWED`가 됨
 - 실행 증거가 `evidence/runs/CARD-CONTRACT-.../`에 저장됨
 
-이 스크립트는 정상 승인 1건을 DB에 남기므로, 반복 실행 전 필요하면 기준 fixture를
-다시 적용한다.
-
-### 1) 기준선 복원
-
-```bash
-docker compose exec -T haeon-card-mysql sh -c 'mysql -u"$MYSQL_USER" -p"$MYSQL_PASSWORD" "$MYSQL_DATABASE" < /docker-entrypoint-initdb.d/003_card03_reset.sql'
-```
-
-### 2) Before 재현
-
-두 요청을 동시에 보내야 하므로, 먼저 카드 서비스를 실습 프로파일로 다시 올린다.
-
-```bash
-LAB_PROFILE=before BEFORE_BARRIER_ENABLED=true \
-  docker compose --env-file .env up -d --build haeon-card
-LAB_PROFILE=before bash tools/card03-concurrency.sh
-```
-
-두 응답이 모두 `APPROVED`여도 실습상 예상 결과다. 초기 한도 100,000원보다 큰 160,000원이 `card_limits.used_amount`에 기록되는지 확인한다.
-
-### 3) After 확인
-
-```bash
-docker compose exec -T haeon-card-mysql sh -c 'mysql -u"$MYSQL_USER" -p"$MYSQL_PASSWORD" "$MYSQL_DATABASE" < /docker-entrypoint-initdb.d/003_card03_reset.sql'
-LAB_PROFILE=after BEFORE_BARRIER_ENABLED=false \
-  docker compose --env-file .env up -d --build haeon-card
-LAB_PROFILE=after bash tools/card03-concurrency.sh
-```
-
-두 요청 중 하나만 승인되고, 다른 요청은 `LIMIT_EXCEEDED`가 되어 사용액이 80,000원에 머무르는 것이 기대 결과다.
-
-### 4) 증거 확인
-
-```bash
-docker compose exec -T haeon-card-mysql sh -c 'mysql -u"$MYSQL_USER" -p"$MYSQL_PASSWORD" "$MYSQL_DATABASE" -e \
-  "SELECT card_id, limit_amount, used_amount, version FROM card_limits; \
-   SELECT status, decision_code, COUNT(*) AS count FROM authorization_requests GROUP BY status, decision_code; \
-   SELECT COALESCE(SUM(amount), 0) AS approved_total FROM card_transactions;"'
-```
-
-요청 응답과 `run.json`은 `evidence/runs/HC03-.../requests/`에 남는다. 로그의 `event=limit_read`에서 `mode=before|after`를, 승인 확정 로그에서 같은 `correlationId`를 확인한다.
+이 스크립트들은 정상 승인 자료를 DB에 남긴다. 반복 실행 전 카드 거래 이력을 지워도 되는 경우에만 [결제 기준선 fixture](../../db/haeon-card/fixtures/README.md)를 적용한다. 기준선 복원은 회원 포털 표시용 과거 이용내역도 지울 수 있다.

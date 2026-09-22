@@ -109,10 +109,7 @@ services:
     restart: unless-stopped
     environment:
       SERVICE_NAME: haeon-card
-      LAB_PROFILE: ${LAB_PROFILE:-normal}
       SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE:-lab}
-      BEFORE_BARRIER_ENABLED: ${BEFORE_BARRIER_ENABLED:-false}
-      BARRIER_TIMEOUT_SECONDS: ${BARRIER_TIMEOUT_SECONDS:-5}
       SERVER_PORT: 8084
       DB_HOST: haeon-card-mysql
       DB_NAME: ${HAEON_DB_NAME:-haeon_card}
@@ -143,7 +140,7 @@ services:
       retries: 5
     labels:
       lab.role: "card-approval-core-and-member-portal"
-      lab.note: "CARD-03 approval core on 8084 (mock-pg only); member portal on 8085"
+      lab.note: "Card approval API on 8084 (mock-pg only); member portal on 8085"
 
   haeon-card-mysql:
     image: mysql:8.0
@@ -157,8 +154,8 @@ services:
     volumes:
       - haeon_card_mysql_data:/var/lib/mysql
       - ./db/haeon-card/init/001_haeon_card_schema.sql:/docker-entrypoint-initdb.d/001_haeon_card.sql:ro
-      - ./db/haeon-card/fixtures/002_card03_baseline.sql:/docker-entrypoint-initdb.d/002_card03_baseline.sql:ro
-      - ./db/haeon-card/fixtures/003_card03_reset.sql:/docker-entrypoint-initdb.d/003_card03_reset.sql:ro
+      - ./db/haeon-card/fixtures/002_haeon_payment_seed.sql:/docker-entrypoint-initdb.d/002_haeon_payment_seed.sql:ro
+      - ./db/haeon-card/fixtures/003_haeon_payment_baseline.sql:/docker-entrypoint-initdb.d/003_haeon_payment_baseline.sql:ro
       - ./db/haeon-card/init/004_portal_schema.sql:/docker-entrypoint-initdb.d/004_portal_schema.sql:ro
       - ./db/haeon-card/fixtures/006_portal_seed.sql:/docker-entrypoint-initdb.d/006_portal_seed.sql:ro
       - ./db/haeon-card/fixtures/007_portal_history_seed.sql:/docker-entrypoint-initdb.d/007_portal_history_seed.sql:ro

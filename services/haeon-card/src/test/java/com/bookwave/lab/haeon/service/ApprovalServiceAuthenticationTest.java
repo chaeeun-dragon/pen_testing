@@ -7,7 +7,6 @@ import static org.mockito.Mockito.verifyNoInteractions;
 import com.bookwave.lab.haeon.api.AuthorizationRequest;
 import com.bookwave.lab.haeon.config.HaeonCardProperties;
 import com.bookwave.lab.haeon.error.HaeonCardException;
-import com.bookwave.lab.haeon.lab.BeforeBarrier;
 import com.bookwave.lab.haeon.repository.AuthorizationRepository;
 import com.bookwave.lab.haeon.repository.CardLimitRepository;
 import com.bookwave.lab.haeon.repository.CardRepository;
@@ -23,14 +22,13 @@ class ApprovalServiceAuthenticationTest {
     void rejectsMissingBearerInsteadOfTrustingBodyMerchantNo() {
         MerchantRepository merchantRepository = mock(MerchantRepository.class);
         HaeonCardProperties properties = new HaeonCardProperties(
-                "normal", "haeon-card-test", "BOOKWAVE-LAB", "lab-merchant-bookwave", false, 5);
+                "haeon-card-test", "BOOKWAVE-LAB", "lab-merchant-bookwave");
         ApprovalService service = new ApprovalService(
                 merchantRepository,
                 mock(CardRepository.class),
                 mock(CardLimitRepository.class),
                 mock(AuthorizationRepository.class),
-                properties,
-                new BeforeBarrier(properties));
+                properties);
         AuthorizationRequest request = new AuthorizationRequest(
                 "corr-auth-0001", "ATTACKER-MERCHANT", "request-auth-0001", "card-token-lab-001",
                 1_000L, "KRW", "0".repeat(64), Instant.parse("2026-09-15T00:00:00Z"));
@@ -48,14 +46,13 @@ class ApprovalServiceAuthenticationTest {
     void usesConfiguredMerchantForAValidBearerNotTheBodyMerchantNo() {
         MerchantRepository merchantRepository = mock(MerchantRepository.class);
         HaeonCardProperties properties = new HaeonCardProperties(
-                "normal", "haeon-card-test", "BOOKWAVE-LAB", "lab-merchant-bookwave", false, 5);
+                "haeon-card-test", "BOOKWAVE-LAB", "lab-merchant-bookwave");
         ApprovalService service = new ApprovalService(
                 merchantRepository,
                 mock(CardRepository.class),
                 mock(CardLimitRepository.class),
                 mock(AuthorizationRepository.class),
-                properties,
-                new BeforeBarrier(properties));
+                properties);
         AuthorizationRequest request = new AuthorizationRequest(
                 "corr-auth-0002", "ATTACKER-MERCHANT", "request-auth-0002", "card-token-lab-001",
                 1_000L, "KRW", "1".repeat(64), Instant.parse("2026-09-15T00:00:00Z"));

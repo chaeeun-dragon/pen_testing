@@ -86,7 +86,7 @@ Bookwave PaymentResult
 ```bash
 docker compose exec -T haeon-card-mysql sh -c \
   'mysql -uroot -p"$MYSQL_ROOT_PASSWORD" "$MYSQL_DATABASE" \
-   < /docker-entrypoint-initdb.d/003_card03_reset.sql'
+   < /docker-entrypoint-initdb.d/003_haeon_payment_baseline.sql'
 
 HAEON_CARD_URL=http://172.27.0.4:8084 \
 bash tools/card-api-contract-check.sh

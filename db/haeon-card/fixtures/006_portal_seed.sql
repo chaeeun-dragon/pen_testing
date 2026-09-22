@@ -35,7 +35,7 @@ INSERT IGNORE INTO merchants (merchant_no, name, status) VALUES
 UPDATE merchants SET name = '북웨이브' WHERE merchant_no = 'BOOKWAVE-LAB';
 
 -- 3) 보유 카드
--- 주 이용 카드는 해온 데일리(card-token-lab-002)다. card-token-lab-001은 CARD-03 기준선
+-- 주 이용 카드는 해온 데일리(card-token-lab-002)다. card-token-lab-001은 결제 기준선
 -- 카드라 한도가 100,000으로 고정되어 있어 회원 화면의 대표 카드로 쓰지 않는다.
 INSERT IGNORE INTO cards (card_token, member_id, card_last4, status, status_version)
 SELECT s.card_token, m.member_id, s.card_last4, 'NORMAL', 0
@@ -57,7 +57,7 @@ JOIN (
 SET c.card_name = s.card_name, c.brand = s.brand, c.card_type = s.card_type,
     c.payment_day = s.payment_day, c.is_primary = s.is_primary, c.benefit_summary = s.benefit_summary;
 
--- 4) 카드별 이용한도 (card-token-lab-001은 CARD-03 기준선 100,000을 유지한다)
+-- 4) 카드별 이용한도 (card-token-lab-001은 100,000원 기준 한도를 유지한다)
 INSERT IGNORE INTO card_limits (card_id, limit_amount, used_amount, version)
 SELECT c.card_id, s.limit_amount, 0.00, 0
 FROM (
