@@ -53,7 +53,8 @@ case "$COMMAND" in
     printf 'run=%s\nstatus=%s\nalertStatus=%s\n' "$RUN_ID" "$(json_value status < "$dir/run-state.json")" "$(json_value alertStatus < "$dir/run-state.json")" > "$dir/verification.txt"
     ;;
   reset)
-    docker exec bookwave-haeon-lab-haeon-card-mysql-1 mysql -uroot -proot_lab_only haeon_card -e "DELETE FROM lab_exfil_records; DELETE FROM lab_events; DELETE FROM lab_shell_sessions; DELETE FROM lab_protection_notices; DELETE FROM lab_runs; DELETE FROM lab_merchant_sessions;"
+    curl --silent --show-error --fail-with-body -X POST "$CONTROL_URL/control/v1/reset" \
+      -H "X-Lab-Control-Token: $CONTROL_TOKEN" > "$OUT_DIR/haeon-lab-reset.json"
     echo '가상 해온카드 실습 상태를 초기화했습니다. 보관된 evidence/runs 파일은 유지됩니다.'
     ;;
   *)
