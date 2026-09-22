@@ -20,7 +20,7 @@ ACTION_LOCK = threading.Lock()
 
 
 def now():
-    return datetime.now(timezone.utc).isoformat(timespec="seconds")
+    return datetime.now(timezone.utc).isoformat(timespec="milliseconds")
 
 
 def read_state():
@@ -296,11 +296,48 @@ def create_run(mode):
         ACTION_LOCK.release()
 
 
+def comparison_evidence(run):
+    if not run:
+        return None
+    stages = run.get("stages") or []
+    details = [item.get("detail") or {} for item in stages]
+    record_count = next((detail.get("recordCount") for detail in details
+                         if detail.get("recordCount") is not None), None)
+    receiver_status = next((detail.get("receiverStatus") for detail in details
+                            if detail.get("receiverStatus")), None)
+    session_created = any(item.get("label") == "제한된 모의 웹 세션 생성"
+                          and item.get("status") in ("SUCCESS", "ALERT") for item in stages)
+    diagnostic_completed = any(item.get("label") == "등록 대상 연결 진단"
+                               and item.get("status") == "SUCCESS" for item in stages)
+    return {
+        "runId": run.get("runId"),
+        "status": run.get("status"),
+        "sessionCreated": session_created,
+        "recordCount": record_count,
+        "receiverStatus": receiver_status,
+        "diagnosticCompleted": diagnostic_completed,
+    }
+
+
 def overview():
     with LOCK:
         runs = [{k: r.get(k) for k in ("runId", "mode", "status", "summary", "createdAt")}
                 for r in STATE["runs"][:40]]
         pending = STATE.get("pendingResponseRunId")
+        latest_baseline = next((record for record in STATE["runs"]
+                                if record.get("mode") == "baseline"), None)
+        latest_before = next((record for record in STATE["runs"]
+                              if record.get("mode") == "before"), None)
+        matched_after = next((
+            record for record in STATE["runs"]
+            if record.get("mode") == "after" and latest_before
+            and record.get("createdAt", "") >= latest_before.get("createdAt", "")
+        ), None)
+        comparison = {
+            "baseline": comparison_evidence(latest_baseline),
+            "before": comparison_evidence(latest_before),
+            "after": comparison_evidence(matched_after),
+        }
     health_code, health = call("GET", "/actuator/health", timeout=2)
     connected = health_code == 200 and health.get("status") == "UP"
     return {
@@ -310,7 +347,7 @@ def overview():
             {"id": "bookwave", "name": "북웨이브 자체 시나리오", "status": "PLANNED", "target": "별도 시나리오"},
             {"id": "mock-pg", "name": "PG 연동 시나리오", "status": "PLANNED", "target": "독립 연동 시나리오"},
         ],
-        "runs": runs, "pendingResponseRunId": pending,
+        "runs": runs, "pendingResponseRunId": pending, "comparison": comparison,
     }
 
 

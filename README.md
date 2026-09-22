@@ -19,6 +19,10 @@ docker compose --env-file .env ps haeon-attack-console haeon-lab-gateway
 
 실행 화면에서 **정상 진단 → Before 공격 흐름 → 대응 실행 → After 차단 검증**을 선택한다. Before 실행에서는 합성 자료 조회와 내부 수신 결과가 단계 로그에 나타난다. After 실행은 차단 결과를 확인하고 선행 후속 동작을 실행하지 않는다. 공격 콘솔 서비스는 내부 Docker 네트워크에만 연결하고, 게이트웨이는 loopback 주소에만 포트를 공개한다. 콘솔의 시나리오 목록·실행 단계·이벤트 타임라인은 북웨이브와 PG 시나리오 및 이후 BAS 검증 항목을 각각 독립적으로 추가할 수 있도록 분리했다.
 
+### 북웨이브·PG 통합 준비
+
+팀장이 만든 북웨이브와 Mock PG는 현재 해온카드 기준선을 직접 수정하지 않고 별도 Git worktree에서 합친다. 브랜치 기준점, 폴더 소유, Compose 경계, 환경 변수, 결제·진단 회귀 순서는 [북웨이브·PG·해온카드 통합 작업 가이드](docs/handoff/bookwave-pg-haeon-integration-guide-v0.1.md)를 따른다.
+
 ### 해온카드 진단 시나리오
 
 ```bash
