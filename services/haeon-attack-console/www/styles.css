@@ -32,3 +32,55 @@ button:focus-visible,a:focus-visible{outline:3px solid #168c7d;outline-offset:3p
 @media(max-width:1150px){.run-context{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:720px){.run-context{gap:8px;margin-bottom:9px}.run-context article{padding:10px}.run-context strong{font-size:13px}.run-context span{font-size:11px;min-height:34px}.action-top b{max-width:108px}.action-card>span.action-cta{align-self:stretch}.comparison-row{grid-template-columns:minmax(0,1fr) minmax(0,1fr) minmax(0,1fr);padding:8px 7px;font-size:10px}.comparison-row strong{font-size:10px}}
 @media(max-width:450px){.run-context{grid-template-columns:1fr}.run-context span{min-height:auto}.comparison-card{padding:13px}.comparison-row{gap:5px;padding:7px 6px}}
+
+/* Console readability and live log playback */
+.panel-heading h2 { font-size: 14px; }
+.metrics label { color: #6f8087; }
+.metrics article > strong { font-size: 15px; }
+.action-card > strong { font-size: 13px; }
+.action-card > span:not(.action-top),
+.action-card > small { color: #687981; font-size: 12.5px; }
+.stage-copy strong,
+.event-copy strong { color: #40535c; font-size: 13px; line-height: 1.5; }
+.stage-copy small,
+.event-copy small { color: #687981; font-size: 12px; line-height: 1.5; }
+.stage-time,
+.event-time { color: #71828a; font-size: 11px; }
+.activity-summary small { color: #718087; }
+.event-list { scrollbar-gutter: stable; scroll-behavior: smooth; }
+.log-pending { display: block; padding: 8px 0; color: #71828a; font-size: 12px; }
+.event-row.log-entry-new { animation: log-entry-in .24s ease-out both; }
+.event-copy strong.log-typing::after,
+.event-copy small.log-typing::after {
+  display: inline-block;
+  width: 5px;
+  height: 1em;
+  margin-left: 3px;
+  vertical-align: -.12em;
+  background: currentColor;
+  content: "";
+  animation: log-caret .65s step-end infinite;
+}
+.action-card:focus-visible,
+.activity-tab:focus-visible,
+.nav-item:focus-visible,
+.refresh:focus-visible,
+.history-item:focus-visible {
+  outline: 2px solid #1fae9a;
+  outline-offset: 2px;
+}
+@keyframes log-entry-in { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
+@keyframes log-caret { 50% { opacity: 0; } }
+@media(max-width:720px) {
+  .panel-heading h2 { font-size: 13px; }
+  .action-card > strong,
+  .stage-copy strong,
+  .event-copy strong { font-size: 12px; }
+  .action-card > span:not(.action-top),
+  .action-card > small { font-size: 12px; }
+}
+@media(prefers-reduced-motion:reduce) {
+  .event-row.log-entry-new { animation: none; }
+  .event-copy strong.log-typing::after,
+  .event-copy small.log-typing::after { display: none; }
+}

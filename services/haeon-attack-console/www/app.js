@@ -1,7 +1,7 @@
 (() => {
   const $ = (selector) => document.querySelector(selector);
   const $$ = (selector) => [...document.querySelectorAll(selector)];
-  const state = { currentRunId:null, current:null, pendingResponseRunId:null, events:[], localEvents:[], logTab:"events", toastTimer:null, busy:false, activeRunId:null, polling:false, overview:null, comparison:null };
+  const state = { currentRunId:null, current:null, pendingResponseRunId:null, events:[], localEvents:[], logTab:"events", toastTimer:null, busy:false, responding:false, activeRunId:null, polling:false, overview:null, comparison:null, logAnimationRunId:null, logGeneration:0, logWriteQueue:Promise.resolve(), animatedEventKeys:new Set(), animatedStepKeys:new Set() };
   const eventLabels = {
     diagnostic_request_received:"진단 요청 수신",
     diagnostic_completed:"진단 완료",
@@ -63,6 +63,56 @@
     state.localEvents.unshift({runId, eventType:"console_api_failed", result:"ERROR", occurredAt:new Date().toISOString(), detail:{source:context}});
     state.localEvents=state.localEvents.slice(0,20);
   }
+  function logWait(ms) { return new Promise(resolve=>setTimeout(resolve,ms)); }
+  async function typeLogText(node,value,speed,generation) {
+    const content=String(value||"");node.textContent="";
+    if(window.matchMedia("(prefers-reduced-motion: reduce)").matches){node.textContent=content;return;}
+    node.classList.add("log-typing");
+    for(const character of Array.from(content)){
+      if(generation!==state.logGeneration)break;
+      node.textContent+=character;
+      await logWait(speed);
+    }
+    node.classList.remove("log-typing");
+  }
+  function enqueueTypedLog(list,row,titleNode,titleValue,detailNode,detailValue,key,kind) {
+    const generation=state.logGeneration;
+    row.dataset.logKey=key;row.classList.add("log-entry-new");
+    const queued=state.logWriteQueue.then(async()=>{
+      if(generation!==state.logGeneration)return;
+      list.querySelector(".log-pending")?.remove();
+      list.classList.remove("empty-state");
+      list.prepend(row);
+      await typeLogText(titleNode,titleValue,kind==="event"?42:40,generation);
+      if(detailNode&&detailValue&&generation===state.logGeneration)await typeLogText(detailNode,detailValue,kind==="event"?18:16,generation);
+      row.classList.remove("log-entry-new");
+    });
+    state.logWriteQueue=queued.catch(()=>{});
+  }
+  async function drainLogQueue() {
+    let queue;
+    do { queue=state.logWriteQueue;await queue; } while(queue!==state.logWriteQueue);
+  }
+  function beginLogPlayback(runId,reset=true) {
+    state.logGeneration+=1;state.logAnimationRunId=runId;state.logWriteQueue=Promise.resolve();
+    const events=$("#eventList"),steps=$("#stepLogList");
+    if(reset){
+      state.animatedEventKeys=new Set();state.animatedStepKeys=new Set();
+      events.replaceChildren();events.classList.remove("empty-state");
+      steps.replaceChildren();steps.classList.remove("empty-state");
+      events.scrollTop=0;steps.scrollTop=0;
+      [events,steps].forEach(list=>{const pending=document.createElement("span");pending.className="log-pending";pending.textContent="새 실행 로그를 기다리는 중입니다.";list.append(pending);});
+    }else{
+      state.animatedEventKeys=new Set([...events.querySelectorAll("[data-log-key]")].map(row=>row.dataset.logKey));
+      state.animatedStepKeys=new Set([...steps.querySelectorAll("[data-log-key]")].map(row=>row.dataset.logKey));
+    }
+  }
+  function eventLogKey(event,runId,index) {
+    return String(event.eventId||event.id||[runId,event.occurredAt,event.eventType,event.result,JSON.stringify(event.detail||"")].join("|"));
+  }
+  function stepLogKey(item,run,index) {
+    return String(item.id||item.stageId||[run.runId,index,item.at,item.label,item.status].join("|"));
+  }
   function empty(parent,message,icon) {
     parent.replaceChildren();parent.classList.add("empty-state");
     const mark=document.createElement("b");mark.className="empty-icon";mark.textContent=icon||"◷";
@@ -121,13 +171,32 @@
     });
   }
   function renderEvents(events, runId) {
-    const list=$("#eventList");list.replaceChildren();$("#eventCount").textContent=String(events.length);
     const visible=[...events,...state.localEvents.filter(event=>!event.runId||event.runId===runId)];
     $("#eventCount").textContent=String(visible.length);
+    const list=$("#eventList");
     if(!visible.length){empty(list,"아직 이벤트가 없습니다.","◷");return;}
-    list.classList.remove("empty-state");
+    const animate=state.logAnimationRunId===runId&&state.logTab==="events";
+    if(animate){
+      list.classList.remove("empty-state");
+      visible.forEach((event,index)=>{
+        const key=eventLogKey(event,runId,index);if(state.animatedEventKeys.has(key))return;
+        state.animatedEventKeys.add(key);
+        const row=document.createElement("div");row.className="event-row";row.dataset.result=event.result||"";
+        const pin=document.createElement("span");pin.className="event-pin";pin.textContent=({BLOCKED:"⊘",ALERT:"!",ERROR:"×",PASS:"✓"})[event.result]||"·";
+        const copy=document.createElement("div");copy.className="event-copy";
+        const title=document.createElement("strong");copy.append(title);
+        const sub=document.createElement("small"),subText=["#"+(index+1),event.result,detailText(event.detail)].filter(Boolean).join(" · ");
+        if(subText)copy.append(sub);
+        const stamp=document.createElement("span");stamp.className="event-time";stamp.textContent=fmtTime(event.occurredAt,true);
+        row.append(pin,copy,stamp);
+        enqueueTypedLog(list,row,title,eventLabels[event.eventType]||event.eventType||"보안 이벤트",sub,subText,key,"event");
+      });
+      return;
+    }
+    list.replaceChildren();list.classList.remove("empty-state");state.animatedEventKeys=new Set();
     [...visible].reverse().forEach((event,index)=>{
-      const row=document.createElement("div");row.className="event-row";row.dataset.result=event.result||"";
+      const key=eventLogKey(event,runId,visible.length-index-1);state.animatedEventKeys.add(key);
+      const row=document.createElement("div");row.className="event-row";row.dataset.result=event.result||"";row.dataset.logKey=key;
       const pin=document.createElement("span");pin.className="event-pin";pin.textContent=({BLOCKED:"⊘",ALERT:"!",ERROR:"×",PASS:"✓"})[event.result]||"·";
       const copy=document.createElement("div");copy.className="event-copy";
       const title=document.createElement("strong");title.textContent=eventLabels[event.eventType]||event.eventType||"보안 이벤트";
@@ -138,10 +207,29 @@
     });
   }
   function renderStepLog(run) {
-    const list=$("#stepLogList");list.replaceChildren();
-    if(!run||!run.stages||!run.stages.length){const span=document.createElement("span");span.textContent="아직 실행 로그가 없습니다.";list.append(span);return;}
+    const list=$("#stepLogList");
+    if(!run||!run.stages||!run.stages.length){list.replaceChildren();list.classList.add("empty-state");const span=document.createElement("span");span.textContent="아직 실행 로그가 없습니다.";list.append(span);return;}
+    const animate=state.logAnimationRunId===run.runId&&state.logTab==="steps";
+    if(animate){
+      list.classList.remove("empty-state");
+      run.stages.forEach((item,index)=>{
+        const key=stepLogKey(item,run,index);if(state.animatedStepKeys.has(key))return;
+        state.animatedStepKeys.add(key);
+        const row=document.createElement("div");row.className="event-row";row.dataset.result=item.status||"";
+        const pin=document.createElement("span");pin.className="event-pin";pin.textContent=({SUCCESS:"✓",ALERT:"!",BLOCKED:"⊘",ERROR:"×",RUNNING:"·",SKIPPED:"—"})[item.status]||"·";
+        const copy=document.createElement("div");copy.className="event-copy";
+        const title=document.createElement("strong");copy.append(title);
+        const detail=detailText(item.detail),sub=document.createElement("small"),subText=["#"+(index+1),detail].filter(Boolean).join(" · ");copy.append(sub);
+        const stamp=document.createElement("span");stamp.className="event-time";stamp.textContent=fmtTime(item.at,true);
+        row.append(pin,copy,stamp);
+        enqueueTypedLog(list,row,title,item.label||"실행 단계",sub,subText,key,"step");
+      });
+      return;
+    }
+    list.replaceChildren();list.classList.remove("empty-state");state.animatedStepKeys=new Set();
     [...run.stages].reverse().forEach((item,index)=>{
-      const row=document.createElement("div");row.className="event-row";row.dataset.result=item.status||"";
+      const key=stepLogKey(item,run,run.stages.length-index-1);state.animatedStepKeys.add(key);
+      const row=document.createElement("div");row.className="event-row";row.dataset.result=item.status||"";row.dataset.logKey=key;
       const pin=document.createElement("span");pin.className="event-pin";pin.textContent=({SUCCESS:"✓",ALERT:"!",BLOCKED:"⊘",ERROR:"×",RUNNING:"·",SKIPPED:"—"})[item.status]||"·";
       const copy=document.createElement("div");copy.className="event-copy";
       const title=document.createElement("strong");title.textContent=item.label||"실행 단계";copy.append(title);
@@ -312,10 +400,11 @@
       busy&&currentMode==="before"?"진행 중":pending?"대응 대기":currentMode==="before"&&run?.status==="CONTAINED"?"대응 완료":"실행 가능",
       pending?"Before 실행의 대응이 완료될 때까지 새 실행을 잠급니다.":busy&&currentMode!=="before"?"다른 실행이 끝난 뒤 시작할 수 있습니다.":"제한된 진단 입력 처리와 모의 세션 흐름을 확인합니다.",
       busy&&currentMode==="before"?"실행 중":pending?"대응 대기":"Before 실행",Boolean(pending)||busy,currentMode==="before");
+    const waitingForBefore=Boolean(pending&&run?.runId===pending&&run?.mode==="before"&&run.status==="RUNNING");
     setActionState("Respond",
-      busy&&currentMode==="before"?"대응 중":responseAvailable?"대응 필요":pending?"실행 선택 필요":currentMode==="before"&&run?.status==="CONTAINED"?"대응 완료":"대응 대기",
-      responseAvailable?"현재 Before 실행의 모의 세션을 폐기할 수 있습니다.":pending?"대응 대기 실행을 열어 주세요.":currentMode==="before"&&run?.status==="CONTAINED"?"세션 폐기와 회원 보호 안내 등록을 확인했습니다.":"Before 실행 완료 후 사용할 수 있습니다.",
-      busy&&currentMode==="before"?"대응 중":responseAvailable?"대응 실행":currentMode==="before"&&run?.status==="CONTAINED"?"대응 완료":"대응 대기",!responseAvailable,currentMode==="before"&&Boolean(pending));
+      state.responding?"대응 중":responseAvailable?"대응 필요":waitingForBefore?"Before 실행 중":pending?"실행 선택 필요":currentMode==="before"&&run?.status==="CONTAINED"?"대응 완료":"대응 대기",
+      state.responding?"세션 폐기와 회원 보호 안내를 적용하고 있습니다.":responseAvailable?"현재 Before 실행의 모의 세션을 폐기할 수 있습니다.":waitingForBefore?"Before 실행이 끝나면 대응을 시작할 수 있습니다.":pending?"대응할 Before 실행을 선택하세요.":currentMode==="before"&&run?.status==="CONTAINED"?"세션 폐기와 회원 보호 안내 등록을 확인했습니다.":"Before 실행 완료 후 사용할 수 있습니다.",
+      state.responding?"적용 중":responseAvailable?"대응 실행":waitingForBefore?"실행 중":currentMode==="before"&&run?.status==="CONTAINED"?"대응 완료":"대응 대기",!responseAvailable,currentMode==="before"&&Boolean(pending));
     setActionState("After",
       busy&&currentMode==="after"?"진행 중":pending?"잠김":currentMode==="after"&&run?.status==="BLOCKED"?"차단 확인":"실행 가능",
       pending?"Before 대응 완료 후 별도 검증을 실행할 수 있습니다.":busy&&currentMode!=="after"?"다른 실행이 끝난 뒤 시작할 수 있습니다.":currentMode==="after"&&run?.status==="BLOCKED"?"허용 목록 정책에서 비정상 입력이 차단됐습니다.":"강화된 입력 검증 모드를 확인합니다.",
@@ -362,6 +451,7 @@
     }catch(error){recordLocalFailure(null,"실행 목록 갱신");renderEvents(state.events,state.currentRunId);notify("실행 목록을 불러오지 못했습니다.");}
   }
   async function selectRun(id) {
+    if(state.logAnimationRunId&&state.logAnimationRunId!==id){state.logGeneration+=1;state.logAnimationRunId=null;state.logWriteQueue=Promise.resolve();}
     state.currentRunId=id;$("#activityRunId").textContent=shortId(id);$("#activityRunId").title=id;
     try{
       const data=await api("/api/runs/"+encodeURIComponent(id));
@@ -386,22 +476,24 @@
     button.classList.add("loading");
     try{
       const data=await api("/api/runs",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({mode:mode})});
+      beginLogPlayback(data.runId);
       state.currentRunId=data.runId;if(mode==="before")state.pendingResponseRunId=data.runId;
       $("#activityRunId").textContent=data.runId;$("#activityStatus").textContent="진행 중";
       notify((modeLabels[mode]||mode)+" 실행을 시작했습니다.");showView("overview");
       await selectRun(data.runId);await loadHistory(false);
     }catch(error){recordLocalFailure(state.currentRunId,"시나리오 시작");renderEvents(state.events,state.currentRunId);notify("시나리오를 시작하지 못했습니다.");}
-    finally{state.busy=false;button.classList.remove("loading");syncControls();}
+    finally{await drainLogQueue();state.busy=false;button.classList.remove("loading");syncControls();}
   }
   async function respond() {
-    const run=state.current;if(!run||state.busy)return;state.busy=true;syncControls();
+    const run=state.current;if(!run||state.busy)return;state.busy=true;state.responding=true;syncControls();
+    if(state.logAnimationRunId!==run.runId)beginLogPlayback(run.runId,false);
     const button=$("#respondButton");button.disabled=true;button.classList.add("loading");
     try{
       const data=await api("/api/runs/"+encodeURIComponent(run.runId)+"/respond",{method:"POST",headers:{"Content-Type":"application/json"},body:"{}"});
       state.pendingResponseRunId=null;updateRun(data.run,data.events||[]);
       notify(data.run.summary||"대응 결과를 확인했습니다.");await loadHistory(false);
     }catch(error){recordLocalFailure(run.runId,"대응 실행");renderEvents(state.events,run.runId);notify("대응 요청을 처리하지 못했습니다.");button.disabled=false;}
-    finally{state.busy=false;button.classList.remove("loading");syncControls();}
+    finally{await drainLogQueue();state.responding=false;state.busy=false;button.classList.remove("loading");syncControls();}
   }
   function showView(view) {
     const history=view==="history";
@@ -422,8 +514,13 @@
   $$(".activity-tab").forEach(button=>button.addEventListener("click",()=>{
     const tab=button.dataset.logTab;
     $$(".activity-tab").forEach(item=>item.classList.toggle("active",item===button));
+    state.logTab=tab;
     $("#eventList").classList.toggle("hidden",tab!=="events");
     $("#stepLogList").classList.toggle("hidden",tab!=="steps");
+    if(state.logAnimationRunId){
+      state.logGeneration+=1;state.logAnimationRunId=null;state.logWriteQueue=Promise.resolve();
+      if(state.current){renderEvents(state.events,state.current.runId);renderStepLog(state.current);}
+    }
   }));
   function tick(){ $("#clock").textContent=new Date().toLocaleTimeString("ko-KR",{hour:"2-digit",minute:"2-digit",second:"2-digit"}); }
   async function init(){

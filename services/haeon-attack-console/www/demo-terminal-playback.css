@@ -1,0 +1,137 @@
+.phase-list small {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.role-label {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 4px;
+  border: 1px solid currentColor;
+  border-radius: 4px;
+  font: 800 7px/1 ui-monospace, Consolas, monospace;
+  font-style: normal;
+  letter-spacing: .04em;
+}
+
+.role-label.attacker { color: #e8aa50; }
+.role-label.defender { color: #76a9ef; }
+
+.actor-badge {
+  padding: 5px 7px;
+  border: 1px solid #36505a;
+  border-radius: 5px;
+  font: 900 8px/1 ui-monospace, Consolas, monospace;
+  letter-spacing: .08em;
+}
+
+.actor-badge.system { color: #7edbcf; background: #153633; border-color: #2b6b63; }
+.actor-badge.attacker { color: #ffd18b; background: #3a2b1c; border-color: #8c6734; }
+.actor-badge.defender { color: #b9d6ff; background: #1d2d4c; border-color: #41699d; }
+
+.terminal-line.actor-attacker .line-marker,
+.terminal-line.actor-attacker strong { color: #efb158; }
+
+.terminal-line.actor-defender .line-marker,
+.terminal-line.actor-defender strong { color: #7fb1f2; }
+
+.terminal-line.actor-system .line-marker { color: #55cbbb; }
+
+.terminal-line strong.is-typing::after,
+.terminal-line small.is-typing::after {
+  display: inline-block;
+  width: 6px;
+  height: 1em;
+  margin-left: 3px;
+  vertical-align: -.12em;
+  background: currentColor;
+  content: "";
+  animation: typing-cursor .65s step-end infinite;
+}
+
+.start-button {
+  min-width: 222px;
+  justify-content: center;
+}
+
+@keyframes typing-cursor {
+  50% { opacity: 0; }
+}
+
+@media(max-width:760px) {
+  .phase-list small { display: none; }
+  .actor-badge { display: none; }
+  .start-button { min-width: 190px; }
+}
+
+@media(prefers-reduced-motion:reduce) {
+  .terminal-line strong.is-typing::after,
+  .terminal-line small.is-typing::after { display: none; }
+}
+
+.terminal-group-heading {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 0 0 17px;
+  padding: 0 0 11px;
+  border-bottom: 1px solid #28434e;
+  color: #d9ebed;
+}
+
+.terminal-group-heading span {
+  color: #61cabb;
+  font: 900 10px/1 ui-monospace, Consolas, monospace;
+  letter-spacing: .08em;
+}
+
+.terminal-group-heading strong {
+  font-size: 12px;
+}
+
+.terminal-group-heading small {
+  margin-left: auto;
+  padding: 4px 6px;
+  border: 1px solid #315c58;
+  border-radius: 4px;
+  color: #8bd9ca;
+  font: 800 8px/1 ui-monospace, Consolas, monospace;
+  letter-spacing: .08em;
+}
+
+.terminal-output.terminal-session-open {
+  animation: terminal-session-open .34s cubic-bezier(.2,.75,.25,1) both;
+}
+
+@keyframes terminal-session-open {
+  from { opacity: .45; transform: translateY(7px) scale(.992); filter: brightness(.76); }
+  to { opacity: 1; transform: none; filter: none; }
+}
+
+@media(prefers-reduced-motion:reduce) {
+  .terminal-output.terminal-session-open { animation: none; }
+}
+
+.scene-result {
+  display: grid;
+  justify-content: stretch;
+  align-items: start;
+  gap: 5px;
+}
+
+.scene-result span,
+.scene-result b {
+  display: block;
+  min-width: 0;
+  max-width: 100%;
+  line-height: 1.45;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
+.scene-result b.scene-result-hash {
+  font: 700 9px/1.55 ui-monospace, "Cascadia Mono", Consolas, monospace;
+  letter-spacing: .025em;
+  word-break: break-all;
+}
