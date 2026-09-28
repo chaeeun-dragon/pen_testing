@@ -96,9 +96,9 @@ docker compose --env-file .env ps haeon-attack-console haeon-card haeon-merchant
     <section class="finish" id="close">
       <h2>촬영 종료와 다음 통합 작업</h2>
       <p>필수 장면은 가맹점 정상 진단, 콘솔 Before 탐지와 20건 수신, 대응 완료, After 차단·미실행, 회원 보호 안내입니다.</p>
-      <div class="terminal"><pre>bash tools/haeon-diagnostic-lab.sh reset
-bash tools/network-port-security-check.sh</pre></div>
-      <p>초기화는 시나리오 실행·세션·보호 안내만 정리하며, 정상 결제 데이터와 보관된 증거는 유지합니다. 콘솔 이력은 남을 수 있으므로 다음 촬영에는 새 실행을 선택합니다. 북웨이브·PG 연동은 이 촬영과 별도 브랜치·worktree에서 통합합니다.</p>
+      <p>재촬영 전에는 공격 콘솔 왼쪽의 <strong>시연 상태 초기화</strong>를 누릅니다. 확인 창에서 범위를 확인하면 콘솔 이력과 실습 실행·세션·보호 안내가 함께 정리됩니다. 정상 결제 데이터와 보관된 증거는 유지합니다. WSL의 <code>bash tools/haeon-diagnostic-lab.sh reset</code>은 콘솔 이력을 지우지 않습니다.</p>
+      <div class="terminal"><pre>bash tools/network-port-security-check.sh</pre></div>
+      <p>북웨이브·PG 연동은 이 촬영과 별도 브랜치·worktree에서 통합합니다.</p>
       <a href="haeon-diagnostic-api-attack-scenario-v0.2.md">공격 시나리오</a>
       <a href="haeon-lab-incident-red-blue-shooting-guide-v1.0.html">레드·블루 큐시트</a>
       <a href="../handoff/bookwave-pg-haeon-integration-guide-v0.1.md">북웨이브·PG 통합 가이드</a>
