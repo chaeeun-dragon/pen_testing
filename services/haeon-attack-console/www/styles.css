@@ -84,3 +84,133 @@ button:focus-visible,a:focus-visible{outline:3px solid #168c7d;outline-offset:3p
   .event-copy strong.log-typing::after,
   .event-copy small.log-typing::after { display: none; }
 }
+
+/* ===== UX REFRESH v2 — presentation-ready overrides ===== */
+
+/* 1. Compact hero */
+.hero { min-height: 100px; padding: 18px 24px; border-radius: 14px; }
+.hero h1 { font-size: 24px; margin: 6px 0 4px; }
+.hero p { font-size: 13px; max-width: 620px; white-space: nowrap; }
+.hero-grid { display: none; }
+.hero:after { display: none; }
+.hero-meta { margin-top: 10px; }
+.hero-side { min-width: 140px; padding-left: 20px; }
+.eyebrow { font-size: 11px; }
+.eyebrow i, .eyebrow b { display: none; }
+
+/* 2. Hide redundant run-context row */
+.run-context { display: none; }
+
+/* 3. Metrics row — tighter, cleaner */
+.metrics { grid-template-columns: repeat(4, 1fr); gap: 14px; margin: 14px 0 16px; }
+.metrics article { padding: 14px 16px; border-radius: 12px; min-height: auto; }
+.metrics label { font-size: 12px; font-weight: 700; color: #5a6d75; }
+.metrics label b { display: none; }
+.metrics article > strong { font-size: 17px; margin: 6px 0 3px; }
+.metrics .mono { font-size: 14px; }
+.metrics article > small { font-size: 12px; }
+
+/* 4. Action cards — single row of 4 */
+.action-grid { grid-template-columns: repeat(4, 1fr); gap: 14px; }
+.action-card { min-height: 150px; padding: 14px; border-radius: 10px; }
+.action-card > .action-description { display: none; }
+.action-card > strong { font-size: 15px; margin-top: 10px; }
+.action-top i { font-size: 20px; font-weight: 700; color: #b0bec3; }
+.action-top b { font-size: 11px; }
+.action-card > small { font-size: 12px; line-height: 1.5; }
+.action-card > span.action-cta { margin-top: 16px; font-size: 13px; font-weight: 700; padding: 7px 12px; border-radius: 8px; }
+.execution-foot { display: none; }
+.policy-note { display: none; }
+
+/* 5. Panel headings — bigger, clearer */
+.panel { border-radius: 14px; }
+.execution-panel { padding: 18px 20px; }
+.panel-heading h2 { font-size: 17px; font-weight: 700; }
+.panel-heading label { font-size: 11px; font-weight: 700; letter-spacing: .13em; color: #7a8d95; }
+
+/* 6. Execution hint — more prominent, extra bottom margin before action cards */
+.execution-hint { font-size: 14px; font-weight: 600; margin: 14px 0 6px; padding: 10px 14px; border-radius: 8px; background: #f0f7f5; border-left: 3px solid #22b6a3; color: #1a4a44; }
+.action-grid { margin-top: 18px; }
+
+/* 7. Topbar — cleaner */
+.topbar { height: 52px; background: #fff; }
+.crumbs strong { font-size: 14px; font-weight: 700; }
+.vline { display: none; }
+.connection { font-size: 12px; padding: 4px 10px; border-radius: 14px; background: #e8f5f1; font-weight: 600; }
+.connection.offline { background: #fde8e6; }
+.clock { font-size: 13px; }
+.refresh { border-radius: 8px; }
+
+/* 8. Activity panel — better contrast */
+.activity-panel { padding: 16px; }
+.activity-summary { margin-top: 12px; padding: 10px 12px; border-radius: 8px; }
+.activity-summary strong { font-size: 13px; }
+.event-list { max-height: 380px; }
+.event-copy strong { font-size: 13px; font-weight: 600; }
+.event-copy small { font-size: 12px; }
+.live-label { font-size: 12px; font-weight: 700; }
+
+/* 9. Comparison card — cleaner table */
+.comparison-card { border-radius: 14px; padding: 16px 18px; }
+.comparison-card > strong { font-size: 17px; }
+.comparison-card > p { font-size: 13px; }
+.comparison-table { border-radius: 10px; }
+.comparison-row { padding: 10px 12px; font-size: 13px; }
+.comparison-row strong { font-size: 13px; }
+.comparison-head { font-size: 11px; }
+
+/* 10. Sidebar polish */
+.sidebar { width: 220px; flex: 0 0 220px; padding: 20px 12px 14px; }
+.brand { padding-bottom: 26px; }
+.brand strong { font-size: 15px; }
+.nav-item { font-size: 14px; padding: 10px 10px; border-radius: 8px; }
+.nav-item kbd { display: none; }
+.scenario-item { padding: 8px 10px; border-radius: 8px; }
+.scenario-copy strong { font-size: 14px; }
+.scenario-copy small { font-size: 11px; }
+
+/* 11. Content grid — better proportions */
+.content-grid { grid-template-columns: minmax(0, 1.4fr) minmax(300px, 0.6fr); gap: 16px; }
+.primary-column, .activity-column { gap: 16px; }
+
+/* 12. Sequence panel */
+.sequence-panel { padding: 18px 20px; min-height: 140px; }
+.stage-row { padding-bottom: 16px; }
+.stage-copy strong { font-size: 14px; font-weight: 600; }
+.stage-copy small { font-size: 12px; line-height: 1.5; }
+
+/* 13. History view polish */
+.history-header h1 { font-size: 24px; }
+.history-panel { border-radius: 14px; }
+.history-item { border-radius: 0; }
+.status-pill { font-size: 12px; border-radius: 14px; padding: 4px 10px; }
+
+/* 14. Toast */
+.toast { border-radius: 10px; font-size: 14px; }
+
+/* 15. Fill viewport */
+.main-shell { display: flex; flex-direction: column; }
+.page-view { flex: 1; display: flex; flex-direction: column; }
+.content-grid { flex: 1; align-items: stretch; }
+.activity-panel { flex: 1; display: flex; flex-direction: column; min-height: 380px; }
+.sequence-panel { flex: 1; min-height: 180px; }
+.event-list { max-height: none; flex: 1; min-height: 220px; }
+
+/* 16. Responsive tweaks for presentation */
+@media (min-width: 1400px) {
+  .page-view { padding: 24px 32px 40px; }
+  .hero h1 { font-size: 28px; }
+  .metrics article > strong { font-size: 19px; }
+  .action-card > strong { font-size: 16px; }
+  .panel-heading h2 { font-size: 18px; }
+}
+@media (max-width: 1200px) {
+  .action-grid { grid-template-columns: repeat(2, 1fr); }
+  .content-grid { grid-template-columns: 1fr; }
+  .activity-column { display: grid; grid-template-columns: 1.2fr 0.8fr; }
+}
+@media (max-width: 800px) {
+  .action-grid { grid-template-columns: 1fr; }
+  .metrics { grid-template-columns: repeat(2, 1fr); }
+  .activity-column { display: flex; }
+}

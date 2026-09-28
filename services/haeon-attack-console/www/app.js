@@ -504,9 +504,7 @@
     if(history)loadHistory(false);
   }
   $$(".nav-item").forEach(button=>button.addEventListener("click",()=>showView(button.dataset.view)));
-  $$(".scenario-item").forEach(button=>button.addEventListener("click",()=>{
-    if(button.dataset.scenario!=="haeon")notify("북웨이브와 PG는 서로 독립된 시나리오로 준비 중입니다.");
-  }));
+  $$(".scenario-item").forEach(button=>button.addEventListener("click",()=>{}));
   $$("[data-run-mode]").forEach(button=>button.addEventListener("click",()=>startRun(button.dataset.runMode)));
   $("#pendingRunButton").addEventListener("click",()=>{if(state.pendingResponseRunId)selectRun(state.pendingResponseRunId);});
   $("#respondButton").addEventListener("click",respond);
