@@ -1,0 +1,100 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#101820">
+  <title>HAEON Scenario Playback</title>
+  <link rel="stylesheet" href="/demo-terminal.css?v=20260923-sessions1">
+  <link rel="stylesheet" href="/demo-terminal-playback.css?v=20260923-sessions1">
+  <script src="/demo-terminal.js?v=20260923-sessions1" defer></script>
+</head>
+<body>
+  <div class="page-shell">
+    <header class="topbar">
+      <a class="brand" href="/" aria-label="운영 콘솔로 이동">
+        <span class="brand-mark" aria-hidden="true"><i></i><i></i><i></i></span>
+        <span><strong>H-SEC</strong><small>SCENARIO PLAYBACK</small></span>
+      </a>
+      <div class="top-title">
+        <span>HAEON CARD</span>
+        <b>진단 API 시나리오 자동 재생</b>
+      </div>
+      <div class="top-actions">
+        <span class="scope-chip">LOCAL · FIXED PATH</span>
+        <span id="serviceStatus" class="service-status"><i></i>연결 확인 중</span>
+        <button id="shootModeButton" class="icon-button" type="button" aria-pressed="false" title="촬영 모드 전환">▣</button>
+      </div>
+    </header>
+
+    <main class="playback-layout">
+      <aside class="phase-rail" aria-label="시연 진행 단계">
+        <div class="rail-heading"><span>VIDEO RUNBOOK</span><strong>자동 시연 흐름</strong></div>
+        <ol id="phaseList" class="phase-list">
+          <li data-phase="preflight"><span class="phase-number">00</span><span><b>환경 확인</b><small>대상 · 실행 상태</small></span><i></i></li>
+          <li data-phase="baseline"><span class="phase-number">01</span><span><b>정상 진단</b><small>등록 대상 연결 확인</small></span><i></i></li>
+          <li data-phase="before"><span class="phase-number">02</span><span><b>Before 공격</b><small><em class="role-label attacker">ATTACKER</em> 탐지 · 20건 수신</small></span><i></i></li>
+          <li data-phase="evidence"><span class="phase-number">03</span><span><b>공격 증거</b><small><em class="role-label attacker">ATTACKER</em> 이벤트 · 수신 결과</small></span><i></i></li>
+          <li data-phase="respond"><span class="phase-number">04</span><span><b>운영자 대응</b><small><em class="role-label defender">DEFENDER</em> 세션 폐기</small></span><i></i></li>
+          <li data-phase="after"><span class="phase-number">05</span><span><b>After 검증</b><small><em class="role-label defender">DEFENDER</em> 입력 차단</small></span><i></i></li>
+          <li data-phase="member"><span class="phase-number">06</span><span><b>회원 보호</b><small><em class="role-label defender">DEFENDER</em> 추가 확인 안내</small></span><i></i></li>
+        </ol>
+        <div class="rail-note"><i></i><span>고정된 로컬 대상과 정해진 단계만 호출합니다.</span></div>
+      </aside>
+
+      <section class="terminal-panel" aria-labelledby="terminalTitle">
+        <div class="window-bar">
+          <div class="window-controls" aria-hidden="true"><i></i><i></i><i></i></div>
+          <div class="window-title"><span class="prompt-mark">›_</span><strong id="terminalTitle">haeon-sec / scenario-playback</strong></div>
+          <span id="actorBadge" class="actor-badge system">SYSTEM</span>
+          <span id="playbackState" class="state-pill ready">준비됨</span>
+        </div>
+        <div id="terminalOutput" class="terminal-output" role="log" aria-live="polite" aria-label="시연 터미널 로그">
+          <div class="terminal-welcome">
+            <span class="welcome-mark">H</span>
+            <div><strong>해온카드 시나리오 재생 준비</strong><p>시작 버튼을 누르면 정상 진단부터 Before, 대응, After, 회원 보호 안내까지 순서대로 확인합니다.</p></div>
+          </div>
+        </div>
+        <div class="terminal-footer">
+          <span class="cursor"><i></i><span id="terminalSessionLabel">시연 세션 대기</span></span>
+          <span id="runSummary" class="run-summary">실행 ID 없음</span>
+        </div>
+      </section>
+
+      <aside class="evidence-panel" aria-label="실행 증거 요약">
+        <div class="evidence-heading"><div><span>LIVE SUMMARY</span><strong>관측 결과</strong></div><i class="live-dot"></i></div>
+        <div class="target-card">
+          <span>대상 도메인</span><strong>haeon.localhost</strong><small>결제 연동 진단 경로</small>
+        </div>
+        <dl class="metric-list">
+          <div><dt>정상 진단</dt><dd id="metricBaseline">대기</dd></div>
+          <div><dt>탐지 상태</dt><dd id="metricDetection">대기</dd></div>
+          <div><dt>합성 자료</dt><dd id="metricRecords">—</dd></div>
+          <div><dt>내부 수신</dt><dd id="metricReceiver">—</dd></div>
+          <div><dt>대응 결과</dt><dd id="metricResponse">대기</dd></div>
+          <div><dt>After 검증</dt><dd id="metricAfter">대기</dd></div>
+        </dl>
+        <section class="scene-card" aria-labelledby="sceneTitle">
+          <div class="scene-header"><span class="browser-dots" aria-hidden="true"><i></i><i></i><i></i></span><strong id="sceneAddress">haeon.localhost/merchant</strong></div>
+          <div id="sceneBody" class="scene-body scene-merchant">
+            <span class="scene-kicker">MERCHANT SUPPORT</span>
+            <strong id="sceneTitle">결제 연동 상태 진단</strong>
+            <p id="sceneDescription">등록된 진단 대상의 연결 상태를 확인할 준비가 되었습니다.</p>
+            <div class="scene-result"><span id="sceneResultLabel">상태</span><b id="sceneResultValue">대기</b></div>
+          </div>
+          <a id="sceneLink" class="scene-link" href="http://haeon.localhost:8090/merchant/" target="_blank" rel="noopener">대상 화면 열기 <span>↗</span></a>
+        </section>
+      </aside>
+    </main>
+
+    <footer class="controlbar">
+      <div class="control-copy"><span>STEP-BY-STEP PLAYBACK</span><strong id="controlGuide">각 단계가 끝나면 발표자가 다음 장면을 직접 시작합니다.</strong></div>
+      <div class="control-actions">
+        <button id="clearButton" class="secondary-button" type="button">표시 초기화</button>
+        <a class="console-link" href="/" target="_blank" rel="noopener">운영 콘솔 열기 <span>↗</span></a>
+        <button id="startButton" class="start-button" type="button"><span class="play-icon">▶</span><span id="startButtonLabel">시연 시작 · 기준선 확인</span></button>
+      </div>
+    </footer>
+  </div>
+</body>
+</html>

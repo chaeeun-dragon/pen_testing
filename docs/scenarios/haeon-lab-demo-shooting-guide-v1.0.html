@@ -23,15 +23,16 @@
     <section class="intro" id="prepare">
       <article class="card">
         <h2>촬영 흐름</h2>
-        <p>공격 콘솔의 왼쪽 메뉴에서 해온카드 시나리오를 선택하고, 오른쪽의 실행 제어와 단계·이벤트 로그를 촬영합니다. 가맹점 포털은 정상 업무 화면, 회원 포털은 대응 결과 확인 화면으로 사용합니다.</p>
+        <p>공격 콘솔의 왼쪽 메뉴에서 해온카드 시나리오를 선택하고, 오른쪽의 실행 요약·단계 제어·상세 근거 로그·Before/After 비교를 촬영합니다. 로그는 한 글자씩 순차 표시되므로 결과가 완성되는 장면까지 기다립니다. 가맹점 포털은 정상 업무와 진입 기능 확인 화면, 회원 포털은 대응 결과 확인 화면으로 사용합니다.</p>
         <div class="flow"><span>가맹점 정상 업무</span><b>→</b><span>콘솔 정상 진단</span><b>→</b><span>Before</span><b>→</b><span>대응</span><b>→</b><span>After</span><b>→</b><span>회원 안내</span></div>
       </article>
       <article class="card">
         <h2>브라우저 탭 준비</h2>
         <p>공격 콘솔: <code>http://haeon-attack.localhost:8090/</code></p>
+        <p>시연 터미널: <code>http://haeon-attack.localhost:8090/demo-terminal.html</code></p>
         <p>가맹점 포털: <code>http://haeon.localhost:8090/merchant/</code></p>
         <p>회원 마이페이지: <code>http://haeon.localhost:8090/mypage</code></p>
-        <p class="muted">북웨이브와 PG 메뉴는 이후 독립 시나리오를 위한 자리입니다. 이번 촬영에서는 해온카드만 실행하고, 비밀번호·제어 토큰·세션 원문은 화면에 표시하지 않습니다.</p>
+        <p class="muted">시연 터미널의 주 버튼은 <strong>기준선 확인 → 공격자 Before → 방어자 대응·After → 회원 보호</strong> 순서로 바뀝니다. 터미널은 단계 묶음마다 새 세션 화면으로 전환됩니다. <strong>00–01</strong>은 환경 확인·정상 진단, <strong>02–03</strong>은 Before·증거, <strong>04</strong>는 대응, <strong>05</strong>는 After, <strong>06</strong>은 회원 보호 화면입니다. 전환할 때 이전 로그를 지우고 제목과 단계 번호를 새로 표시해 스크롤이 누적되지 않게 합니다. 로그가 한 글자씩 표시되는 동안은 기다리고, 각 버튼 단계가 끝난 뒤 발표자가 다음 장면으로 진행합니다. 이전 Before 실행이 대응 대기 중이면 새 재생을 시작하지 않습니다. 북웨이브와 PG 메뉴는 이후 독립 시나리오를 위한 자리입니다. 이번 촬영에서는 해온카드만 실행하고, 비밀번호·제어 토큰·세션 원문은 화면에 표시하지 않습니다.</p>
       </article>
     </section>
 
@@ -64,14 +65,14 @@ docker compose --env-file .env ps haeon-attack-console haeon-card haeon-merchant
       <div class="head"><div class="num">3</div><div><h2>탐지와 증거 대조</h2><p>콘솔의 단계 결과와 이벤트 로그에서 관측된 증거를 같은 실행 단위로 확인합니다.</p></div><span class="badge">보안 관찰</span></div>
       <div class="body"><div class="cols">
         <article class="panel"><h3>시나리오 단계</h3><ol><li>세션 생성</li><li>지정 합성 자료 조회</li><li>내부 수신 결과</li><li>탐지 상태</li></ol><p>각 단계가 완료된 순서와 실행 ID를 보여 줍니다.</p></article>
-        <article class="panel"><h3>이벤트 로그</h3><ol><li><strong>보안 이벤트</strong> 탭에서 비정상 진단 입력, 세션 생성, 자료 조회, 전송 결과를 확인합니다.</li><li><strong>실행 로그</strong> 탭에서 처리 순서를 확인합니다.</li><li>건수 20건과 SHA-256 수신 일치 결과를 촬영합니다.</li></ol></article>
+        <article class="panel"><h3>이벤트 로그</h3><ol><li><strong>보안 이벤트</strong> 탭에서 비정상 진단 입력, 세션 생성, 자료 조회, 전송 결과를 확인합니다.</li><li><strong>실행 로그</strong> 탭에서 처리 순서를 확인합니다.</li><li>로그가 타이핑처럼 순차 표시된 뒤 건수 20건과 SHA-256 수신 결과를 촬영합니다.</li></ol></article>
       </div><div class="note">콘솔 실행은 콘솔의 실행 이력과 상세 타임라인에 남습니다. <code>evidence/runs/</code> 파일은 별도로 명령행 검증 도구를 실행했을 때 생성되는 보관 증거입니다. 토큰이 포함될 수 있는 원시 파일은 촬영 화면에서 열지 않습니다.</div></div>
     </section>
 
     <section class="step" id="respond">
       <div class="head"><div class="num">4</div><div><h2>운영자 대응과 세션 폐기</h2><p>탐지 후 운영자가 콘솔에서 대응을 실행해 해당 실행을 차단합니다.</p></div><span class="badge">수동 대응</span></div>
       <div class="body"><div class="cols">
-        <article class="panel"><h3>콘솔 조작</h3><ol><li>Before 실행이 선택된 상태에서 <strong>대응 실행</strong>을 선택합니다.</li><li>완료될 때까지 기다립니다.</li><li>실행 상태와 이벤트 로그가 갱신되는 장면을 촬영합니다.</li></ol></article>
+        <article class="panel"><h3>콘솔 조작</h3><ol><li>Before 실행이 선택된 상태에서 <strong>대응 실행</strong>을 선택합니다.</li><li>터미널이 <strong>04 · 운영자 대응</strong> 세션으로 전환된 뒤 완료될 때까지 기다립니다.</li><li>실행 상태와 이벤트 로그가 갱신되는 장면을 촬영합니다. 이어지는 After 단계에서는 다시 새 터미널 세션이 열립니다.</li></ol></article>
         <article class="panel"><h3>기대 상태</h3><div class="facts"><div class="fact"><small>실행</small><strong class="green">대응 완료</strong></div><div class="fact"><small>경보</small><strong class="green">차단</strong></div><div class="fact"><small>세션</small><strong>폐기</strong></div><div class="fact"><small>보호 안내</small><strong>등록</strong></div></div><p>대응 뒤 이전 실행으로 새 세션 생성, 자료 조회, 전송은 거부됩니다.</p></article>
       </div><div class="quote">“탐지는 자동으로 기록됐고, 세션 폐기와 보호 안내 등록은 운영자 대응으로 완료됐습니다.”</div></div>
     </section>
@@ -79,7 +80,7 @@ docker compose --env-file .env ps haeon-attack-console haeon-card haeon-merchant
     <section class="step" id="after">
       <div class="head"><div class="num">5</div><div><h2>After 차단 검증</h2><p>동일한 비정상 흐름이 통제에서 차단되고 정상 진단이 유지되는지 확인합니다.</p></div><span class="badge">개선 확인</span></div>
       <div class="body"><div class="cols">
-        <article class="panel"><h3>콘솔 조작</h3><ol><li><strong>After 차단 검증</strong>을 선택합니다.</li><li>차단 결과와 후속 단계 상태를 확인합니다.</li><li>필요하면 다시 <strong>정상 진단</strong>을 실행해 정상 업무가 유지됨을 보여 줍니다.</li></ol></article>
+        <article class="panel"><h3>콘솔 조작</h3><ol><li>방어자 단계 중 터미널이 <strong>05 · After 차단 검증</strong> 세션으로 새로 전환됩니다.</li><li>새 터미널 화면에서 차단 결과와 후속 단계 상태를 확인합니다.</li><li>필요하면 다시 <strong>정상 진단</strong>을 실행해 정상 업무가 유지됨을 보여 줍니다.</li></ol></article>
         <article class="panel"><h3>기대 결과</h3><div class="facts"><div class="fact"><small>입력</small><strong class="green">차단</strong></div><div class="fact"><small>세션</small><strong>생성 없음</strong></div><div class="fact"><small>수신</small><strong>없음</strong></div><div class="fact"><small>후속 단계</small><strong class="blue">미실행</strong></div></div><p>After는 Before와 별도 실행 ID로 생성됩니다. 자료 조회·전송은 성공이 아니라 선행 차단에 따른 미실행으로 표시합니다.</p></article>
       </div></div>
     </section>
