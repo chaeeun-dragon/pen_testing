@@ -214,3 +214,31 @@ button:focus-visible,a:focus-visible{outline:3px solid #168c7d;outline-offset:3p
   .metrics { grid-template-columns: repeat(2, 1fr); }
   .activity-column { display: flex; }
 }
+
+/* Sidebar-only demo reset control; separate from scenario execution steps. */
+.sidebar-reset-group { margin: 18px 2px 0; padding-top: 17px; border-top: 1px solid #26343c; }
+.sidebar-reset { display: flex; align-items: center; gap: 10px; width: 100%; padding: 10px 12px; border: 1px solid #61413f; border-radius: 8px; background: #281f23; color: #f0b2ac; text-align: left; cursor: pointer; font-size: 12px; font-weight: 700; }
+.sidebar-reset:hover:not(:disabled) { background: #382629; border-color: #a2605b; color: #ffe1dc; }
+.sidebar-reset:focus-visible { outline: 2px solid #f0b2ac; outline-offset: 2px; }
+.sidebar-reset:disabled { opacity: .5; cursor: not-allowed; }
+.sidebar-reset .nav-icon { color: inherit; font-size: 18px; line-height: 1; }
+@media (max-width: 720px) {
+  .sidebar-reset-group { margin: 14px 0 0; padding-top: 12px; }
+  .sidebar-reset { justify-content: center; padding: 10px 4px; }
+  .sidebar-reset-label { display: none; }
+}
+.reset-dialog { width: min(440px, calc(100vw - 32px)); max-height: calc(100vh - 32px); padding: 24px; border: 1px solid #dce6e8; border-radius: 14px; background: #fff; color: #21343d; box-shadow: 0 24px 70px #0b1d2c45; }
+.reset-dialog::backdrop { background: #101820a8; }
+.reset-dialog-head { display: flex; align-items: center; gap: 13px; }
+.reset-dialog-head > span { display: grid; place-items: center; width: 42px; height: 42px; border-radius: 11px; background: #fff0ee; color: #b85d55; font-size: 24px; }
+.reset-dialog-head small { color: #ad7771; font: 700 11px monospace; letter-spacing: .1em; }
+.reset-dialog-head h2 { margin: 4px 0 0; font-size: 19px; }
+.reset-dialog > p { font-size: 13px; line-height: 1.65; }
+.reset-dialog-preserved { padding: 10px 12px; border-radius: 8px; background: #eef8f5; color: #33665b; }
+.reset-dialog-error { color: #b34440; font-weight: 700; }
+.reset-dialog-error:empty { display: none; }
+.reset-dialog-actions { display: flex; justify-content: flex-end; gap: 9px; margin-top: 22px; }
+.reset-dialog-actions button { min-height: 36px; padding: 8px 14px; border: 1px solid #d5e0e3; border-radius: 8px; background: #fff; cursor: pointer; font-weight: 700; }
+.reset-dialog-actions button:last-child { border-color: #ba625b; background: #ba625b; color: #fff; }
+.reset-dialog-actions button:disabled { opacity: .55; cursor: not-allowed; }
+.reset-dialog-actions button:focus-visible { outline: 2px solid #207e73; outline-offset: 2px; }

@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="theme-color" content="#101820"><title>Security Validation Console | Haeon</title>
-<link rel="stylesheet" href="/styles.css?v=20260928-ux4"><script src="/app.js?v=20260928-ux4" defer></script>
+<link rel="stylesheet" href="/styles.css?v=20260928-reset2"><script src="/app.js?v=20260928-reset2" defer></script>
 </head>
 <body>
 <div class="app-shell">
@@ -15,6 +15,7 @@
   <div class="side-divider"></div>
   <div class="side-label">시나리오</div>
   <button class="scenario-item active" data-scenario="haeon" aria-label="해온카드 진단 API" title="해온카드 진단 API"><span class="scenario-symbol haeon">H</span><span class="scenario-copy"><strong>해온카드</strong><small>진단 API 침해</small></span><i class="live-dot"></i></button>
+  <div class="sidebar-reset-group"><div class="side-label">시연 관리</div><button id="resetDemoButton" class="sidebar-reset" type="button" aria-label="시연 상태 초기화" title="콘솔 이력과 실습 상태 초기화 · 보관 증거 유지"><span class="nav-icon" aria-hidden="true">↺</span><span class="sidebar-reset-label">시연 상태 초기화</span></button></div>
   <div class="sidebar-spacer"></div>
   <div class="target-card"><div class="target-head"><i></i>대상 환경<span>LOCAL</span></div><strong>haeon.localhost</strong><small>127.0.0.1 · 포트 8090</small></div>
   <div class="operator"><span class="operator-avatar">OP</span><span><strong>Security Operator</strong><small>로컬 콘솔</small></span><b>•••</b></div>
@@ -57,4 +58,5 @@
 </main>
 <main id="historyView" class="page-view hidden"><section class="history-header"><div class="eyebrow"><i></i>EXECUTION ARCHIVE</div><h1>실행 이력</h1><p>최근 40개 실행과 탐지 결과를 확인하고 상세 이벤트 타임라인을 다시 열 수 있습니다.</p></section><section class="panel history-panel"><div class="panel-heading"><div><label>RECENT RUNS</label><h2>시나리오 실행 목록</h2></div><span id="historyCount" class="run-label">0 RUNS</span></div><div class="history-table-head"><span>시나리오 / 실행 ID</span><span>실행 시각</span><span>상태</span><span></span></div><div id="historyList" class="history-list empty-state"><strong>아직 실행 기록이 없습니다</strong><span>시나리오 실행 후 이력에서 다시 확인할 수 있습니다.</span></div></section></main>
 </div></div>
+<dialog id="resetDemoDialog" class="reset-dialog" aria-labelledby="resetDemoTitle" aria-describedby="resetDemoDescription"><div class="reset-dialog-head"><span aria-hidden="true">↺</span><div><small>DEMO RESET</small><h2 id="resetDemoTitle">시연 상태를 초기화할까요?</h2></div></div><p id="resetDemoDescription">콘솔 실행 이력, 실습 실행·이벤트·모의 세션, 회원 보호 안내가 삭제됩니다. 가맹점 로그인 세션도 만료됩니다.</p><p class="reset-dialog-preserved">보관된 <code>evidence/runs/</code> 파일과 정상 결제 데이터는 유지됩니다.</p><p id="resetDemoError" class="reset-dialog-error" role="alert"></p><div class="reset-dialog-actions"><button id="cancelResetButton" type="button">취소</button><button id="confirmResetButton" type="button">시연 상태 초기화</button></div></dialog>
 <div id="toast" class="toast" role="status"></div></body></html>

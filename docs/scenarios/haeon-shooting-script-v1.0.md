@@ -121,6 +121,6 @@
 
 ## 촬영 종료
 
-프로젝트 루트의 WSL에서 `bash tools/haeon-diagnostic-lab.sh reset`으로 현재 실습 상태와 보호 안내를 초기화한다. 저장된 `evidence/runs/` 증거는 유지된다. 재촬영 전에 공격 콘솔의 이전 실행 선택 상태와 가맹점·회원 로그인 상태를 다시 확인한다.
+재촬영 전 공격 콘솔 왼쪽의 `시연 상태 초기화`를 누르고 확인 창에서 범위를 확인한다. 콘솔 이력과 현재 실습 상태·회원 보호 안내가 함께 비워지며, 저장된 `evidence/runs/` 증거와 정상 결제 데이터는 유지된다. 가맹점·회원 로그인 상태는 별도로 다시 확인한다. WSL의 `bash tools/haeon-diagnostic-lab.sh reset`은 실습 상태만 지우고 콘솔 이력은 남긴다.
 
 관련 상세 절차: [해온카드 실행 런북](haeon-lab-demo-runbook-v1.0.md) · [공격 시나리오 정의](haeon-diagnostic-api-attack-scenario-v0.2.md)

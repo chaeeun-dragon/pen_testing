@@ -221,32 +221,68 @@ def detail(run_id):
 
 
 def respond(run_id):
-    row = detail(run_id)
-    if not row:
-        return 404, {"errorCode": "RUN_NOT_FOUND", "message": "실행 기록을 찾을 수 없습니다."}
-    item = row["run"]
-    if item.get("status") == "RUNNING":
-        return 409, {"errorCode":"RUN_IN_PROGRESS", "message":"진행 중인 단계가 끝난 뒤 대응을 실행하세요."}
-    if item.get("status") == "CONTAINED":
-        return 200, row
-    if item.get("mode") != "before" or not item.get("controlRunId"):
-        return 409, {"errorCode": "RESPONSE_NOT_AVAILABLE", "message": "대응할 Before 실행이 아닙니다."}
-    stage(run_id, "실행 세션 폐기 및 회원 보호 안내 등록", "RUNNING")
-    code, result = call("POST", f"/control/v1/runs/{item['controlRunId']}/respond", control=True)
-    if code != 200:
-        stage(run_id, "실행 세션 폐기 및 회원 보호 안내 등록", "ERROR",
-              {"httpStatus": code, **error_info(result)})
-        return code, result
-    with LOCK:
-        if STATE.get("pendingResponseRunId") == run_id:
+    if not ACTION_LOCK.acquire(False):
+        return 409, {"errorCode": "SCENARIO_BUSY", "message": "다른 시나리오 작업이 끝난 뒤 다시 시도하세요."}
+    try:
+        row = detail(run_id)
+        if not row:
+            return 404, {"errorCode": "RUN_NOT_FOUND", "message": "실행 기록을 찾을 수 없습니다."}
+        item = row["run"]
+        if item.get("status") == "RUNNING":
+            return 409, {"errorCode":"RUN_IN_PROGRESS", "message":"진행 중인 단계가 끝난 뒤 대응을 실행하세요."}
+        if item.get("status") == "CONTAINED":
+            return 200, row
+        if item.get("mode") != "before" or not item.get("controlRunId"):
+            return 409, {"errorCode": "RESPONSE_NOT_AVAILABLE", "message": "대응할 Before 실행이 아닙니다."}
+        stage(run_id, "실행 세션 폐기 및 회원 보호 안내 등록", "RUNNING")
+        code, result = call("POST", f"/control/v1/runs/{item['controlRunId']}/respond", control=True)
+        if code != 200:
+            stage(run_id, "실행 세션 폐기 및 회원 보호 안내 등록", "ERROR",
+                  {"httpStatus": code, **error_info(result)})
+            return code, result
+        with LOCK:
+            if STATE.get("pendingResponseRunId") == run_id:
+                STATE["pendingResponseRunId"] = None
+                save()
+        stage(run_id, "실행 세션 폐기 및 회원 보호 안내 등록", "BLOCKED", {
+            "result": result.get("result"),
+            "protectionNoticeCreated": result.get("protectionNoticeCreated"),
+        })
+        patch_run(run_id, status="CONTAINED", summary="모의 세션 폐기 · " + ("추가 확인 안내 등록" if result.get("protectionNoticeCreated") else "자료 접근 없음, 안내 대상 없음"))
+        return 200, detail(run_id)
+    finally:
+        ACTION_LOCK.release()
+
+
+def reset_demo(confirmation):
+    if confirmation != "RESET_HAEON_DEMO":
+        return 400, {"errorCode": "RESET_CONFIRMATION_REQUIRED", "message": "초기화 확인이 필요합니다."}
+    if not ACTION_LOCK.acquire(False):
+        return 409, {"errorCode": "SCENARIO_BUSY", "message": "다른 시나리오 작업이 끝난 뒤 초기화하세요."}
+    try:
+        with LOCK:
+            if any(run.get("status") == "RUNNING" for run in STATE["runs"]):
+                return 409, {"errorCode": "RUN_IN_PROGRESS", "message": "진행 중인 실행이 끝난 뒤 초기화하세요."}
+        code, result = call("POST", "/control/v1/reset", control=True)
+        if code != 200 or result.get("result") != "RESET":
+            return (code if code != 200 else 502), {
+                "errorCode": result.get("errorCode", "UPSTREAM_RESET_FAILED"),
+                "message": result.get("message", "지원 서비스 초기화를 확인하지 못했습니다."),
+            }
+        with LOCK:
+            count = len(STATE["runs"])
+            STATE["runs"] = []
             STATE["pendingResponseRunId"] = None
-            save()
-    stage(run_id, "실행 세션 폐기 및 회원 보호 안내 등록", "BLOCKED", {
-        "result": result.get("result"),
-        "protectionNoticeCreated": result.get("protectionNoticeCreated"),
-    })
-    patch_run(run_id, status="CONTAINED", summary="모의 세션 폐기 · " + ("추가 확인 안내 등록" if result.get("protectionNoticeCreated") else "자료 접근 없음, 안내 대상 없음"))
-    return 200, detail(run_id)
+            try:
+                save()
+            except OSError:
+                return 500, {"errorCode": "CONSOLE_RESET_SAVE_FAILED",
+                             "message": "실습 상태는 초기화됐지만 콘솔 이력 저장에 실패했습니다. 저장소 상태를 확인하세요."}
+        return 200, {"result": "RESET", "consoleRunsDeleted": count,
+                     "runsDeleted": result.get("runsDeleted", 0),
+                     "protectionNoticesDeleted": result.get("protectionNoticesDeleted", 0)}
+    finally:
+        ACTION_LOCK.release()
 
 
 def create_run(mode):
@@ -409,6 +445,9 @@ class Handler(SimpleHTTPRequestHandler):
             return self.send_json(400, {"errorCode": "INVALID_JSON"})
         if self.path == "/api/runs":
             code, value = create_run(body.get("mode"))
+            return self.send_json(code, value)
+        if self.path == "/api/demo/reset":
+            code, value = reset_demo(body.get("confirmation"))
             return self.send_json(code, value)
         match = re.fullmatch(r"/api/runs/([A-Za-z0-9-]{1,100})/respond",
                              self.path.split("?", 1)[0])

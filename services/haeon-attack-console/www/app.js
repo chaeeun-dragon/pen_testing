@@ -1,7 +1,7 @@
 (() => {
   const $ = (selector) => document.querySelector(selector);
   const $$ = (selector) => [...document.querySelectorAll(selector)];
-  const state = { currentRunId:null, current:null, pendingResponseRunId:null, events:[], localEvents:[], logTab:"events", toastTimer:null, busy:false, responding:false, activeRunId:null, polling:false, overview:null, comparison:null, logAnimationRunId:null, logGeneration:0, logWriteQueue:Promise.resolve(), animatedEventKeys:new Set(), animatedStepKeys:new Set() };
+  const state = { currentRunId:null, current:null, pendingResponseRunId:null, events:[], localEvents:[], logTab:"events", toastTimer:null, busy:false, responding:false, resetting:false, activeRunId:null, polling:false, overview:null, comparison:null, logAnimationRunId:null, logGeneration:0, logWriteQueue:Promise.resolve(), animatedEventKeys:new Set(), animatedStepKeys:new Set() };
   const eventLabels = {
     diagnostic_request_received:"진단 요청 수신",
     diagnostic_completed:"진단 완료",
@@ -375,7 +375,7 @@
   }
   function syncControls(){
     const run=state.current;
-    const busy=state.busy||Boolean(state.activeRunId)||run?.status==="RUNNING";
+    const busy=state.busy||state.resetting||Boolean(state.activeRunId)||run?.status==="RUNNING";
     const pending=state.pendingResponseRunId;
     const baseline=$('[data-run-mode="baseline"]');
     const before=$('[data-run-mode="before"]');
@@ -385,6 +385,7 @@
     before.disabled=busy||Boolean(pending);
     after.disabled=busy||Boolean(pending);
     $("#respondButton").disabled=!responseAvailable;
+    $("#resetDemoButton").disabled=busy;
     $("#pendingRunButton").classList.toggle("hidden",!state.pendingResponseRunId||state.pendingResponseRunId===state.currentRunId);
     $("#executionHint").textContent=busy
       ?"실행 중입니다. 실제 단계 기록이 완료되면 다음 작업을 선택할 수 있습니다."
@@ -485,7 +486,7 @@
     finally{await drainLogQueue();state.busy=false;button.classList.remove("loading");syncControls();}
   }
   async function respond() {
-    const run=state.current;if(!run||state.busy)return;state.busy=true;state.responding=true;syncControls();
+    const run=state.current;if(!run||state.busy||state.resetting)return;state.busy=true;state.responding=true;syncControls();
     if(state.logAnimationRunId!==run.runId)beginLogPlayback(run.runId,false);
     const button=$("#respondButton");button.disabled=true;button.classList.add("loading");
     try{
@@ -494,6 +495,21 @@
       notify(data.run.summary||"대응 결과를 확인했습니다.");await loadHistory(false);
     }catch(error){recordLocalFailure(run.runId,"대응 실행");renderEvents(state.events,run.runId);notify("대응 요청을 처리하지 못했습니다.");button.disabled=false;}
     finally{await drainLogQueue();state.responding=false;state.busy=false;button.classList.remove("loading");syncControls();}
+  }
+  function openResetDialog() {
+    if($("#resetDemoButton").disabled||state.resetting)return;
+    $("#resetDemoError").textContent="";
+    $("#resetDemoDialog").showModal();
+  }
+  async function resetDemo() {
+    if(state.resetting)return;
+    const dialog=$("#resetDemoDialog"), confirmButton=$("#confirmResetButton"), cancelButton=$("#cancelResetButton");
+    state.resetting=true;dialog.setAttribute("aria-busy","true");confirmButton.disabled=true;cancelButton.disabled=true;syncControls();
+    try{
+      await api("/api/demo/reset",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({confirmation:"RESET_HAEON_DEMO"})});
+      window.location.reload();
+    }catch(error){$("#resetDemoError").textContent="초기화 실패: "+error.message;}
+    finally{state.resetting=false;dialog.removeAttribute("aria-busy");confirmButton.disabled=false;cancelButton.disabled=false;syncControls();}
   }
   function showView(view) {
     const history=view==="history";
@@ -508,6 +524,10 @@
   $$("[data-run-mode]").forEach(button=>button.addEventListener("click",()=>startRun(button.dataset.runMode)));
   $("#pendingRunButton").addEventListener("click",()=>{if(state.pendingResponseRunId)selectRun(state.pendingResponseRunId);});
   $("#respondButton").addEventListener("click",respond);
+  $("#resetDemoButton").addEventListener("click",openResetDialog);
+  $("#cancelResetButton").addEventListener("click",()=>$("#resetDemoDialog").close());
+  $("#confirmResetButton").addEventListener("click",resetDemo);
+  $("#resetDemoDialog").addEventListener("cancel",event=>{if(state.resetting)event.preventDefault();});
   $("#refreshButton").addEventListener("click",()=>{loadHistory(false);if(state.currentRunId)selectRun(state.currentRunId);notify("콘솔 데이터를 새로고침했습니다.");});
   $$(".activity-tab").forEach(button=>button.addEventListener("click",()=>{
     const tab=button.dataset.logTab;
@@ -528,8 +548,8 @@
       if(data.runs&&data.runs.length){state.currentRunId=data.runs[0].runId;await selectRun(state.currentRunId);}
       await loadHistory(false);
     }catch(error){notify("콘솔 연결에 실패했습니다: "+error.message);}
-    setInterval(async()=>{if(state.polling||document.hidden)return;state.polling=true;try{if(state.currentRunId)await selectRun(state.currentRunId);}finally{state.polling=false;}},1500);
-    setInterval(()=>{if(!document.hidden)loadHistory(false);},10000);
+    setInterval(async()=>{if(state.polling||state.resetting||document.hidden)return;state.polling=true;try{if(state.currentRunId)await selectRun(state.currentRunId);}finally{state.polling=false;}},1500);
+    setInterval(()=>{if(!state.resetting&&!document.hidden)loadHistory(false);},10000);
   }
   init();
 })();
