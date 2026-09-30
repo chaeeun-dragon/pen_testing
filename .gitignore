@@ -1,6 +1,8 @@
 .env
 evidence/runs/
 evidence/receiver/
+evidence/console/
+**/__pycache__/
 evidence/.ready
 **/target/
 *.log

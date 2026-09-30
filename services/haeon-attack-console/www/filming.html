@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#101820"><title>Security Validation Console | Haeon</title>
+<link rel="stylesheet" href="/styles.css?v=20260928-reset2"><link rel="stylesheet" href="/filming.css?v=20260929-console"><script src="/filming.js?v=20260929-console" defer></script></head>
+<body><div class="app-shell">
+<aside class="sidebar">
+  <a class="brand" href="/"><span class="brand-mark"><i></i><i></i><i></i></span><span><strong>H-SEC</strong><small>VALIDATION CONSOLE</small></span></a>
+  <div class="side-label">WORKSPACE</div>
+  <button id="overviewTab" class="nav-item active" type="button" aria-label="시나리오 실행"><span class="nav-icon">▦</span><span>시나리오 실행</span></button>
+  <button id="historyTab" class="nav-item" type="button" aria-label="실행 이력"><span class="nav-icon">◷</span><span>실행 이력</span><kbd id="runCount">00</kbd></button>
+  <a class="nav-item" href="/filming.html?view=results" target="_blank" rel="noopener" aria-label="결과 전용 화면"><span class="nav-icon">◫</span><span>결과 전용 화면 ↗</span></a>
+  <div class="side-divider"></div><div class="side-label">시나리오</div>
+  <button id="diagTab" class="scenario-item active" type="button" aria-label="해온카드 진단 API"><span class="scenario-symbol haeon">H</span><span class="scenario-copy"><strong>해온카드</strong><small>진단 API 침해</small></span><i class="live-dot"></i></button>
+  <button id="cardTab" class="scenario-item" type="button" aria-label="CARD-03 동시 승인"><span class="scenario-symbol pg">C</span><span class="scenario-copy"><strong>CARD-03</strong><small>동시 승인 · 분리 실험</small></span></button>
+  <div class="sidebar-reset-group operator-only"><div class="side-label">시연 관리</div><button id="reset" class="sidebar-reset" type="button" aria-label="시연 상태 초기화"><span class="nav-icon" aria-hidden="true">↺</span><span class="sidebar-reset-label">시연 상태 초기화</span></button></div>
+  <div class="sidebar-spacer"></div><div class="target-card"><div class="target-head"><i></i>대상 환경<span>LOCAL</span></div><strong>해온카드 실습 환경</strong><small>127.0.0.1 · 포트 8090</small></div>
+  <div class="operator"><span class="operator-avatar">OP</span><span><strong>Security Operator</strong><small>발표자 전용 · 로컬 콘솔</small></span></div>
+</aside>
+<div class="main-shell">
+<header class="topbar"><div class="crumbs"><span>SECURITY VALIDATION</span><b>/</b><strong id="topCrumb">시나리오 실행</strong></div><div class="top-actions"><span id="connection" class="connection" role="status">연결 확인 중</span><span class="clock" id="clock">--:--:--</span><button id="refresh" class="refresh" aria-label="새로고침">↻</button></div></header>
+<div id="error" class="console-error" role="alert" hidden></div>
+<main id="diagPanel" class="page-view">
+  <section class="hero"><div class="hero-copy"><div class="eyebrow">ATTACK SCENARIO · HAEON CARD</div><h1>진단 API 침해 시나리오</h1><p>가맹점 진단 요청부터 탐지와 대응까지, 공격 흐름과 검증 근거를 확인합니다.</p><div class="hero-meta"><span>✓ 등록 대상 기반</span><span>◉ 내부 수신기 연결</span><span>◇ OS 명령 미실행</span></div></div><div class="hero-side"><small>EXECUTION ENGINE</small><strong id="targetReadiness">확인 중</strong><span id="engineSummary">대상 연결 상태 확인 중</span></div></section>
+  <section class="metrics">
+    <article><label>대상 환경</label><strong class="mono">해온카드 · 진단 API</strong><small>가맹점 지원 서비스</small></article>
+    <article><label>Before 실행</label><strong id="beforeStatus">미실행</strong><small id="baselineState">정상 기준선 미실행</small></article>
+    <article><label>After 검증</label><strong id="afterStatus">미실행</strong><small>같은 입력 차단 · 정상 진단 유지</small></article>
+    <article class="metric-highlight"><label>조회된 합성 자료</label><strong id="metricRecords">미실행</strong><small>지원 자료 · 마스킹 카드 정보</small></article>
+  </section>
+  <div class="content-grid"><div class="primary-column">
+    <section class="panel execution-panel operator-only"><div class="panel-heading"><div><label>EXECUTION CONTROL</label><h2>공격 시나리오 제어</h2></div><span class="secure-badge"><i></i> 고정된 로컬 대상만 호출</span></div><p id="executionHint" class="execution-hint" role="status">정상 진단 → Before → 대응 → After 순서로 실행하세요.</p>
+      <div class="action-grid">
+        <button id="baseline" class="action-card baseline"><span class="action-top"><i>01</i><b id="baselineActionState">실행 가능</b></span><strong>정상 진단</strong><small>등록된 가맹점 대상의 연결 상태를 확인합니다.</small><span class="action-cta">정상 진단 실행</span></button>
+        <button id="before" class="action-card before"><span class="action-top"><i>02</i><b id="beforeActionState">실행 가능</b></span><strong>Before 공격 흐름</strong><small>모의 웹 세션 생성 · 합성 자료 조회 · 내부 전송</small><span class="action-cta">Before 실행</span></button>
+        <button id="respond" class="action-card respond" disabled><span class="action-top"><i>03</i><b id="respondActionState">대응 대기</b></span><strong>대응 실행</strong><small>기존 세션 폐기 · 재접근 거부 검증 · 회원 보호 안내</small><span class="action-cta">대응 및 재접근 검증</span></button>
+        <button id="after" class="action-card after" disabled><span class="action-top"><i>04</i><b id="afterActionState">대응 후 실행</b></span><strong>After 차단 검증</strong><small>같은 비정상 입력 차단 · 정상 진단 재검증</small><span class="action-cta">After 실행</span></button>
+      </div>
+    </section>
+    <section class="panel comparison-card evidence-comparison" aria-label="진단 API Before After 결과"><div class="panel-heading"><div><label>RUN COMPARISON</label><h2>Before / After 결과 비교</h2></div><span class="run-label">동일 Before 기준</span></div>
+      <div class="select-row"><label for="runSelect">비교할 Before</label><select id="runSelect"><option value="">실행 기록 없음</option></select></div>
+      <div class="comparison-table" role="table" aria-label="진단 API 검증 결과">
+        <div class="comparison-row comparison-head" role="row"><span role="columnheader">검증 항목</span><span role="columnheader">BEFORE · 침해 흐름</span><span role="columnheader">AFTER · 입력 차단</span></div>
+        <div class="comparison-row" role="row"><span role="rowheader">비정상 진단 입력</span><strong id="bInput" role="cell">미실행</strong><strong id="aInput" role="cell">미실행</strong></div>
+        <div class="comparison-row" role="row"><span role="rowheader">제한된 모의 웹쉘</span><strong id="bSession" role="cell">미실행</strong><strong id="aSession" role="cell">미실행</strong></div>
+        <div class="comparison-row" role="row"><span role="rowheader">합성 지원 자료</span><strong id="bRecords" role="cell">미실행</strong><strong id="aRecords" role="cell">미실행</strong></div>
+        <div class="comparison-row" role="row"><span role="rowheader">내부 수신 증적</span><strong id="bReceiver" role="cell">미실행</strong><strong id="aReceiver" role="cell">미실행</strong></div>
+        <div class="comparison-row" role="row"><span role="rowheader">정상 진단 유지</span><strong id="bNormal" role="cell">미실행</strong><strong id="aNormal" role="cell">미실행</strong></div>
+      </div><p class="comparison-note">After의 후속 단계는 선행 차단으로 ‘미실행’입니다. 개별 통제를 모두 검증한 뜻은 아닙니다.</p>
+    </section>
+    <section class="panel sequence-panel"><div class="panel-heading"><div><label>CONTAINMENT VERIFICATION</label><h2>기존 세션 격리 검증</h2></div><span class="run-label">같은 Before 세션</span></div><div class="proof-grid"><div><small>폐기 후 재조회</small><strong id="retryRead">미검증</strong></div><div><small>폐기 후 재전송</small><strong id="retrySend">미검증</strong></div><div><small>영향 회원 보호 안내</small><strong id="notice">미등록</strong></div></div><p class="subtle-note">ALERT는 탐지, CONTAINED는 기존 실행 격리, BLOCKED는 새 입력 차단을 뜻합니다.</p></section>
+  </div><aside class="activity-column">
+    <section class="panel activity-panel"><div class="panel-heading"><div><label>LIVE ACTIVITY</label><h2>상세 근거 로그</h2></div><span class="live-label"><i></i> LIVE</span></div><div class="activity-summary"><div><small>선택 Before</small><strong id="activityRunId">—</strong></div><div><small>단계 기록</small><strong id="activityStageCount">0개</strong></div></div>
+      <div class="tabs"><button id="beforeLogTab" class="activity-tab active" type="button">Before · 대응</button><button id="afterLogTab" class="activity-tab" type="button">After 검증</button></div><ol id="beforeSteps" class="event-list step-evidence"></ol><ol id="afterSteps" class="event-list step-evidence" hidden></ol><footer><span><i></i> 실제 실행 기록</span><span id="updated">—</span></footer>
+    </section>
+    <section class="panel quick-links"><div class="panel-heading"><div><label>DEMO SHORTCUTS</label><h2>시연 화면 바로가기</h2></div></div><a href="http://127.0.0.1:8090/" target="_blank" rel="noopener">해온카드 메인 <span>↗</span></a><a href="http://127.0.0.1:8090/merchant/" target="_blank" rel="noopener">가맹점 페이지 <span>↗</span></a><a href="http://127.0.0.1:8090/mypage" target="_blank" rel="noopener">회원 마이페이지 <span>↗</span></a><a href="/api/evidence" download="haeon-filming-evidence.json">증거 JSON 저장 <span>↓</span></a></section>
+  </aside></div>
+  <details id="receiptDetails" class="panel receipt-panel"><summary>수신 증적 · 실행 ID · SHA-256</summary><div class="receipt"><div><small>BEFORE RUN</small><code id="beforeId">—</code><small>AFTER RUN</small><code id="afterId">—</code></div><div><small>TRANSFER ID</small><code id="transferId">—</code><small>수신 페이로드 SHA-256</small><code id="sha">—</code></div></div></details><p class="subtle-note">합성 자료와 내부 수신기만 사용하는 실습입니다. 회원 보호 안내는 실제 통지·카드 정지·사건 종결이 아닙니다.</p>
+</main>
+<main id="cardPanel" class="page-view" hidden>
+  <section class="hero"><div class="hero-copy"><div class="eyebrow">CONCURRENT APPROVAL · CARD-03</div><h1>동시 승인 검증 시나리오</h1><p>서로 다른 거래 2건의 경쟁 조건과 행 잠금 적용 결과를 비교합니다.</p><div class="hero-meta"><span>✓ 합성 카드 · 분리 장부</span><span>◉ 실제 MySQL 트랜잭션</span></div></div><div class="hero-side"><small>ISOLATED LAB</small><strong id="cardStatus">미실행</strong><span>승인 코어 / PG 연동과 별개</span></div></section>
+  <section class="metrics"><article><label>실험 한도</label><strong>100,000원</strong><small>동일한 합성 카드</small></article><article><label>거래별 요청 금액</label><strong>60,000원 × 2</strong><small>TX-1 · TX-2는 서로 다른 거래</small></article><article><label>Before</label><strong>동시 과거 값 읽기</strong><small>두 읽기 시점 동기화</small></article><article class="metric-highlight"><label>After</label><strong>행 잠금 적용</strong><small>SELECT … FOR UPDATE</small></article></section>
+  <section class="panel execution-panel"><div class="panel-heading"><div><label>EXECUTION CONTROL</label><h2>동시 승인 Before / After</h2></div><button id="cardRun" class="console-primary operator-only">동시 승인 비교 실행</button></div><p id="cardHint" class="execution-hint">별도 합성 장부에서 Before와 After를 순서대로 실행합니다.</p><p class="subtle-note">현재 승인 코어는 이미 행 잠금을 사용합니다. 이 실험은 코어 자체 또는 북웨이브↔Mock PG 통합시험 결과가 아닙니다.</p></section>
+  <div class="card-results"><article class="panel"><div class="eyebrow">BEFORE · 동시 과거 값 읽기</div><h2 id="cardBeforeTotal">—</h2><p id="cardBeforeNote">두 트랜잭션의 읽기 시점을 맞춰 경쟁 조건을 재현합니다.</p><table><thead><tr><th>거래</th><th>판정 시 잔여 한도</th><th>결과</th></tr></thead><tbody id="cardBeforeRows"></tbody></table></article><article class="panel"><div class="eyebrow">AFTER · 행 잠금</div><h2 id="cardAfterTotal">—</h2><p id="cardAfterNote">행 잠금 이후 최신 사용액으로 다시 판정합니다.</p><table><thead><tr><th>거래</th><th>판정 시 잔여 한도</th><th>결과</th></tr></thead><tbody id="cardAfterRows"></tbody></table></article></div>
+  <section class="panel sequence-panel"><div class="panel-heading"><div><label>ISOLATED LAB REGRESSION</label><h2>정상 승인 · 재시도 유지 검증</h2></div></div><div class="proof-grid"><div><small>정상 20,000원</small><strong id="cardNormal">미검증</strong></div><div><small>동일 요청 재시도</small><strong id="cardRetry">미검증</strong></div><div><small>키 충돌 / 초과 한도</small><strong id="cardConflict">미검증</strong></div></div></section><p id="cardId" class="subtle-note mono">실행 ID: —</p><p class="subtle-note">결과는 실제 실험 장부 기록입니다. 실제 회원 한도·결제 내역과 분리되어 있습니다.</p>
+</main>
+<main id="historyPanel" class="page-view" hidden><section class="history-header"><div class="eyebrow">EXECUTION ARCHIVE</div><h1>실행 이력</h1><p>진단 API의 최근 40개 실행입니다. 실행을 선택하면 해당 기록의 단계별 근거가 표시됩니다.</p></section><section class="panel history-panel"><div class="panel-heading"><div><label>RECENT RUNS</label><h2>시나리오 실행 목록</h2></div><span id="historyCount" class="run-label">0 RUNS</span></div><div class="history-table-head"><span>시나리오 / 실행 ID</span><span>실행 시각</span><span>상태</span><span></span></div><div id="historyList" class="history-list"></div></section>
+<section id="historyDetail" class="panel sequence-panel" hidden><div class="panel-heading"><div><label>SELECTED RUN</label><h2>선택 실행의 단계별 근거</h2></div><span id="historyDetailId" class="run-label">—</span></div><ol id="historySteps" class="event-list step-evidence"></ol></section>
+</main>
+</div></div>
+<dialog id="resetDialog" class="reset-dialog" aria-labelledby="resetTitle"><div class="reset-dialog-head"><span>↺</span><div><small>DEMO RESET</small><h2 id="resetTitle">시연 상태를 초기화할까요?</h2></div></div><p>실습 실행·세션·회원 보호 안내와 콘솔 이력이 지워지고 가맹점은 로그아웃됩니다.</p><p class="reset-dialog-preserved">정상 결제 데이터와 이미 보관한 evidence 파일은 유지됩니다.</p><p>다음 촬영 전에 증거 JSON과 영상을 먼저 저장하세요.</p><div class="reset-dialog-actions"><button id="cancelReset">취소</button><button id="confirmReset">시연 상태 초기화</button></div></dialog>
+</body></html>

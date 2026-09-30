@@ -33,10 +33,10 @@ def masked(value):
     return value
 
 def api(path,body=None,method=None,token=None,control=False,console=False,expected=200):
-    headers={'Host':'haeon-attack.localhost:8090' if console else 'haeon.localhost:8090','Content-Type':'application/json'}
+    headers={'Host':'127.0.0.1:8094' if console else 'haeon.localhost:8090','Content-Type':'application/json'}
     if token:headers['Authorization']='Bearer '+token
     if control:headers['X-Lab-Control-Token']=CONTROL
-    port=8092 if control else 8090
+    port=8094 if console else 8092 if control or path.startswith('/lab-shell/') else 8090
     data=None if body is None else json.dumps(body).encode()
     request=Request(f'http://127.0.0.1:{port}'+path,data=data,headers=headers,method=method or ('POST' if body is not None else 'GET'))
     start=time.monotonic()
@@ -147,8 +147,16 @@ def suite(faults):
         check('console '+mode,detail['run']['status']==expected)
         if mode=='before':
             OWN_RUNS.append(result['runId'])
-            api('/api/runs/'+result['runId']+'/respond',{},console=True)
-        if mode=='after':check('After explicitly marks skipped follow-up',any(s['status']=='SKIPPED' for s in detail['run']['stages']))
+            response_detail=api('/api/runs/'+result['runId']+'/respond',{},console=True)
+            check('console verifies same revoked session twice',response_detail['run']['containmentVerified'])
+        if mode=='after':
+            check('After explicitly marks skipped follow-up',any(s['status']=='SKIPPED' for s in detail['run']['stages']))
+            check('After normal diagnostic regression',any(s['label']=='After 정상 진단 재검증' and s['status']=='SUCCESS' for s in detail['run']['stages']))
+    card=api('/api/card03/compare',{},console=True)
+    check('CARD03 isolated MySQL before/after and regression',card['verified'] and card['regression']['passed'])
+    check('CARD03 distinct requests and latest read',
+          {a['requestId'] for a in card['before']['attempts']}=={'TX-1','TX-2'}
+          and sorted(a['observedUsed'] for a in card['after']['attempts'])==[0,60000])
     api('/api/runs',[],console=True,expected=400)
     api('/api/runs',{'mode':[]},console=True,expected=400)
     check('console malformed requests rejected')

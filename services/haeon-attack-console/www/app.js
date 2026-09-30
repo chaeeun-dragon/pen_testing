@@ -44,7 +44,7 @@
   function detailText(value) {
     if(!value)return "";
     if(typeof value==="string"){try{value=JSON.parse(value);}catch{return "";}}
-    const labels={httpStatus:"HTTP",latencyMs:"응답 시간",recordCount:"자료 건수",receiverStatus:"수신 상태",payloadSha256:"SHA-256",mode:"모드",control:"차단 정책",protectionNoticeCreated:"보호 안내",changed:"상태 변경",exfiltrationConfirmed:"수신 확인",source:"기록 출처"};
+    const labels={httpStatus:"HTTP",errorCode:"판정 코드",transferId:"전송 ID",latencyMs:"응답 시간",recordCount:"자료 건수",receiverStatus:"수신 상태",payloadSha256:"SHA-256",mode:"모드",control:"차단 정책",protectionNoticeCreated:"보호 안내",changed:"상태 변경",exfiltrationConfirmed:"수신 확인",source:"기록 출처"};
     const parts=[];
     Object.keys(labels).forEach(key=>{
       if(value[key]!=null){
@@ -247,7 +247,8 @@
       sessionCreated:stages.some(item=>item.label==="제한된 모의 웹 세션 생성"&&["SUCCESS","ALERT"].includes(item.status)),
       recordCount:details.map(detail=>detail.recordCount).find(value=>value!=null),
       receiverStatus:details.map(detail=>detail.receiverStatus).find(Boolean),
-      diagnosticCompleted:stages.some(item=>item.label==="등록 대상 연결 진단"&&item.status==="SUCCESS")
+      diagnosticCompleted:stages.some(item=>item.label==="등록 대상 연결 진단"&&item.status==="SUCCESS"),
+      normalAfterCompleted:stages.some(item=>item.label==="After 정상 진단 재검증"&&item.status==="SUCCESS")
     };
   }
   function comparisonValue(evidence,key,mode) {
@@ -277,7 +278,7 @@
     $("#comparisonReceiverAfter").textContent=comparisonValue(after,"receiver","after");
     const baselineValue=comparisonValue(baseline,"diagnostic","baseline");
     $("#comparisonBaselineBefore").textContent=baselineValue;
-    $("#comparisonBaselineAfter").textContent=baselineValue;
+    $("#comparisonBaselineAfter").textContent=after?.normalAfterCompleted?"After 정상 진단 완료":"미검증";
     $("#comparisonSummary").textContent=!before
       ?"Before 실행을 시작하면 실제 모의 세션·자료 조회·수신 증적을 표시합니다."
       :!after

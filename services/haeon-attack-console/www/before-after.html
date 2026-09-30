@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#101820">
+  <title>해온카드 Before / After | 촬영용 결과 화면</title>
+  <link rel="stylesheet" href="/before-after.css">
+  <script src="/before-after.js" defer></script>
+</head>
+<body>
+  <header class="topbar">
+    <a class="brand" href="/" aria-label="공격 콘솔로 돌아가기"><span class="brand-mark">H</span><span>HAEON <small>SECURITY LAB</small></span></a>
+    <div class="topbar-right"><span id="connection" class="connection" role="status">연결 확인 중</span><a class="console-link" href="/">공격 콘솔 ↗</a></div>
+  </header>
+
+  <main class="page">
+    <p><a href="/filming.html?view=results">최종 발표용 비교 화면 v1.1 열기 → (재접근·정상 기능 검증 포함)</a></p>
+    <section class="intro" aria-labelledby="pageTitle">
+      <div class="intro-copy"><p class="eyebrow">HAEON-DIAG-01 · 촬영용 결과 화면</p><h1 id="pageTitle">같은 진단 요청,<br><em>달라진 보안 결과.</em></h1><p class="lead">공격 콘솔에서 실행한 해온카드 진단 API 시나리오를 웹페이지 한 장에서 비교합니다. 왼쪽은 제한된 모의 웹 세션과 합성 자료 이동이 관측된 Before, 오른쪽은 같은 비정상 입력이 선행 차단된 After입니다.</p></div>
+      <div class="intro-aside"><span class="aside-kicker">RECORDING VIEW</span><strong>화면을 바꾸지 않고<br>결과를 설명하세요.</strong><p>이 페이지는 실행을 시작하거나 상태를 변경하지 않습니다. 공격 콘솔에서 실행하면 결과가 자동 갱신됩니다.</p><span id="updatedAt" class="updated-at">마지막 갱신 · 확인 중</span></div>
+    </section>
+
+    <section class="toolbar" aria-label="비교 실행 선택">
+      <div class="toolbar-copy"><span class="live-dot" aria-hidden="true"></span><div><strong>실제 실행 기록 연결됨</strong><small id="toolbarHint">공격 콘솔에서 Before → 대응 → After 순서로 진행하세요.</small></div></div>
+      <div class="toolbar-actions"><label for="beforeSelect">비교할 Before 실행</label><select id="beforeSelect" aria-label="비교할 Before 실행"><option value="">실행 기록 확인 중</option></select><button id="refreshButton" type="button">새로고침 ↻</button></div>
+    </section>
+    <p id="errorMessage" class="error-message" role="alert" hidden></p>
+
+    <section class="journey" aria-label="시연 흐름">
+      <div><b>01</b><span>공격자 흐름</span><strong>Before 실행</strong></div><i aria-hidden="true">→</i><div><b>02</b><span>운영자 조치</span><strong>세션 폐기 · 보호 안내</strong></div><i aria-hidden="true">→</i><div><b>03</b><span>방어 검증</span><strong>After 입력 차단</strong></div>
+    </section>
+
+    <section class="comparison" aria-label="Before와 After 결과 비교">
+      <article class="scenario before" aria-labelledby="beforeTitle">
+        <div class="scenario-head"><span class="scenario-number">01 / BEFORE</span><span id="beforeStatus" class="status neutral">미실행</span></div>
+        <h2 id="beforeTitle">취약 처리 경로</h2><p class="scenario-desc">비정상 진단 입력이 제한된 모의 웹 세션으로 이어지는지 확인합니다.</p>
+        <div class="run-meta"><span>실행 ID</span><strong id="beforeId">—</strong><span>실행 시각</span><strong id="beforeTime">—</strong></div>
+        <div class="result-grid">
+          <div class="result-cell"><small>진단 입력</small><strong id="beforeInput">미실행</strong><span>같은 비정상 옵션</span></div>
+          <div class="result-cell"><small>모의 웹 세션</small><strong id="beforeSession">미실행</strong><span>허용 범위가 제한된 세션</span></div>
+          <div class="result-cell"><small>합성 자료 조회</small><strong id="beforeRecords">미실행</strong><span>실제 카드 정보가 아닌 실습 자료</span></div>
+          <div class="result-cell"><small>내부 수신 기록</small><strong id="beforeReceiver">미실행</strong><span>외부 유출이 아닌 로컬 수신기</span></div>
+        </div>
+        <div class="evidence"><div class="evidence-head"><span>관측 단계</span><small id="beforeStageCount">0개 확인</small></div><ol id="beforeStages" class="stage-list"><li class="empty">공격 콘솔에서 Before를 실행하면 실제 단계가 표시됩니다.</li></ol></div>
+      </article>
+
+      <article class="scenario after" aria-labelledby="afterTitle">
+        <div class="scenario-head"><span class="scenario-number">03 / AFTER</span><span id="afterStatus" class="status neutral">미실행</span></div>
+        <h2 id="afterTitle">입력 차단 경로</h2><p class="scenario-desc">별도 허용 목록 설정에서 동일한 비정상 입력이 시작점에서 차단되는지 검증합니다.</p>
+        <div class="run-meta"><span>실행 ID</span><strong id="afterId">—</strong><span>실행 시각</span><strong id="afterTime">—</strong></div>
+        <div class="result-grid">
+          <div class="result-cell"><small>진단 입력</small><strong id="afterInput">미실행</strong><span>Before와 같은 비정상 옵션</span></div>
+          <div class="result-cell"><small>모의 웹 세션</small><strong id="afterSession">미실행</strong><span>선행 차단 시 생성되지 않음</span></div>
+          <div class="result-cell"><small>합성 자료 조회</small><strong id="afterRecords">미실행</strong><span>차단 이후 단계는 실행되지 않음</span></div>
+          <div class="result-cell"><small>내부 수신 기록</small><strong id="afterReceiver">미실행</strong><span>전송 요청이 시작되지 않음</span></div>
+        </div>
+        <div class="evidence"><div class="evidence-head"><span>관측 단계</span><small id="afterStageCount">0개 확인</small></div><ol id="afterStages" class="stage-list"><li class="empty">대응을 마친 뒤 After를 실행하면 차단 근거가 표시됩니다.</li></ol></div>
+      </article>
+    </section>
+
+    <section class="response-strip" aria-labelledby="responseTitle"><span class="response-icon" aria-hidden="true">◎</span><div><small>02 / OPERATOR RESPONSE</small><h2 id="responseTitle">운영자 대응 <span id="responseStatus">대기</span></h2><p id="responseText">Before 실행이 완료되면 공격 콘솔에서 같은 실행의 대응을 진행합니다.</p></div><a href="/">콘솔에서 대응 확인 ↗</a></section>
+
+    <footer><p><strong>화면 해석:</strong> Before의 탐지 경보는 자동 차단을 뜻하지 않습니다. After의 <b>미실행</b>은 앞 단계에서 입력이 차단되어 세션·조회·전송이 수행되지 않았다는 뜻입니다.</p><p>이 페이지는 해온카드 자체 진단 API 시나리오 전용입니다. 북웨이브 자체 공격과 PG 결제 연동 시나리오는 포함하지 않습니다.</p></footer>
+  </main>
+</body>
+</html>

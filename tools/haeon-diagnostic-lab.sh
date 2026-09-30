@@ -37,8 +37,9 @@ case "$COMMAND" in
     printf 'run=%s\nmode=%s\nattackHttp=%s\nresult=%s\n' "$run" "$mode" "$http" "$(json_value result < "$dir/attack-response.json")" > "$dir/summary.txt"
     if [[ "$mode" == before && "$(json_value shellSessionToken < "$dir/attack-response.json")" != '' ]]; then
       shell="$(json_value shellSessionToken < "$dir/attack-response.json")"
-      write_json "$dir/records.json" "$BASE_URL/lab-shell/v1/sessions/$shell/records"
-      write_json "$dir/exfiltration.json" -X POST "$BASE_URL/lab-shell/v1/sessions/$shell/exfiltrate" -H 'Content-Type: application/json' -d "{\"transferId\":\"TRANSFER-$run\"}"
+      # Private filming/control port only; the classroom gateway denies /lab-shell/.
+      write_json "$dir/records.json" "$CONTROL_URL/lab-shell/v1/sessions/$shell/records"
+      write_json "$dir/exfiltration.json" -X POST "$CONTROL_URL/lab-shell/v1/sessions/$shell/exfiltrate" -H 'Content-Type: application/json' -d "{\"transferId\":\"TRANSFER-$run\"}"
     fi
     ;;
   respond)

@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="theme-color" content="#101f2a">
+  <title>해온카드 | 가상 터미널</title>
+  <link rel="stylesheet" href="/terminal-scene.css?v=3">
+  <script src="/terminal-scene-core.js?v=1" defer></script>
+  <script src="/terminal-scene.js?v=4" defer></script>
+</head>
+<body>
+<header class="topbar">
+  <a class="brand" href="http://www.haeoncard.co.kr/" target="_blank" rel="noopener"><b>H</b><span>HAEON CARD<small>VIRTUAL LAB TERMINAL</small></span></a>
+  <div class="header-right"><span class="simulation">합성정보 기반 모의 시연</span><span id="connection" role="status">연결 확인 중</span><button id="focusMode" aria-pressed="false" type="button">촬영 모드</button></div>
+</header>
+<main>
+  <section class="intro">
+    <div><p class="eyebrow">HAEON-DIAG-01 / TERMINAL</p><h1>해온카드 가상 터미널</h1><p>명령과 실행 결과는 여기에서. 웹사이트는 실제 페이지에서.</p></div>
+    <nav class="site-links" aria-label="별도 탭으로 실제 페이지 열기">
+      <a href="http://www.haeoncard.co.kr/" target="_blank" rel="noopener">해온카드 메인 ↗</a>
+      <a href="http://www.haeoncard.co.kr/mypage" target="_blank" rel="noopener">회원 마이페이지 ↗</a>
+      <a href="/" target="_blank" rel="noopener">기존 공격 콘솔 ↗</a>
+    </nav>
+  </section>
+  <p class="screen-note">바로가기는 별도 탭으로 열립니다. 촬영할 때 메인·마이페이지 탭과 이 터미널을 전환하세요. 대응 후 회원 안내는 마이페이지를 새로고침해 확인합니다.</p>
+  <ol id="sequence" class="sequence" aria-label="터미널 진행 순서">
+    <li data-phase="baseline"><span>01</span>정상 진단</li><li data-phase="before"><span>02</span>침해 흐름</li><li data-phase="records"><span>03</span>합성자료 확인</li><li data-phase="contain"><span>04</span>세션 격리</li><li data-phase="after"><span>05</span>새 입력 차단</li><li data-phase="compare"><span>06</span>전후 비교</li>
+  </ol>
+  <section class="terminal-window" aria-labelledby="terminalTitle">
+    <div class="terminal-bar"><span class="window-dots" aria-hidden="true">● ● ●</span><strong id="terminalTitle">haeon-lab / virtual terminal</strong><span id="actor" class="actor">OPERATOR</span></div>
+    <div class="terminal-context"><span id="terminalStatus">READY</span></div>
+    <div id="output" class="terminal-output" role="log" aria-live="polite" aria-label="가상 터미널 출력" tabindex="0"></div>
+    <form id="commandForm" class="command-form" autocomplete="off">
+      <label for="commandInput"><span id="prompt">operator</span>@haeon-lab:~$</label><input id="commandInput" aria-label="가상 터미널 명령어" spellcheck="false" maxlength="80" autocomplete="off" autocapitalize="off"><button id="submitCommand" type="submit">실행 ↵</button>
+    </form>
+    <div class="terminal-foot"><button id="exportLog" type="button">로그 저장 ↓</button></div>
+  </section>
+  <section class="command-guide" aria-label="시연 명령어 안내">
+    <div class="guide-title"><span>다음 명령</span><strong id="nextStep">정상 진단부터 시작하세요</strong><p>아래 명령을 선택한 뒤 Enter로 실행합니다.</p></div>
+    <div class="command-list">
+      <button data-command="lab baseline"><code>lab baseline</code><span>정상 연결 확인</span></button><button data-command="lab before"><code>lab before</code><span>침해 흐름 실행</span></button><button data-command="lab records"><code>lab records</code><span>합성자료 재조회</span></button><button data-command="lab receipt"><code>lab receipt</code><span>내부 수신 증거</span></button><button data-command="lab contain"><code>lab contain</code><span>폐기 · 재접근 검증</span></button><button data-command="lab after"><code>lab after</code><span>같은 입력 차단</span></button><button data-command="lab compare"><code>lab compare</code><span>Before / After</span></button><button data-command="lab card03"><code>lab card03</code><span>별도 동시 승인 실험</span></button>
+    </div>
+  </section>
+  <footer><p>Before는 생성·조회·내부 전송을 묶어 실행합니다. <code>lab records</code>는 같은 세션의 추가 조회이며, 터미널 자체가 외부 수신기는 아닙니다.</p><p>기존 콘솔과 실습 상태를 공유합니다. 새 촬영 초기화는 기존 콘솔에서 별도로 진행하세요. 실제 메인 화면을 변조하거나 회원 안내를 이 화면에서 흉내 내지 않습니다.</p></footer>
+</main>
+</body>
+</html>

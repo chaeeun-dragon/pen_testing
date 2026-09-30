@@ -1,0 +1,7 @@
+# Opt-in classroom CARD WEBSITE entrypoint. Console hostnames return 404.
+# The filming console remains loopback-only at 127.0.0.1:8094.
+# Set HAEON_CLASSROOM_IP to the Docker host's classroom-facing IPv4 address.
+services:
+  haeon-lab-gateway:
+    ports:
+      - "${HAEON_CLASSROOM_IP:?Set HAEON_CLASSROOM_IP to the classroom LAN IPv4 address}:80:8090"

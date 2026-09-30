@@ -162,6 +162,7 @@ services:
       - ./db/haeon-card/init/009_lab_diagnostic_schema.sql:/docker-entrypoint-initdb.d/009_lab_diagnostic_schema.sql:ro
       - ./db/haeon-card/fixtures/009_lab_diagnostic_seed.sql:/docker-entrypoint-initdb.d/009_lab_diagnostic_seed.sql:ro
       - ./db/haeon-card/init/010_lab_support_grants.sql:/docker-entrypoint-initdb.d/010_lab_support_grants.sql:ro
+      - ./db/haeon-card/init/011_card03_lab.sql:/docker-entrypoint-initdb.d/011_card03_lab.sql:ro
     networks:
       - card_net
       - haeon_lab_net
@@ -288,6 +289,7 @@ services:
       - "8094"
     volumes:
       - haeon_attack_console_data:/data
+      - ./evidence/console:/evidence/console
     networks:
       - haeon_lab_net
     depends_on:

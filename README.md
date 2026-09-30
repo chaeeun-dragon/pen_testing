@@ -1,11 +1,13 @@
 # Bookwave · Mock PG · Haeon Card 실습 환경
 
+> **2026-09-29 최종 발표 촬영:** [촬영 순서 PDF v1.1](docs/scenarios/haeon-final-demo-shooting-guide-v1.1.pdf) / [구현 범위·촬영·재촬영 안내](docs/scenarios/haeon-filming-v1.1.md). 학생 콘솔 공개는 중단했다. 발표 시연 데스크는 `http://127.0.0.1:8094/`, 결과 전용은 `/filming.html?view=results`, 기존 상세 콘솔은 `/index.html`이다. 이전 촬영 문서는 당시 버전으로 보존한다. CARD-03은 **격리 합성 MySQL 장부** 실험이며 기존 승인 코어/PG 통합시험과 구분한다.
+
 > **2026-09-22 해온카드 시나리오:** [결제 연동 진단 API → 웹쉘 세션 → 자료 전송 시나리오](docs/scenarios/haeon-diagnostic-api-attack-scenario-v0.2.md)를 기준으로 가맹점 진단·탐지·대응 흐름을 구현했다. 현재 Docker의 북웨이브는 팀원의 사이트와 별개인 임시 연동용이며, 사용자 담당 범위는 해온카드다.
-> **구현:** `haeon-merchant-support`(가맹점 진단·제한 세션), `haeon-lab-receiver`(내부 자료 수신), `haeon-lab-gateway`(로컬 대상·콘솔 게이트웨이), `haeon-attack-console`(시나리오 실행·로그 화면)가 연결되어 있다. 해온카드 공격 콘솔은 `haeon-attack.localhost:8090` 또는 `127.0.0.1:8094`에서 연다. 콘솔 백엔드는 내부 실습 API만 호출하며 제어 토큰을 브라우저에 보내지 않는다. 명령행 검증은 `bash tools/haeon-diagnostic-lab.sh normal|before|after|respond|verify|reset`을 사용할 수 있다.
+> **구현:** `haeon-merchant-support`(가맹점 진단·제한 세션), `haeon-lab-receiver`(내부 자료 수신), `haeon-lab-gateway`(로컬 대상·콘솔 게이트웨이), `haeon-attack-console`(시나리오 실행·로그 화면)가 연결되어 있다. 콘솔은 `127.0.0.1:8094`에서만 연다. `haeon-attack.localhost:8090`과 `console.haeoncard.co.kr` 경로는 404로 닫았다. 콘솔 백엔드는 내부 실습 API만 호출하며 제어 토큰을 브라우저에 보내지 않는다. 명령행 검증은 `bash tools/haeon-diagnostic-lab.sh normal|before|after|respond|verify|reset`을 사용할 수 있다.
 
 ### 별도 공격 콘솔
 
-공격 콘솔에서 정상 진단, Before 흐름, 수동 대응, After 차단 검증을 순서대로 실행한다. 왼쪽 메뉴의 북웨이브와 PG 항목은 각각 독립된 시나리오를 위한 자리이며 아직 실행 API에 연결하지 않았다.
+시연 데스크에서 정상 진단, Before 흐름, 대응 및 재접근 검증, After 차단·정상 기능 검증을 순서대로 실행한다. 북웨이브 자체 공격과 PG 연동은 여기서 실행하지 않는다.
 
 ```bash
 # 콘솔과 해온카드 대상 서비스 기동
@@ -13,11 +15,10 @@ docker compose --env-file .env up -d --build haeon-lab-gateway
 docker compose --env-file .env ps haeon-attack-console haeon-lab-gateway
 
 # 브라우저에서 연다
-# http://haeon-attack.localhost:8090/
-# 또는 http://127.0.0.1:8094/
+# http://127.0.0.1:8094/
 ```
 
-실행 화면에서 **정상 진단 → Before 공격 흐름 → 대응 실행 → After 차단 검증**을 선택한다. Before 실행에서는 합성 자료 조회와 내부 수신 결과가 단계 로그에 나타난다. After 실행은 차단 결과를 확인하고 선행 후속 동작을 실행하지 않는다. 공격 콘솔 서비스는 내부 Docker 네트워크에만 연결하고, 게이트웨이는 loopback 주소에만 포트를 공개한다. 콘솔의 시나리오 목록·실행 단계·이벤트 타임라인은 북웨이브와 PG 시나리오 및 이후 BAS 검증 항목을 각각 독립적으로 추가할 수 있도록 분리했다.
+실행 화면에서 **정상 진단 → Before 실행 → 대응 및 재접근 검증 → After 실행**을 선택한다. Before 실행에서는 합성 자료 조회와 내부 수신 결과가 나타난다. After 실행은 차단 결과와 정상 진단 유지를 확인하고, 침해 흐름의 후속 동작은 실행하지 않는다. 콘솔 게이트웨이는 loopback에만 공개한다. 카드 사이트는 선택형 `compose.classroom.yaml`로 LAN에 공개할 수 있지만 콘솔 도메인은 404로 거절한다.
 
 ### 북웨이브·PG 통합 준비
 
@@ -32,11 +33,11 @@ docker compose --env-file .env up -d --build haeon-lab-gateway
 # 정상 업무와 Before/After 검증
 bash tools/haeon-diagnostic-lab.sh normal
 bash tools/haeon-diagnostic-lab.sh before
-bash tools/haeon-diagnostic-lab.sh after
 
 # Before 실행의 수동 대응·이벤트 확인
 RUN_ID=HAEON-DIAG-<실행ID> bash tools/haeon-diagnostic-lab.sh respond
 RUN_ID=HAEON-DIAG-<실행ID> bash tools/haeon-diagnostic-lab.sh verify
+bash tools/haeon-diagnostic-lab.sh after
 
 # 합성 실행·세션·보호 안내만 정리한다. 결제 데이터와 evidence/runs는 유지된다.
 bash tools/haeon-diagnostic-lab.sh reset
@@ -44,7 +45,11 @@ bash tools/haeon-diagnostic-lab.sh reset
 
 가맹점 정상 화면은 `http://haeon.localhost:8090/merchant` 또는 `http://127.0.0.1:8090/merchant`에서 연다. 실습 제어 API는 `127.0.0.1:8092`에만 게시되며 `X-Lab-Control-Token`이 필요하다. 내부 수신기에는 호스트 포트가 없다. 모든 합성자료는 `HC-MEMBER-001`에 연결된 20건이며, 대응 후 회원 포털 `http://127.0.0.1:8085/mypage`의 보호 안내에서 확인 상태를 기록한다.
 
-기존 MySQL 볼륨을 재사용하면 `009_lab_diagnostic_schema.sql`, `009_lab_diagnostic_seed.sql`, `010_lab_support_grants.sql`을 root 합성 비밀번호로 한 번 적용한다. 새 볼륨에서는 Compose init 순서로 자동 적용된다.
+기존 MySQL 볼륨을 재사용하면 `009_lab_diagnostic_schema.sql`, `009_lab_diagnostic_seed.sql`, `010_lab_support_grants.sql`, `011_card03_lab.sql`을 순서대로 한 번 적용한다. 새 볼륨에서는 Compose init 순서로 자동 적용된다. 현재 PC에는 모두 적용 완료했다. 기존 진단 스키마가 있는 PC에 CARD-03만 추가할 때는 WSL bash에서 아래 명령을 사용한다.
+
+```bash
+docker compose exec -T haeon-card-mysql sh -c 'MYSQL_PWD="$MYSQL_ROOT_PASSWORD" mysql -uroot "$MYSQL_DATABASE"' < db/haeon-card/init/011_card03_lab.sql
+```
 
 브라우저 기준 회귀 점검은 다음 명령으로 실행한다. 두 도구 모두 합성 계정만 사용하며, 가맹점 로그인·정상 진단·공격 콘솔 기준선 실행의 화면 증거와 해시를 `evidence/runs/`에 남긴다.
 
